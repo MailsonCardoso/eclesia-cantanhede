@@ -102,7 +102,7 @@ export function CrudPage({
           <TableBody>
             {rows.map((r) => (
               <TableRow key={r.id}>
-                {cols.map((c) => <TableCell key={c.key} className={c.key === cols[0].key ? "font-medium" : ""}>{render(c, r[c.key])}</TableCell>)}
+                {cols.map((c) => <TableCell key={c.key} className={c.key === cols[0]?.key ? "font-medium" : ""}>{render(c, r[c.key])}</TableCell>)}
                 <TableCell className="text-right no-print whitespace-nowrap">
                   {extraAction?.(r)}
                   <Button size="icon" variant="ghost" aria-label="Editar" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>

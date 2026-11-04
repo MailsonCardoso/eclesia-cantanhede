@@ -6,7 +6,11 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
  * Para integrar, substitua as operações abaixo por chamadas em src/lib/api.ts.
  */
 
-export type Row = { id: string; [k: string]: string | number | undefined };
+type V = string | number | undefined;
+export type Row = {
+  id: string; nome?: V; titulo?: V; descricao?: V; membro?: V; categoria?: V; congregacao?: V; data?: V; local?: V;
+  nascimento?: V; pagamento?: V; recebimento?: V; situacao?: V; tipo?: V; valor?: V; [k: string]: V;
+};
 export type Collection = "members" | "congregations" | "departments" | "transactions" | "contributions" | "events";
 export type AuditEntry = { id: string; at: string; collection: Collection; action: "criação" | "edição" | "exclusão"; label: string };
 
@@ -40,7 +44,7 @@ function seed(): DB {
     sexo: i % 2 ? "Masculino" : "Feminino",
     estadoCivil: ["Casado(a)", "Solteiro(a)", "Viúvo(a)"][i % 3],
     telefone: `(11) 9${8000 + i * 37}-${1000 + i * 13}`,
-    email: n.split(" ")[0].toLowerCase() + "@email.com",
+    email: (n.split(" ")[0] ?? "").toLowerCase() + "@email.com",
     endereco: `Rua das Oliveiras, ${100 + i * 7}`,
     batismo: `20${10 + (i % 14)}-04-12`,
     recebimento: d(-i * 40),
