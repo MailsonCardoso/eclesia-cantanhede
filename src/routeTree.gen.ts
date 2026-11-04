@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CongregacoesRouteImport } from './routes/congregacoes'
+import { Route as ContribuicoesRouteImport } from './routes/contribuicoes'
+import { Route as DepartamentosRouteImport } from './routes/departamentos'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as MembrosRouteImport } from './routes/membros'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CongregacoesRoute = CongregacoesRouteImport.update({
+  id: '/congregacoes',
+  path: '/congregacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContribuicoesRoute = ContribuicoesRouteImport.update({
+  id: '/contribuicoes',
+  path: '/contribuicoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepartamentosRoute = DepartamentosRouteImport.update({
+  id: '/departamentos',
+  path: '/departamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembrosRoute = MembrosRouteImport.update({
+  id: '/membros',
+  path: '/membros',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/congregacoes': typeof CongregacoesRoute
+  '/contribuicoes': typeof ContribuicoesRoute
+  '/departamentos': typeof DepartamentosRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/membros': typeof MembrosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/congregacoes': typeof CongregacoesRoute
+  '/contribuicoes': typeof ContribuicoesRoute
+  '/departamentos': typeof DepartamentosRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/membros': typeof MembrosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/congregacoes': typeof CongregacoesRoute
+  '/contribuicoes': typeof ContribuicoesRoute
+  '/departamentos': typeof DepartamentosRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/membros': typeof MembrosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/congregacoes'
+    | '/contribuicoes'
+    | '/departamentos'
+    | '/financeiro'
+    | '/membros'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/congregacoes'
+    | '/contribuicoes'
+    | '/departamentos'
+    | '/financeiro'
+    | '/membros'
+  id:
+    | '__root__'
+    | '/'
+    | '/congregacoes'
+    | '/contribuicoes'
+    | '/departamentos'
+    | '/financeiro'
+    | '/membros'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CongregacoesRoute: typeof CongregacoesRoute
+  ContribuicoesRoute: typeof ContribuicoesRoute
+  DepartamentosRoute: typeof DepartamentosRoute
+  FinanceiroRoute: typeof FinanceiroRoute
+  MembrosRoute: typeof MembrosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/congregacoes': {
+      id: '/congregacoes'
+      path: '/congregacoes'
+      fullPath: '/congregacoes'
+      preLoaderRoute: typeof CongregacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contribuicoes': {
+      id: '/contribuicoes'
+      path: '/contribuicoes'
+      fullPath: '/contribuicoes'
+      preLoaderRoute: typeof ContribuicoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/departamentos': {
+      id: '/departamentos'
+      path: '/departamentos'
+      fullPath: '/departamentos'
+      preLoaderRoute: typeof DepartamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro': {
+      id: '/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membros': {
+      id: '/membros'
+      path: '/membros'
+      fullPath: '/membros'
+      preLoaderRoute: typeof MembrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CongregacoesRoute: CongregacoesRoute,
+  ContribuicoesRoute: ContribuicoesRoute,
+  DepartamentosRoute: DepartamentosRoute,
+  FinanceiroRoute: FinanceiroRoute,
+  MembrosRoute: MembrosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
