@@ -14,10 +14,12 @@ import { toast } from "sonner";
 export type Field = {
   key: string;
   label: string;
-  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email";
+  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members";
   options?: string[];
   table?: boolean;
   required?: boolean;
+  /** Só exibe o campo quando a condição sobre os valores do formulário for verdadeira. */
+  enabledWhen?: (values: Record<string, string>) => boolean;
 };
 
 export function CrudPage({
@@ -32,6 +34,10 @@ export function CrudPage({
   const [editing, setEditing] = useState<Row | null>(null);
   const [open, setOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState<Row | null>(null);
+  // Valores controlados do formulário (para campos condicionais e seleção múltipla)
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+
+  const memberNames = useMemo(() => db.members.map((m) => String(m.nome)).sort((a, b) => a.localeCompare(b)), [db.members]);
 
   const rows = useMemo(() => db[collection].filter((r) =>
     (!q || searchKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase()))) &&
@@ -41,18 +47,31 @@ export function CrudPage({
   const render = (f: Field, v: Row[string]) => {
     if (f.type === "money") return brl(Number(v || 0));
     if (f.type === "date") return fmtDate(v);
-    if (f.key === "situacao" || f.key === "tipo") {
-      const good = ["Ativo", "Ativa", "Receita", "Membro", "Dízimo"].includes(String(v));
-      return <Badge variant={good ? "default" : "secondary"}>{v}</Badge>;
+    if (f.key === "situacao" || f.key === "tipo" || f.key === "status" || f.key === "estado") {
+      const good = ["Ativo", "Ativa", "Receita", "Membro", "Dízimo", "Realizado", "Bom", "Novo"].includes(String(v));
+      const bad = ["Inativo", "Cancelado", "Ruim"].includes(String(v));
+      return <Badge variant={good ? "default" : bad ? "destructive" : "secondary"}>{v}</Badge>;
     }
     return v || "—";
   };
+
+  const openForm = (row: Row | null) => {
+    setEditing(row);
+    const initial: Record<string, string> = {};
+    fields.forEach((f) => { initial[f.key] = String(row?.[f.key] ?? (f.options ? f.options[0] : "")); });
+    setFormValues(initial);
+    setOpen(true);
+  };
+
+  const visibleFields = fields.filter((f) => !f.enabledWhen || f.enabledWhen(formValues));
 
   const save = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const data: Record<string, string | number> = {};
-    fields.forEach((f) => {
+    visibleFields.forEach((f) => {
+      if (f.type === "members") { data[f.key] = formValues[f.key] ?? ""; return; }
+      if (f.type === "member" || f.type === "select") { data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? ""); return; }
       const v = String(fd.get(f.key) ?? "");
       data[f.key] = f.type === "money" || f.type === "number" ? Number(v || 0) : v;
     });
@@ -71,7 +90,7 @@ export function CrudPage({
         <div className="flex gap-2 no-print">
           <Button variant="outline" onClick={() => exportCSV(collection, rows, fields)}><FileSpreadsheet className="size-4" />Excel</Button>
           <Button variant="outline" onClick={() => window.print()}><Printer className="size-4" />PDF</Button>
-          <Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4" />Novo</Button>
+          <Button onClick={() => openForm(null)}><Plus className="size-4" />Novo</Button>
         </div>
       </div>
 
@@ -105,7 +124,7 @@ export function CrudPage({
                 {cols.map((c) => <TableCell key={c.key} className={c.key === cols[0]?.key ? "font-medium" : ""}>{render(c, r[c.key])}</TableCell>)}
                 <TableCell className="text-right no-print whitespace-nowrap">
                   {extraAction?.(r)}
-                  <Button size="icon" variant="ghost" aria-label="Editar" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>
+                  <Button size="icon" variant="ghost" aria-label="Editar" onClick={() => openForm(r)}><Pencil className="size-4" /></Button>
                   <Button size="icon" variant="ghost" aria-label="Excluir" onClick={() => setConfirmDel(r)}><Trash2 className="size-4 text-destructive" /></Button>
                 </TableCell>
               </TableRow>
@@ -120,20 +139,38 @@ export function CrudPage({
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? `Editar ${singular.toLowerCase()}` : `Novo(a) ${singular.toLowerCase()}`}</DialogTitle></DialogHeader>
           <form id="crud-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-            {fields.map((f) => {
-              const dv = editing?.[f.key] ?? (f.options ? f.options[0] : "");
+            {visibleFields.map((f) => {
+              const dv = formValues[f.key] ?? "";
               return (
                 <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2 space-y-1.5" : "space-y-1.5"}>
                   <Label htmlFor={f.key}>{f.label}</Label>
                   {f.type === "select" ? (
-                    <Select name={f.key} defaultValue={String(dv)}>
+                    <Select name={f.key} value={dv} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v }))}>
                       <SelectTrigger id={f.key}><SelectValue /></SelectTrigger>
                       <SelectContent>{f.options!.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
                     </Select>
+                  ) : f.type === "member" ? (
+                    <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
+                      <SelectTrigger id={f.key}><SelectValue placeholder="Selecione um membro" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Nenhum</SelectItem>
+                        {memberNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : f.type === "members" ? (
+                    <select
+                      id={f.key}
+                      multiple
+                      className="flex min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={dv ? dv.split("; ") : []}
+                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: Array.from(e.target.selectedOptions).map((o) => o.value).join("; ") }))}
+                    >
+                      {memberNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
                   ) : f.type === "textarea" ? (
-                    <Textarea id={f.key} name={f.key} defaultValue={String(dv)} />
+                    <Textarea id={f.key} name={f.key} defaultValue={dv} />
                   ) : (
-                    <Input id={f.key} name={f.key} required={f.required} defaultValue={String(dv)}
+                    <Input id={f.key} name={f.key} required={f.required} defaultValue={dv}
                       type={f.type === "money" || f.type === "number" ? "number" : f.type ?? "text"} step={f.type === "money" ? "0.01" : undefined} />
                   )}
                 </div>
