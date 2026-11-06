@@ -33,7 +33,7 @@ function AgendaEventos() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {upcoming.map((e) => (
             <div key={e.id} className="rounded-xl border bg-background p-4">
-              <div className="text-sm font-semibold text-gold">{fmtDate(e.data)}{e.hora ? ` · ${e.hora}` : ""}</div>
+              <div className="text-sm font-semibold text-gold">{fmtDate(e.data)}{e["hora"] ? ` · ${e["hora"]}` : ""}</div>
               <div className="mt-1 font-medium">{e.titulo}</div>
               <div className="text-sm text-muted-foreground">{e.tipo} · {e.local}</div>
             </div>
