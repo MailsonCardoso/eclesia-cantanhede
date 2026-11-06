@@ -40,7 +40,7 @@ const names = [
   "Tiago Nunes", "Raquel Dias", "Samuel Teixeira",
 ];
 
-function seed(): DB {
+export function seed(): DB {
   const members: Row[] = names.map((n, i) => ({
     id: uid(),
     nome: n,
