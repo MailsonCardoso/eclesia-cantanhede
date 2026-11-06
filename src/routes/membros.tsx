@@ -36,6 +36,10 @@ function Membros() {
         { key: "congregacao", label: "Congregação", type: "select", options: ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"], table: true },
         { key: "departamento", label: "Departamento" },
         { key: "cargo", label: "Cargo / função", table: true },
+        { key: "conjuge", label: "Cônjuge (membro)", type: "member", enabledWhen: (v) => v.estadoCivil === "Casado(a)" },
+        { key: "pai", label: "Pai (membro)", type: "member" },
+        { key: "mae", label: "Mãe (membro)", type: "member" },
+        { key: "filhos", label: "Filhos (membros)", type: "members" },
         { key: "observacoes", label: "Observações", type: "textarea" },
       ]}
     />
