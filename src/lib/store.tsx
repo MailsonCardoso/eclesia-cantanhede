@@ -11,7 +11,7 @@ export type Row = {
   id: string; nome?: V; titulo?: V; descricao?: V; membro?: V; categoria?: V; congregacao?: V; data?: V; local?: V;
   nascimento?: V; pagamento?: V; recebimento?: V; situacao?: V; tipo?: V; valor?: V; [k: string]: V;
 };
-export type Collection = "members" | "congregations" | "departments" | "transactions" | "contributions" | "events";
+export type Collection = "members" | "congregations" | "departments" | "transactions" | "contributions" | "events" | "appointments" | "inventory";
 export type AuditEntry = { id: string; at: string; collection: Collection; action: "criação" | "edição" | "exclusão"; label: string };
 
 type DB = Record<Collection, Row[]> & { audit: AuditEntry[] };
@@ -26,6 +26,11 @@ const monthDay = (m: number, day: number) => {
   const x = new Date();
   return `198${m % 10}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 };
+const ageYears = (years: number) => {
+  const x = new Date();
+  x.setFullYear(x.getFullYear() - years);
+  return x.toISOString().slice(0, 10);
+};
 
 const congs = ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"];
 const names = [
@@ -35,7 +40,7 @@ const names = [
   "Tiago Nunes", "Raquel Dias", "Samuel Teixeira",
 ];
 
-function seed(): DB {
+export function seed(): DB {
   const members: Row[] = names.map((n, i) => ({
     id: uid(),
     nome: n,
@@ -53,6 +58,10 @@ function seed(): DB {
     congregacao: congs[i % 3],
     departamento: ["Louvor", "Jovens", "Mulheres", "Homens", "Intercessão"][i % 5],
     cargo: ["Membro", "Diácono", "Presbítero", "Obreiro"][i % 4],
+    conjuge: i % 3 === 0 ? names[(i + 1) % names.length] : "",
+    pai: i % 2 === 0 ? names[(i + 5) % names.length] : "",
+    mae: i % 2 === 0 ? names[(i + 6) % names.length] : "",
+    filhos: i % 4 === 1 ? names[(i + 9) % names.length] : "",
     observacoes: "",
   }));
   const congregations: Row[] = congs.map((c, i) => ({
@@ -79,15 +88,40 @@ function seed(): DB {
     valor: 50 + ((i * 73) % 600), data: d(-i * 2), pagamento: ["PIX", "Dinheiro", "Cartão"][i % 3], congregacao: congs[i % 3],
   }));
   const events: Row[] = [
-    { id: uid(), titulo: "Culto de Celebração", data: d(3), local: "Sede Central" },
-    { id: uid(), titulo: "Conferência de Jovens", data: d(10), local: "Sede Central" },
-    { id: uid(), titulo: "Ação Social no Bairro", data: d(17), local: "Vila Nova" },
-    { id: uid(), titulo: "Santa Ceia", data: d(24), local: "Todas as congregações" },
+    { id: uid(), titulo: "Culto de Celebração", data: d(3), hora: "19:00", tipo: "Culto", local: "Sede Central", responsavel: "Pr. João Silva" },
+    { id: uid(), titulo: "Conferência de Jovens", data: d(10), hora: "15:00", tipo: "Conferência", local: "Sede Central", responsavel: "Gabriel Almeida" },
+    { id: uid(), titulo: "Ação Social no Bairro", data: d(17), hora: "09:00", tipo: "Social", local: "Vila Nova", responsavel: "Marta Oliveira" },
+    { id: uid(), titulo: "Santa Ceia", data: d(24), hora: "19:30", tipo: "Culto", local: "Todas as congregações", responsavel: "Pr. João Silva" },
+    { id: uid(), titulo: "Ensaio do Louvor", data: d(1), hora: "20:00", tipo: "Ensaio", local: "Sede Central", responsavel: "Lucas Barbosa" },
+    { id: uid(), titulo: "Escola Bíblica Dominical", data: d(5), hora: "09:00", tipo: "EBD", local: "Todas as congregações", responsavel: "Débora Ferreira" },
+    { id: uid(), titulo: "Vigília de Oração", data: d(12), hora: "22:00", tipo: "Vigília", local: "Sede Central", responsavel: "Pr. Marcos Reis" },
+    { id: uid(), titulo: "Evangelismo na Praça", data: d(19), hora: "16:00", tipo: "Evangelismo", local: "Praça Central", responsavel: "Tiago Nunes" },
+    { id: uid(), titulo: "Reunião de Obreiros", data: d(8), hora: "19:00", tipo: "Reunião", local: "Sede Central", responsavel: "Pr. André Luz" },
   ];
-  return { members, congregations, departments, transactions, contributions, events, audit: [] };
+  const appointments: Row[] = [
+    { id: uid(), membro: names[2], data: d(1), hora: "14:00", tipo: "Aconselhamento", motivo: "Aconselhamento familiar", status: "Agendado" },
+    { id: uid(), membro: names[6], data: d(2), hora: "10:00", tipo: "Visita", motivo: "Visita pós-operatória", status: "Agendado" },
+    { id: uid(), membro: names[9], data: d(4), hora: "16:30", tipo: "Aconselhamento", motivo: "Orientação vocacional", status: "Agendado" },
+    { id: uid(), membro: names[12], data: d(-1), hora: "19:00", tipo: "Visita", motivo: "Visita a novo convertido", status: "Realizado" },
+    { id: uid(), membro: names[15], data: d(6), hora: "09:30", tipo: "Aconselhamento", motivo: "Aconselhamento pré-casamento", status: "Agendado" },
+    { id: uid(), membro: names[4], data: d(-3), hora: "15:00", tipo: "Visita", motivo: "Visita de aniversário", status: "Cancelado" },
+  ];
+  const inventory: Row[] = [
+    { id: uid(), nome: "Cadeiras plásticas", categoria: "Mobiliário", quantidade: 220, estado: "Bom", local: "Sede Central", aquisicao: "2021-05-10", valor: 85 },
+    { id: uid(), nome: "Mesa de som 16 canais", categoria: "Áudio", quantidade: 1, estado: "Bom", local: "Sede Central", aquisicao: "2019-11-02", valor: 4200 },
+    { id: uid(), nome: "Microfones sem fio", categoria: "Áudio", quantidade: 6, estado: "Regular", local: "Sede Central", aquisicao: "2022-03-18", valor: 950 },
+    { id: uid(), nome: "Projetor multimídia", categoria: "Audiovisual", quantidade: 2, estado: "Bom", local: "Sede Central", aquisicao: "2023-01-25", valor: 2800 },
+    { id: uid(), nome: "Instrumentos musicais (bateria)", categoria: "Instrumentos", quantidade: 1, estado: "Bom", local: "Sede Central", aquisicao: "2020-08-14", valor: 5600 },
+    { id: uid(), nome: "Bíblias para EBD", categoria: "Material didático", quantidade: 45, estado: "Regular", local: "Congregação Vila Nova", aquisicao: "2022-07-30", valor: 60 },
+    { id: uid(), nome: "Ar-condicionado 24.000 BTU", categoria: "Climatização", quantidade: 4, estado: "Bom", local: "Sede Central", aquisicao: "2021-12-05", valor: 3900 },
+    { id: uid(), nome: "Computador da secretaria", categoria: "Informática", quantidade: 2, estado: "Regular", local: "Sede Central", aquisicao: "2020-02-20", valor: 3200 },
+    { id: uid(), nome: "Cadeiras de madeira", categoria: "Mobiliário", quantidade: 60, estado: "Regular", local: "Congregação Jardim Esperança", aquisicao: "2018-06-11", valor: 120 },
+    { id: uid(), nome: "Caixas de som ativas", categoria: "Áudio", quantidade: 4, estado: "Bom", local: "Congregação Vila Nova", aquisicao: "2023-09-08", valor: 1800 },
+  ];
+  return { members, congregations, departments, transactions, contributions, events, appointments, inventory, audit: [] };
 }
 
-const KEY = "ecclesia-db-v1";
+const KEY = "ecclesia-db-v2";
 
 type Ctx = {
   db: DB;
@@ -132,7 +166,7 @@ export const fmtDate = (s?: string | number) => (s ? new Date(String(s) + "T12:0
 
 export function exportCSV(filename: string, rows: Row[], cols: { key: string; label: string }[]) {
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const csv = "\uFEFF" + [cols.map((c) => esc(c.label)).join(";"), ...rows.map((r) => cols.map((c) => esc(r[c.key])).join(";"))].join("\n");
+  const csv = "﻿" + [cols.map((c) => esc(c.label)).join(";"), ...rows.map((r) => cols.map((c) => esc(r[c.key])).join(";"))].join("\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
   a.download = filename + ".csv";

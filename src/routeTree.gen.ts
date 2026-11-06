@@ -10,15 +10,29 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgendaEventosRouteImport } from './routes/agenda-eventos'
+import { Route as AgendaPastoralRouteImport } from './routes/agenda-pastoral'
 import { Route as CongregacoesRouteImport } from './routes/congregacoes'
 import { Route as ContribuicoesRouteImport } from './routes/contribuicoes'
 import { Route as DepartamentosRouteImport } from './routes/departamentos'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as InventarioRouteImport } from './routes/inventario'
 import { Route as MembrosRouteImport } from './routes/membros'
+import { Route as RelatorioMembrosRouteImport } from './routes/relatorio-membros'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgendaEventosRoute = AgendaEventosRouteImport.update({
+  id: '/agenda-eventos',
+  path: '/agenda-eventos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgendaPastoralRoute = AgendaPastoralRouteImport.update({
+  id: '/agenda-pastoral',
+  path: '/agenda-pastoral',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CongregacoesRoute = CongregacoesRouteImport.update({
@@ -41,71 +55,109 @@ const FinanceiroRoute = FinanceiroRouteImport.update({
   path: '/financeiro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventarioRoute = InventarioRouteImport.update({
+  id: '/inventario',
+  path: '/inventario',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembrosRoute = MembrosRouteImport.update({
   id: '/membros',
   path: '/membros',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RelatorioMembrosRoute = RelatorioMembrosRouteImport.update({
+  id: '/relatorio-membros',
+  path: '/relatorio-membros',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agenda-eventos': typeof AgendaEventosRoute
+  '/agenda-pastoral': typeof AgendaPastoralRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
   '/departamentos': typeof DepartamentosRoute
   '/financeiro': typeof FinanceiroRoute
+  '/inventario': typeof InventarioRoute
   '/membros': typeof MembrosRoute
+  '/relatorio-membros': typeof RelatorioMembrosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agenda-eventos': typeof AgendaEventosRoute
+  '/agenda-pastoral': typeof AgendaPastoralRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
   '/departamentos': typeof DepartamentosRoute
   '/financeiro': typeof FinanceiroRoute
+  '/inventario': typeof InventarioRoute
   '/membros': typeof MembrosRoute
+  '/relatorio-membros': typeof RelatorioMembrosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agenda-eventos': typeof AgendaEventosRoute
+  '/agenda-pastoral': typeof AgendaPastoralRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
   '/departamentos': typeof DepartamentosRoute
   '/financeiro': typeof FinanceiroRoute
+  '/inventario': typeof InventarioRoute
   '/membros': typeof MembrosRoute
+  '/relatorio-membros': typeof RelatorioMembrosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agenda-eventos'
+    | '/agenda-pastoral'
     | '/congregacoes'
     | '/contribuicoes'
     | '/departamentos'
     | '/financeiro'
+    | '/inventario'
     | '/membros'
+    | '/relatorio-membros'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agenda-eventos'
+    | '/agenda-pastoral'
     | '/congregacoes'
     | '/contribuicoes'
     | '/departamentos'
     | '/financeiro'
+    | '/inventario'
     | '/membros'
+    | '/relatorio-membros'
   id:
     | '__root__'
     | '/'
+    | '/agenda-eventos'
+    | '/agenda-pastoral'
     | '/congregacoes'
     | '/contribuicoes'
     | '/departamentos'
     | '/financeiro'
+    | '/inventario'
     | '/membros'
+    | '/relatorio-membros'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgendaEventosRoute: typeof AgendaEventosRoute
+  AgendaPastoralRoute: typeof AgendaPastoralRoute
   CongregacoesRoute: typeof CongregacoesRoute
   ContribuicoesRoute: typeof ContribuicoesRoute
   DepartamentosRoute: typeof DepartamentosRoute
   FinanceiroRoute: typeof FinanceiroRoute
+  InventarioRoute: typeof InventarioRoute
   MembrosRoute: typeof MembrosRoute
+  RelatorioMembrosRoute: typeof RelatorioMembrosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -115,6 +167,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agenda-eventos': {
+      id: '/agenda-eventos'
+      path: '/agenda-eventos'
+      fullPath: '/agenda-eventos'
+      preLoaderRoute: typeof AgendaEventosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agenda-pastoral': {
+      id: '/agenda-pastoral'
+      path: '/agenda-pastoral'
+      fullPath: '/agenda-pastoral'
+      preLoaderRoute: typeof AgendaPastoralRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/congregacoes': {
@@ -145,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventario': {
+      id: '/inventario'
+      path: '/inventario'
+      fullPath: '/inventario'
+      preLoaderRoute: typeof InventarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/membros': {
       id: '/membros'
       path: '/membros'
@@ -152,16 +225,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MembrosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/relatorio-membros': {
+      id: '/relatorio-membros'
+      path: '/relatorio-membros'
+      fullPath: '/relatorio-membros'
+      preLoaderRoute: typeof RelatorioMembrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgendaEventosRoute: AgendaEventosRoute,
+  AgendaPastoralRoute: AgendaPastoralRoute,
   CongregacoesRoute: CongregacoesRoute,
   ContribuicoesRoute: ContribuicoesRoute,
   DepartamentosRoute: DepartamentosRoute,
   FinanceiroRoute: FinanceiroRoute,
+  InventarioRoute: InventarioRoute,
   MembrosRoute: MembrosRoute,
+  RelatorioMembrosRoute: RelatorioMembrosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

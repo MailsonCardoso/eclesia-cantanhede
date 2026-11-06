@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Church, Wallet, HandCoins, Network, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, Users, Church, Wallet, HandCoins, Network, Moon, Sun, CalendarClock, CalendarDays, Boxes, BarChart3 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
@@ -14,6 +14,10 @@ const items = [
   { title: "Financeiro", url: "/financeiro", icon: Wallet },
   { title: "Dízimos e Ofertas", url: "/contribuicoes", icon: HandCoins },
   { title: "Departamentos", url: "/departamentos", icon: Network },
+  { title: "Agenda Pastoral", url: "/agenda-pastoral", icon: CalendarClock },
+  { title: "Agenda de Eventos", url: "/agenda-eventos", icon: CalendarDays },
+  { title: "Inventário", url: "/inventario", icon: Boxes },
+  { title: "Relatório de Membros", url: "/relatorio-membros", icon: BarChart3 },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
