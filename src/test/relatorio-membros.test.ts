@@ -43,8 +43,8 @@ describe("Dados de demonstração", () => {
   });
 
   it("membros casados de exemplo têm cônjuge vinculado", () => {
-    const casados = db.members.filter((m) => m.estadoCivil === "Casado(a)");
+    const casados = db.members.filter((m) => m["estadoCivil"] === "Casado(a)");
     expect(casados.length).toBeGreaterThan(0);
-    casados.forEach((m) => expect(String(m.conjuge ?? "").length).toBeGreaterThan(0));
+    casados.forEach((m) => expect(String(m["conjuge"] ?? "").length).toBeGreaterThan(0));
   });
 });

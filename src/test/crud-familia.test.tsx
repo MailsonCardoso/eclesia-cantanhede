@@ -13,7 +13,7 @@ beforeAll(() => {
 const fields = [
   { key: "nome", label: "Nome completo", required: true },
   { key: "estadoCivil", label: "Estado civil", type: "select" as const, options: ["Solteiro(a)", "Casado(a)", "Viúvo(a)"] },
-  { key: "conjuge", label: "Cônjuge (membro)", type: "member" as const, enabledWhen: (v: Record<string, string>) => v.estadoCivil === "Casado(a)" },
+  { key: "conjuge", label: "Cônjuge (membro)", type: "member" as const, enabledWhen: (v: Record<string, string>) => v["estadoCivil"] === "Casado(a)" },
   { key: "pai", label: "Pai (membro)", type: "member" as const },
   { key: "mae", label: "Mãe (membro)", type: "member" as const },
   { key: "filhos", label: "Filhos (membros)", type: "members" as const },

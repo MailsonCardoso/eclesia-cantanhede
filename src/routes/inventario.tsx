@@ -18,8 +18,8 @@ export const Route = createFileRoute("/inventario")({
 
 function Inventario() {
   const { db } = useStore();
-  const patrimonio = db.inventory.reduce((a, i) => a + Number(i.valor || 0) * Number(i.quantidade || 0), 0);
-  const itens = db.inventory.reduce((a, i) => a + Number(i.quantidade || 0), 0);
+  const patrimonio = db.inventory.reduce((a, i) => a + Number(i.valor || 0) * Number(i["quantidade"] || 0), 0);
+  const itens = db.inventory.reduce((a, i) => a + Number(i["quantidade"] || 0), 0);
 
   return (
     <div className="space-y-8">
