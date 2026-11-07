@@ -45,7 +45,7 @@ export function bucketOf(age: number): string {
   return AGE_BUCKETS.find(([, lo, hi]) => age >= lo && age <= hi)?.[0] ?? "70+";
 }
 
-const COLORS = ["#C8A45D", "#243F60", "#8FA3BF", "#C8A45D", "#243F60", "#8FA3BF", "#C8A45D", "#243F60"];
+const COLORS = ["#3B82F6", "#8B5CF6", "#22C55E", "#F97316", "#6366F1", "#A855F7", "#10B981", "#FB923C"];
 
 function RelatorioMembros() {
   const { db } = useStore();

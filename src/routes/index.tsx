@@ -19,14 +19,16 @@ export const Route = createFileRoute("/")({
 
 const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-function Stat({ icon: Icon, label, value, accent }: { icon: typeof Users; label: string; value: string | number; accent?: boolean }) {
+const GRADS = ["var(--grad-blue)", "var(--grad-violet)", "var(--grad-green)", "var(--grad-orange)"];
+
+function Stat({ icon: Icon, label, value, grad = 0 }: { icon: typeof Users; label: string; value: string | number; grad?: number }) {
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-card">
-      <div className={`mb-4 grid size-10 place-items-center rounded-xl ${accent ? "bg-gold-soft text-gold" : "bg-secondary text-primary"}`}>
+    <div className="rounded-2xl border bg-card p-5 shadow-card card-hover">
+      <div className="mb-4 grid size-10 place-items-center rounded-xl text-primary-foreground shadow-lg" style={{ backgroundImage: GRADS[grad % GRADS.length] }}>
         <Icon className="size-5" />
       </div>
       <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tracking-tight">{value}</div>
+      <div className="mt-1 text-2xl font-bold tracking-tight">{value}</div>
     </div>
   );
 }
@@ -72,14 +74,14 @@ function Dashboard() {
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Users} label="Total cadastrados" value={m.length} />
-        <Stat icon={UserCheck} label="Membros ativos" value={m.filter((x) => x.situacao === "Ativo").length} />
-        <Stat icon={UserPlus} label="Novos no mês" value={m.filter((x) => inMonth(x.recebimento)).length} />
-        <Stat icon={UserRound} label="Congregados" value={m.filter((x) => x.tipo === "Congregado").length} />
-        <Stat icon={HandCoins} label="Dízimos no mês" value={brl(dizimos)} accent />
-        <Stat icon={Gift} label="Ofertas no mês" value={brl(ofertas)} accent />
-        <Stat icon={TrendingDown} label="Despesas do mês" value={brl(despesas)} accent />
-        <Stat icon={Landmark} label="Saldo do mês" value={brl(dizimos + ofertas - despesas)} accent />
+        <Stat icon={Users} label="Total cadastrados" value={m.length} grad={0} />
+        <Stat icon={UserCheck} label="Membros ativos" value={m.filter((x) => x.situacao === "Ativo").length} grad={1} />
+        <Stat icon={UserPlus} label="Novos no mês" value={m.filter((x) => inMonth(x.recebimento)).length} grad={2} />
+        <Stat icon={UserRound} label="Congregados" value={m.filter((x) => x.tipo === "Congregado").length} grad={3} />
+        <Stat icon={HandCoins} label="Dízimos no mês" value={brl(dizimos)} grad={1} />
+        <Stat icon={Gift} label="Ofertas no mês" value={brl(ofertas)} grad={2} />
+        <Stat icon={TrendingDown} label="Despesas do mês" value={brl(despesas)} grad={3} />
+        <Stat icon={Landmark} label="Saldo do mês" value={brl(dizimos + ofertas - despesas)} grad={0} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

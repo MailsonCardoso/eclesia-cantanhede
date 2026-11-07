@@ -90,7 +90,7 @@ export function CrudPage({
         <div className="flex gap-2 no-print">
           <Button variant="outline" onClick={() => exportCSV(collection, rows, fields)}><FileSpreadsheet className="size-4" />Excel</Button>
           <Button variant="outline" onClick={() => window.print()}><Printer className="size-4" />PDF</Button>
-          <Button onClick={() => openForm(null)}><Plus className="size-4" />Novo</Button>
+          <Button variant="premium" onClick={() => openForm(null)}><Plus className="size-4" />Novo</Button>
         </div>
       </div>
 
