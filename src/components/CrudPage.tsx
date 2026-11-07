@@ -179,7 +179,7 @@ export function CrudPage({
           </form>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button type="submit" form="crud-form">Salvar</Button>
+            <Button variant="premium" type="submit" form="crud-form">Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
