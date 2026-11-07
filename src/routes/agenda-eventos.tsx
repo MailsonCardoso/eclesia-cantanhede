@@ -7,9 +7,9 @@ import { fmtDate, useStore } from "@/lib/store";
 export const Route = createFileRoute("/agenda-eventos")({
   head: () => ({
     meta: [
-      { title: "Agenda de Eventos — Ecclesia" },
+      { title: "Agenda de Eventos — EclesiaPro" },
       { name: "description", content: "Programação de cultos, conferências e atividades da igreja." },
-      { property: "og:title", content: "Agenda de Eventos — Ecclesia" },
+      { property: "og:title", content: "Agenda de Eventos — EclesiaPro" },
       { property: "og:description", content: "Programação de cultos, conferências e atividades da igreja." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

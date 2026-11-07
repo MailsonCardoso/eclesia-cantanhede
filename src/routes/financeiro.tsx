@@ -5,9 +5,9 @@ import { brl, useStore } from "@/lib/store";
 export const Route = createFileRoute("/financeiro")({
   head: () => ({
     meta: [
-      { title: "Financeiro — Ecclesia" },
+      { title: "Financeiro — EclesiaPro" },
       { name: "description", content: "Receitas, despesas, fluxo de caixa e auditoria." },
-      { property: "og:title", content: "Financeiro — Ecclesia" },
+      { property: "og:title", content: "Financeiro — EclesiaPro" },
       { property: "og:description", content: "Receitas, despesas, fluxo de caixa e auditoria." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

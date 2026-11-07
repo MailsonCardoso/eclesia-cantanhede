@@ -4,9 +4,9 @@ import { CrudPage } from "@/components/CrudPage";
 export const Route = createFileRoute("/membros")({
   head: () => ({
     meta: [
-      { title: "Membros — Ecclesia" },
+      { title: "Membros — EclesiaPro" },
       { name: "description", content: "Cadastro e consulta de membros da igreja." },
-      { property: "og:title", content: "Membros — Ecclesia" },
+      { property: "og:title", content: "Membros — EclesiaPro" },
       { property: "og:description", content: "Cadastro e consulta de membros da igreja." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -5,9 +5,9 @@ import { brl, useStore } from "@/lib/store";
 export const Route = createFileRoute("/inventario")({
   head: () => ({
     meta: [
-      { title: "Inventário — Ecclesia" },
+      { title: "Inventário — EclesiaPro" },
       { name: "description", content: "Controle do patrimônio e dos bens da igreja." },
-      { property: "og:title", content: "Inventário — Ecclesia" },
+      { property: "og:title", content: "Inventário — EclesiaPro" },
       { property: "og:description", content: "Controle do patrimônio e dos bens da igreja." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
