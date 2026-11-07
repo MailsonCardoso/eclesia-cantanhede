@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Church, Wallet, HandCoins, Network, Moon, Sun, CalendarClock, CalendarDays, Boxes, BarChart3, Bell } from "lucide-react";
+import { LayoutDashboard, Users, Church, Wallet, HandCoins, Network, Moon, Sun, CalendarClock, CalendarDays, Boxes, BarChart3, Bell, LineChart } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
@@ -26,6 +26,7 @@ const groups = [
     items: [
       { title: "Financeiro", url: "/financeiro", icon: Wallet },
       { title: "Dízimos e Ofertas", url: "/contribuicoes", icon: HandCoins },
+      { title: "Análise Financeira", url: "/analise-financeira", icon: LineChart },
     ],
   },
   {
@@ -50,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const pageTitle = groups
     .flatMap((g) => g.items as readonly { title: string; url: string }[])
-    .find((i) => i.url === path)?.title ?? "Ecclesia";
+    .find((i) => i.url === path)?.title ?? "EclesiaPro";
 
   return (
     <SidebarProvider>
@@ -62,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Church className="size-5" />
               </div>
               <div className="group-data-[collapsible=icon]:hidden">
-                <div className="font-display text-lg font-semibold text-sidebar-accent-foreground leading-none">Ecclesia</div>
+                <div className="font-display text-lg font-semibold text-sidebar-accent-foreground leading-none">EclesiaPro</div>
                 <div className="text-xs text-sidebar-foreground/70 mt-1">Gestão eclesiástica</div>
               </div>
             </div>

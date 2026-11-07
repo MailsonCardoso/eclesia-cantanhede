@@ -9,9 +9,9 @@ import { exportCSV, fmtDate, useStore, type Row } from "@/lib/store";
 export const Route = createFileRoute("/relatorio-membros")({
   head: () => ({
     meta: [
-      { title: "Relatório de Membros por Idade — Ecclesia" },
+      { title: "Relatório de Membros por Idade — EclesiaPro" },
       { name: "description", content: "Distribuição dos membros por faixa etária e lista ordenada por idade." },
-      { property: "og:title", content: "Relatório de Membros por Idade — Ecclesia" },
+      { property: "og:title", content: "Relatório de Membros por Idade — EclesiaPro" },
       { property: "og:description", content: "Distribuição dos membros por faixa etária e lista ordenada por idade." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

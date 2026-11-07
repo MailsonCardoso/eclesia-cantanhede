@@ -6,9 +6,9 @@ import { brl, fmtDate, useStore } from "@/lib/store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Painel — Ecclesia Gestão Eclesiástica" },
+      { title: "Painel — EclesiaPro Gestão Eclesiástica" },
       { name: "description", content: "Indicadores de membros, finanças, eventos e aniversariantes da igreja." },
-      { property: "og:title", content: "Painel — Ecclesia" },
+      { property: "og:title", content: "Painel — EclesiaPro" },
       { property: "og:description", content: "Indicadores de membros, finanças, eventos e aniversariantes da igreja." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

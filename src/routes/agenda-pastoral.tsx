@@ -4,9 +4,9 @@ import { CrudPage } from "@/components/CrudPage";
 export const Route = createFileRoute("/agenda-pastoral")({
   head: () => ({
     meta: [
-      { title: "Agenda Pastoral — Ecclesia" },
+      { title: "Agenda Pastoral — EclesiaPro" },
       { name: "description", content: "Agendamentos de visitas e aconselhamentos pastorais com os membros." },
-      { property: "og:title", content: "Agenda Pastoral — Ecclesia" },
+      { property: "og:title", content: "Agenda Pastoral — EclesiaPro" },
       { property: "og:description", content: "Agendamentos de visitas e aconselhamentos pastorais com os membros." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

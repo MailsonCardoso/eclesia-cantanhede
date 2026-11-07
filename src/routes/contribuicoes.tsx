@@ -7,9 +7,9 @@ import { brl, fmtDate, useStore, type Row } from "@/lib/store";
 export const Route = createFileRoute("/contribuicoes")({
   head: () => ({
     meta: [
-      { title: "Dízimos e Ofertas — Ecclesia" },
+      { title: "Dízimos e Ofertas — EclesiaPro" },
       { name: "description", content: "Registro de contribuições, recibos e histórico." },
-      { property: "og:title", content: "Dízimos e Ofertas — Ecclesia" },
+      { property: "og:title", content: "Dízimos e Ofertas — EclesiaPro" },
       { property: "og:description", content: "Registro de contribuições, recibos e histórico." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
