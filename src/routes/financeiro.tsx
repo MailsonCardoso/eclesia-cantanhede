@@ -24,9 +24,9 @@ function Financeiro() {
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-3">
         {[["Receitas", rec], ["Despesas", desp], ["Saldo em caixa", rec - desp]].map(([l, v]) => (
-          <div key={l} className="rounded-2xl border bg-card p-5 shadow-card">
+          <div key={l} className="rounded-2xl border bg-card p-5 shadow-card card-hover">
             <div className="text-sm text-muted-foreground">{l}</div>
-            <div className="mt-1 text-2xl font-semibold">{brl(Number(v))}</div>
+            <div className="mt-1 text-2xl font-bold tracking-tight">{brl(Number(v))}</div>
           </div>
         ))}
       </div>
