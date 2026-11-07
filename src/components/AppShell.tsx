@@ -48,7 +48,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
 
-  const pageTitle = groups.flatMap((g) => g.items).find((i) => i.url === path)?.title ?? "Ecclesia";
+  const pageTitle = groups
+    .flatMap((g) => g.items as readonly { title: string; url: string }[])
+    .find((i) => i.url === path)?.title ?? "Ecclesia";
 
   return (
     <SidebarProvider>
