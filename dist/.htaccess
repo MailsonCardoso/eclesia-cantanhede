@@ -1,0 +1,43 @@
+# ====================================================================
+# EcclesiaPro - Configuracao Apache / cPanel / LiteSpeed
+# ====================================================================
+
+# Desativa listagem de diretorios (evita 403 Forbidden em pastas)
+Options -Indexes
+
+# Define index.html como documento padrao
+DirectoryIndex index.html
+
+# Garante tipos MIME corretos para modulos JavaScript e CSS
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType text/css .css
+  AddType image/svg+xml .svg
+  AddType application/json .json
+  AddType font/woff2 .woff2
+</IfModule>
+
+# Habilita compressao Gzip / Deflate
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# Roteamento SPA / HTML5 History API
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Permite carregar arquivos ou diretorios fisicos existentes
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Redireciona qualquer rota dinamica para index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Headers de CORS e seguranca
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+  Header set X-Content-Type-Options "nosniff"
+</IfModule>
