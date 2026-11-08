@@ -35,6 +35,19 @@ function Analise() {
     return { mes: `${MONTHS[dt.getMonth()]}/${String(dt.getFullYear()).slice(2)}`, Receitas: receitas, Despesas: despesas, Saldo: receitas - despesas };
   });
   const tot = rows.reduce((a, r) => ({ r: a.r + r.Receitas, d: a.d + r.Despesas }), { r: 0, d: 0 });
+  const start = new Date(now.getFullYear(), now.getMonth() - (n - 1), 1).toISOString().slice(0, 10);
+  const txP = db.transactions.filter((t) => String(t.data) >= start);
+  const ctP = db.contributions.filter((c) => String(c.data) >= start);
+  const sumBy = (list: typeof txP, key: string) => {
+    const m = new Map<string, number>();
+    list.forEach((r) => m.set(String(r[key] || "—"), (m.get(String(r[key] || "—")) ?? 0) + Number(r.valor)));
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  };
+  const recCt = sumBy(ctP, "tipo");
+  const recTx = sumBy(txP.filter((t) => t.tipo === "Receita"), "categoria");
+  const despTx = sumBy(txP.filter((t) => t.tipo === "Despesa"), "categoria");
+  const totRec = [...recCt, ...recTx].reduce((a, [, v]) => a + v, 0);
+  const totDesp = despTx.reduce((a, [, v]) => a + v, 0);
   const tip = { background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12 };
 
   return (
@@ -94,6 +107,40 @@ function Analise() {
             })}
           </tbody>
         </table>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="rounded-2xl border bg-card p-5 shadow-card">
+          <h2 className="text-lg font-semibold">DRE — Demonstração do Resultado</h2>
+          <p className="mb-4 text-xs text-muted-foreground">Últimos {n} meses</p>
+          <table className="w-full text-sm"><tbody>
+            <tr className="border-b"><td className="py-2 font-semibold">(+) Receita bruta</td><td className="py-2 text-right font-semibold">{brl(totRec)}</td></tr>
+            <tr><td className="py-1 pl-4 text-muted-foreground">Dízimos e ofertas</td><td className="py-1 text-right">{brl(recCt.reduce((a, [, v]) => a + v, 0))}</td></tr>
+            <tr className="border-b"><td className="py-1 pl-4 text-muted-foreground">Outras receitas lançadas</td><td className="py-1 text-right">{brl(recTx.reduce((a, [, v]) => a + v, 0))}</td></tr>
+            <tr className="border-b"><td className="py-2 font-semibold">(−) Despesas operacionais</td><td className="py-2 text-right font-semibold text-destructive">{brl(totDesp)}</td></tr>
+            {despTx.map(([k, v]) => <tr key={k}><td className="py-1 pl-4 text-muted-foreground">{k}</td><td className="py-1 text-right">{brl(v)}</td></tr>)}
+            <tr className="border-t-2"><td className="py-3 font-bold">(=) Resultado do período</td><td className={`py-3 text-right font-bold ${totRec - totDesp < 0 ? "text-destructive" : "text-primary"}`}>{brl(totRec - totDesp)}</td></tr>
+          </tbody></table>
+        </section>
+        <section className="rounded-2xl border bg-card p-5 shadow-card">
+          <h2 className="text-lg font-semibold">Balancete</h2>
+          <p className="mb-4 text-xs text-muted-foreground">Receitas e despesas por conta — últimos {n} meses</p>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2">Conta</th><th className="py-2 text-right">Receita</th><th className="py-2 text-right">Despesa</th></tr></thead>
+            <tbody>
+              <tr><td colSpan={3} className="pt-3 pb-1 text-xs font-semibold uppercase text-muted-foreground">Dízimos e ofertas — por tipo</td></tr>
+              {recCt.map(([k, v]) => <tr key={"t" + k}><td className="py-1 pl-3">{k}</td><td className="py-1 text-right">{brl(v)}</td><td className="py-1 text-right text-muted-foreground">—</td></tr>)}
+              <tr><td colSpan={3} className="pt-3 pb-1 text-xs font-semibold uppercase text-muted-foreground">Dízimos e ofertas — por forma de pagamento</td></tr>
+              {sumBy(ctP, "pagamento").map(([k, v]) => <tr key={"p" + k}><td className="py-1 pl-3">{k}</td><td className="py-1 text-right">{brl(v)}</td><td className="py-1 text-right text-muted-foreground">—</td></tr>)}
+              <tr><td colSpan={3} className="pt-3 pb-1 text-xs font-semibold uppercase text-muted-foreground">Dízimos e ofertas — por congregação</td></tr>
+              {sumBy(ctP, "congregacao").map(([k, v]) => <tr key={"c" + k}><td className="py-1 pl-3">{k}</td><td className="py-1 text-right">{brl(v)}</td><td className="py-1 text-right text-muted-foreground">—</td></tr>)}
+              <tr><td colSpan={3} className="pt-3 pb-1 text-xs font-semibold uppercase text-muted-foreground">Movimentações</td></tr>
+              {recTx.map(([k, v]) => <tr key={"r" + k}><td className="py-1 pl-3">{k}</td><td className="py-1 text-right">{brl(v)}</td><td className="py-1 text-right text-muted-foreground">—</td></tr>)}
+              {despTx.map(([k, v]) => <tr key={"d" + k}><td className="py-1 pl-3">{k}</td><td className="py-1 text-right text-muted-foreground">—</td><td className="py-1 text-right text-destructive">{brl(v)}</td></tr>)}
+              <tr className="border-t-2 font-bold"><td className="py-2">Totais</td><td className="py-2 text-right">{brl(totRec)}</td><td className="py-2 text-right text-destructive">{brl(totDesp)}</td></tr>
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-muted-foreground">Os blocos por forma de pagamento e congregação detalham o mesmo total de dízimos e ofertas.</p>
+        </section>
       </div>
     </div>
   );
