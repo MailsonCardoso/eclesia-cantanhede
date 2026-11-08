@@ -22,7 +22,7 @@ function AgendaPastoral() {
   const today = new Date().toISOString().slice(0, 10);
   const ap = db.appointments;
   const proximos = ap.filter((a) => a["status"] === "Agendado" && String(a["data"]) >= today)
-    .sort((a, b) => String(a["data"] + (a["hora"] ?? "")).localeCompare(String(b.data + (b.hora ?? "")))).slice(0, 6);
+    .sort((a, b) => `${a["data"]}${a["hora"] ?? ""}`.localeCompare(`${b["data"]}${b["hora"] ?? ""}`)).slice(0, 6);
   const stats = [
     { l: "Agendados", v: ap.filter((a) => a["status"] === "Agendado").length, i: CalendarClock, c: "from-chart-1/25" },
     { l: "Realizados", v: ap.filter((a) => a["status"] === "Realizado").length, i: CheckCircle2, c: "from-chart-3/25" },
