@@ -46,7 +46,10 @@ const fallbackScript = `
 async function buildStaticDist() {
   console.log('--- Iniciando geracao de dist/ estatico completo ---');
   
-  // 1. Copiar assets estaticos de .output/public para dist/
+  // 1. Limpar e copiar assets estaticos de .output/public para dist/
+  if (fs.existsSync('dist/assets')) {
+    fs.rmSync('dist/assets', { recursive: true, force: true });
+  }
   if (fs.existsSync('.output/public')) {
     fs.cpSync('.output/public', 'dist', { recursive: true });
     console.log('✓ Arquivos publicos copiados de .output/public para dist/');
