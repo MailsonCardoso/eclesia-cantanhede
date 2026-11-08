@@ -21,12 +21,12 @@ function AgendaPastoral() {
   const { db } = useStore();
   const today = new Date().toISOString().slice(0, 10);
   const ap = db.appointments;
-  const proximos = ap.filter((a) => a.status === "Agendado" && String(a.data) >= today)
-    .sort((a, b) => String(a.data + (a.hora ?? "")).localeCompare(String(b.data + (b.hora ?? "")))).slice(0, 6);
+  const proximos = ap.filter((a) => a["status"] === "Agendado" && String(a["data"]) >= today)
+    .sort((a, b) => String(a["data"] + (a["hora"] ?? "")).localeCompare(String(b.data + (b.hora ?? "")))).slice(0, 6);
   const stats = [
-    { l: "Agendados", v: ap.filter((a) => a.status === "Agendado").length, i: CalendarClock, c: "from-chart-1/25" },
-    { l: "Realizados", v: ap.filter((a) => a.status === "Realizado").length, i: CheckCircle2, c: "from-chart-3/25" },
-    { l: "Cancelados", v: ap.filter((a) => a.status === "Cancelado").length, i: XCircle, c: "from-destructive/25" },
+    { l: "Agendados", v: ap.filter((a) => a["status"] === "Agendado").length, i: CalendarClock, c: "from-chart-1/25" },
+    { l: "Realizados", v: ap.filter((a) => a["status"] === "Realizado").length, i: CheckCircle2, c: "from-chart-3/25" },
+    { l: "Cancelados", v: ap.filter((a) => a["status"] === "Cancelado").length, i: XCircle, c: "from-destructive/25" },
     { l: "Total de atendimentos", v: ap.length, i: CalendarDays, c: "from-chart-2/25" },
   ];
   return (
@@ -46,13 +46,13 @@ function AgendaPastoral() {
             {proximos.map((a) => (
               <div key={a.id} className="flex gap-4 rounded-2xl border bg-card p-4 shadow-card card-hover">
                 <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/15 text-primary">
-                  <span className="text-xl font-bold leading-none">{String(a.data).slice(8, 10)}</span>
-                  <span className="text-[10px] uppercase">{new Date(String(a.data) + "T12:00").toLocaleDateString("pt-BR", { month: "short" })}</span>
+                  <span className="text-xl font-bold leading-none">{String(a["data"]).slice(8, 10)}</span>
+                  <span className="text-[10px] uppercase">{new Date(String(a["data"]) + "T12:00").toLocaleDateString("pt-BR", { month: "short" })}</span>
                 </div>
                 <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-1.5 font-semibold"><User className="size-4 text-muted-foreground" /><span className="truncate">{a.membro}</span></div>
-                  <div className="text-sm text-muted-foreground truncate">{a.tipo} · {a.motivo || "Sem motivo informado"}</div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Clock className="size-3.5" />{fmtDate(a.data)} {a.hora ? `às ${a.hora}` : ""}</div>
+                  <div className="flex items-center gap-1.5 font-semibold"><User className="size-4 text-muted-foreground" /><span className="truncate">{a["membro"]}</span></div>
+                  <div className="text-sm text-muted-foreground truncate">{a["tipo"]} · {a["motivo"] || "Sem motivo informado"}</div>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Clock className="size-3.5" />{fmtDate(a["data"])} {a["hora"] ? `às ${a["hora"]}` : ""}</div>
                 </div>
               </div>
             ))}

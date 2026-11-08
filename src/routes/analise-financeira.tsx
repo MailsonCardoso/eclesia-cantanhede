@@ -40,7 +40,7 @@ function Analise() {
   const ctP = db.contributions.filter((c) => String(c.data) >= start);
   const sumBy = (list: typeof txP, key: string) => {
     const m = new Map<string, number>();
-    list.forEach((r) => m.set(String(r[key] || "—"), (m.get(String(r[key] || "—")) ?? 0) + Number(r.valor)));
+    list.forEach((r) => m.set(String(r[key] || "—"), (m.get(String(r[key] || "—")) ?? 0) + Number(r["valor"])));
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
   };
   const recCt = sumBy(ctP, "tipo");
