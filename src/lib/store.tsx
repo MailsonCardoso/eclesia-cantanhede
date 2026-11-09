@@ -33,6 +33,7 @@ const ageYears = (years: number) => {
 };
 
 const congs = ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"];
+const cellNames = ["Célula Ágape", "Célula Betel", "Célula Canaã", "Célula Emanuel", "Célula Shalom"];
 const names = [
   "Ana Beatriz Souza", "Carlos Eduardo Lima", "Débora Ferreira", "Elias Martins", "Fernanda Rocha",
   "Gabriel Almeida", "Helena Costa", "Isaque Pereira", "Júlia Ribeiro", "Lucas Barbosa",
@@ -58,6 +59,7 @@ export function seed(): DB {
     congregacao: congs[i % 3],
     departamento: ["Louvor", "Jovens", "Mulheres", "Homens", "Intercessão"][i % 5],
     cargo: ["Membro", "Diácono", "Presbítero", "Obreiro"][i % 4],
+    celula: i % 3 === 2 ? "" : cellNames[i % cellNames.length],
     conjuge: i % 3 === 0 ? names[(i + 1) % names.length] : "",
     pai: i % 2 === 0 ? names[(i + 5) % names.length] : "",
     mae: i % 2 === 0 ? names[(i + 6) % names.length] : "",
