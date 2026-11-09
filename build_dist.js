@@ -7,6 +7,7 @@ const routes = [
   '/agenda-eventos',
   '/agenda-pastoral',
   '/analise-financeira',
+  '/celulas',
   '/congregacoes',
   '/contribuicoes',
   '/departamentos',
