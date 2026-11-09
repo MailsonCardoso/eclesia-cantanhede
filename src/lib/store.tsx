@@ -11,7 +11,7 @@ export type Row = {
   id: string; nome?: V; titulo?: V; descricao?: V; membro?: V; categoria?: V; congregacao?: V; data?: V; local?: V;
   nascimento?: V; pagamento?: V; recebimento?: V; situacao?: V; tipo?: V; valor?: V; [k: string]: V;
 };
-export type Collection = "members" | "congregations" | "departments" | "transactions" | "contributions" | "events" | "appointments" | "inventory";
+export type Collection = "members" | "congregations" | "departments" | "cells" | "transactions" | "contributions" | "events" | "appointments" | "inventory";
 export type AuditEntry = { id: string; at: string; collection: Collection; action: "criação" | "edição" | "exclusão"; label: string };
 
 type DB = Record<Collection, Row[]> & { audit: AuditEntry[] };
@@ -33,6 +33,7 @@ const ageYears = (years: number) => {
 };
 
 const congs = ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"];
+const cellNames = ["Célula Ágape", "Célula Betel", "Célula Canaã", "Célula Emanuel", "Célula Shalom"];
 const names = [
   "Ana Beatriz Souza", "Carlos Eduardo Lima", "Débora Ferreira", "Elias Martins", "Fernanda Rocha",
   "Gabriel Almeida", "Helena Costa", "Isaque Pereira", "Júlia Ribeiro", "Lucas Barbosa",
@@ -58,6 +59,7 @@ export function seed(): DB {
     congregacao: congs[i % 3],
     departamento: ["Louvor", "Jovens", "Mulheres", "Homens", "Intercessão"][i % 5],
     cargo: ["Membro", "Diácono", "Presbítero", "Obreiro"][i % 4],
+    celula: i % 3 === 2 ? "" : cellNames[i % cellNames.length],
     conjuge: i % 3 === 0 ? names[(i + 1) % names.length] : "",
     pai: i % 2 === 0 ? names[(i + 5) % names.length] : "",
     mae: i % 2 === 0 ? names[(i + 6) % names.length] : "",
@@ -72,6 +74,12 @@ export function seed(): DB {
   const deps = ["Louvor", "Jovens", "Crianças", "Adolescentes", "Mulheres", "Homens", "Intercessão", "Evangelismo", "Ação Social", "Escola Bíblica Dominical"];
   const departments: Row[] = deps.map((n, i) => ({
     id: uid(), nome: n, lider: names[i], integrantes: 6 + ((i * 7) % 20), descricao: `Ministério de ${n}`, situacao: "Ativo",
+  }));
+  const cells: Row[] = cellNames.map((n, i) => ({
+    id: uid(), nome: n, lider: names[(i * 3) % names.length], anfitriao: names[(i * 3 + 7) % names.length],
+    endereco: `Rua das Palmeiras, ${50 + i * 33}`, dia: ["Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"][i],
+    hora: ["19:30", "20:00", "19:00", "20:00", "16:00"][i], congregacao: congs[i % 3],
+    participantes: 8 + ((i * 5) % 12), situacao: "Ativa",
   }));
   const transactions: Row[] = [];
   for (let m = 0; m < 6; m++) {
@@ -118,10 +126,10 @@ export function seed(): DB {
     { id: uid(), nome: "Cadeiras de madeira", categoria: "Mobiliário", quantidade: 60, estado: "Regular", local: "Congregação Jardim Esperança", aquisicao: "2018-06-11", valor: 120 },
     { id: uid(), nome: "Caixas de som ativas", categoria: "Áudio", quantidade: 4, estado: "Bom", local: "Congregação Vila Nova", aquisicao: "2023-09-08", valor: 1800 },
   ];
-  return { members, congregations, departments, transactions, contributions, events, appointments, inventory, audit: [] };
+  return { members, congregations, departments, cells, transactions, contributions, events, appointments, inventory, audit: [] };
 }
 
-const KEY = "ecclesia-db-v2";
+const KEY = "ecclesia-db-v3";
 
 type Ctx = {
   db: DB;

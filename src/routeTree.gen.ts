@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaEventosRouteImport } from './routes/agenda-eventos'
 import { Route as AgendaPastoralRouteImport } from './routes/agenda-pastoral'
 import { Route as AnaliseFinanceiraRouteImport } from './routes/analise-financeira'
+import { Route as CelulasRouteImport } from './routes/celulas'
 import { Route as CongregacoesRouteImport } from './routes/congregacoes'
 import { Route as ContribuicoesRouteImport } from './routes/contribuicoes'
 import { Route as DepartamentosRouteImport } from './routes/departamentos'
@@ -39,6 +40,11 @@ const AgendaPastoralRoute = AgendaPastoralRouteImport.update({
 const AnaliseFinanceiraRoute = AnaliseFinanceiraRouteImport.update({
   id: '/analise-financeira',
   path: '/analise-financeira',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CelulasRoute = CelulasRouteImport.update({
+  id: '/celulas',
+  path: '/celulas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CongregacoesRoute = CongregacoesRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/agenda-eventos': typeof AgendaEventosRoute
   '/agenda-pastoral': typeof AgendaPastoralRoute
   '/analise-financeira': typeof AnaliseFinanceiraRoute
+  '/celulas': typeof CelulasRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
   '/departamentos': typeof DepartamentosRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/agenda-eventos': typeof AgendaEventosRoute
   '/agenda-pastoral': typeof AgendaPastoralRoute
   '/analise-financeira': typeof AnaliseFinanceiraRoute
+  '/celulas': typeof CelulasRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
   '/departamentos': typeof DepartamentosRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/agenda-eventos': typeof AgendaEventosRoute
   '/agenda-pastoral': typeof AgendaPastoralRoute
   '/analise-financeira': typeof AnaliseFinanceiraRoute
+  '/celulas': typeof CelulasRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
   '/departamentos': typeof DepartamentosRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/agenda-eventos'
     | '/agenda-pastoral'
     | '/analise-financeira'
+    | '/celulas'
     | '/congregacoes'
     | '/contribuicoes'
     | '/departamentos'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/agenda-eventos'
     | '/agenda-pastoral'
     | '/analise-financeira'
+    | '/celulas'
     | '/congregacoes'
     | '/contribuicoes'
     | '/departamentos'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/agenda-eventos'
     | '/agenda-pastoral'
     | '/analise-financeira'
+    | '/celulas'
     | '/congregacoes'
     | '/contribuicoes'
     | '/departamentos'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AgendaEventosRoute: typeof AgendaEventosRoute
   AgendaPastoralRoute: typeof AgendaPastoralRoute
   AnaliseFinanceiraRoute: typeof AnaliseFinanceiraRoute
+  CelulasRoute: typeof CelulasRoute
   CongregacoesRoute: typeof CongregacoesRoute
   ContribuicoesRoute: typeof ContribuicoesRoute
   DepartamentosRoute: typeof DepartamentosRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/analise-financeira'
       fullPath: '/analise-financeira'
       preLoaderRoute: typeof AnaliseFinanceiraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/celulas': {
+      id: '/celulas'
+      path: '/celulas'
+      fullPath: '/celulas'
+      preLoaderRoute: typeof CelulasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/congregacoes': {
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaEventosRoute: AgendaEventosRoute,
   AgendaPastoralRoute: AgendaPastoralRoute,
   AnaliseFinanceiraRoute: AnaliseFinanceiraRoute,
+  CelulasRoute: CelulasRoute,
   CongregacoesRoute: CongregacoesRoute,
   ContribuicoesRoute: ContribuicoesRoute,
   DepartamentosRoute: DepartamentosRoute,

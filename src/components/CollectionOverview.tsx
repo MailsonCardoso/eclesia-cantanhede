@@ -1,9 +1,9 @@
-import { Users, UserCheck, Church, HeartHandshake, Network, UserRound, HandCoins, Gift, Wallet, CalendarDays, CalendarCheck, MapPin, Boxes, Package, Landmark, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Users, UserCheck, Church, HeartHandshake, Network, UserRound, HandCoins, Gift, Wallet, CalendarDays, CalendarCheck, MapPin, Boxes, Package, Landmark, ArrowDownLeft, ArrowUpRight, Home, Clock } from "lucide-react";
 import { brl, useStore, type Collection } from "@/lib/store";
 import { MetricCard } from "@/components/MetricCard";
 
 export const collectionIcons = {
-  members: Users, congregations: Church, departments: Network, contributions: HandCoins,
+  members: Users, congregations: Church, departments: Network, cells: Home, contributions: HandCoins,
   transactions: Wallet, events: CalendarDays, appointments: HeartHandshake, inventory: Boxes,
 };
 
@@ -30,6 +30,12 @@ export function CollectionOverview({ collection }: { collection: Collection }) {
       { label: "Departamentos", value: rows.length, icon: Network },
       { label: "Ministérios ativos", value: rows.filter((r) => r.situacao === "Ativo").length, icon: UserCheck },
       { label: "Integrantes informados", value: sum("integrantes"), icon: Users },
+    ],
+    cells: [
+      { label: "Células cadastradas", value: rows.length, icon: Home },
+      { label: "Células ativas", value: rows.filter((r) => r.situacao === "Ativa").length, icon: UserCheck },
+      { label: "Participantes informados", value: sum("participantes"), icon: Users },
+      { label: "Dias de reunião", value: new Set(rows.map((r) => r["dia"]).filter(Boolean)).size, icon: Clock },
     ],
     contributions: [
       { label: "Total de contribuições", value: brl(sum("valor")), icon: HandCoins },
