@@ -11,7 +11,7 @@ export type Row = {
   id: string; nome?: V; titulo?: V; descricao?: V; membro?: V; categoria?: V; congregacao?: V; data?: V; local?: V;
   nascimento?: V; pagamento?: V; recebimento?: V; situacao?: V; tipo?: V; valor?: V; [k: string]: V;
 };
-export type Collection = "members" | "congregations" | "departments" | "transactions" | "contributions" | "events" | "appointments" | "inventory";
+export type Collection = "members" | "congregations" | "departments" | "cells" | "transactions" | "contributions" | "events" | "appointments" | "inventory";
 export type AuditEntry = { id: string; at: string; collection: Collection; action: "criação" | "edição" | "exclusão"; label: string };
 
 type DB = Record<Collection, Row[]> & { audit: AuditEntry[] };
