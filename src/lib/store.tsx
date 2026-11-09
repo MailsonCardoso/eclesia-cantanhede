@@ -75,6 +75,12 @@ export function seed(): DB {
   const departments: Row[] = deps.map((n, i) => ({
     id: uid(), nome: n, lider: names[i], integrantes: 6 + ((i * 7) % 20), descricao: `Ministério de ${n}`, situacao: "Ativo",
   }));
+  const cells: Row[] = cellNames.map((n, i) => ({
+    id: uid(), nome: n, lider: names[(i * 3) % names.length], anfitriao: names[(i * 3 + 7) % names.length],
+    endereco: `Rua das Palmeiras, ${50 + i * 33}`, dia: ["Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"][i],
+    hora: ["19:30", "20:00", "19:00", "20:00", "16:00"][i], congregacao: congs[i % 3],
+    participantes: 8 + ((i * 5) % 12), situacao: "Ativa",
+  }));
   const transactions: Row[] = [];
   for (let m = 0; m < 6; m++) {
     [["Receita", "Dízimos", 9800], ["Receita", "Ofertas", 3200], ["Receita", "Campanhas", 1500], ["Despesa", "Energia", 890], ["Despesa", "Aluguel", 3500], ["Despesa", "Ação social", 1200], ["Despesa", "Manutenção", 700]].forEach(([tipo, cat, v], j) => {
@@ -120,10 +126,10 @@ export function seed(): DB {
     { id: uid(), nome: "Cadeiras de madeira", categoria: "Mobiliário", quantidade: 60, estado: "Regular", local: "Congregação Jardim Esperança", aquisicao: "2018-06-11", valor: 120 },
     { id: uid(), nome: "Caixas de som ativas", categoria: "Áudio", quantidade: 4, estado: "Bom", local: "Congregação Vila Nova", aquisicao: "2023-09-08", valor: 1800 },
   ];
-  return { members, congregations, departments, transactions, contributions, events, appointments, inventory, audit: [] };
+  return { members, congregations, departments, cells, transactions, contributions, events, appointments, inventory, audit: [] };
 }
 
-const KEY = "ecclesia-db-v2";
+const KEY = "ecclesia-db-v3";
 
 type Ctx = {
   db: DB;
