@@ -9,7 +9,7 @@ const tones = {
 
 export function MetricCard({ label, value, icon: Icon, tone = "blue", detail }: {
   label: string; value: string | number; icon: LucideIcon;
-  tone?: keyof typeof tones; detail?: string;
+  tone?: keyof typeof tones | undefined; detail?: string;
 }) {
   return (
     <div className="metric-card rounded-xl border bg-card p-5 shadow-card">
