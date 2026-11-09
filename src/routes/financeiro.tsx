@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CrudPage } from "@/components/CrudPage";
-import { brl, useStore } from "@/lib/store";
+import { ShieldCheck } from "lucide-react";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/financeiro")({
   head: () => ({
@@ -18,18 +19,8 @@ export const Route = createFileRoute("/financeiro")({
 
 function Financeiro() {
   const { db } = useStore();
-  const rec = db.transactions.filter((t) => t.tipo === "Receita").reduce((a, t) => a + Number(t.valor), 0);
-  const desp = db.transactions.filter((t) => t.tipo === "Despesa").reduce((a, t) => a + Number(t.valor), 0);
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[["Receitas", rec], ["Despesas", desp], ["Saldo em caixa", rec - desp]].map(([l, v]) => (
-          <div key={l} className="rounded-2xl border bg-card p-5 shadow-card card-hover">
-            <div className="text-sm text-muted-foreground">{l}</div>
-            <div className="mt-1 text-2xl font-bold tracking-tight">{brl(Number(v))}</div>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-8 animate-rise">
       <CrudPage title="Movimentações" subtitle="Lançamentos de receitas e despesas." collection="transactions" singular="Lançamento"
         searchKeys={["descricao", "categoria"]} filterKeys={["tipo", "categoria", "congregacao"]}
         fields={[
@@ -44,11 +35,11 @@ function Financeiro() {
           { key: "comprovante", label: "Comprovante (link)" },
         ]}
       />
-      <div className="rounded-2xl border bg-card p-5 shadow-card">
-        <h2 className="mb-4 text-lg font-semibold">Auditoria de alterações</h2>
+      <div className="border-t pt-6">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><ShieldCheck className="size-5 text-chart-1" />Auditoria de alterações</h2>
         <ul className="space-y-2 text-sm">
           {db.audit.slice(0, 15).map((a) => (
-            <li key={a.id} className="flex justify-between border-b pb-2 last:border-0">
+            <li key={a.id} className="flex flex-wrap justify-between gap-2 border-b py-3 last:border-0">
               <span><span className="font-medium capitalize">{a.action}</span> · {a.label} <span className="text-muted-foreground">({a.collection})</span></span>
               <span className="text-muted-foreground">{new Date(a.at).toLocaleString("pt-BR")}</span>
             </li>

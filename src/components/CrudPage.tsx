@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Pencil, Trash2, FileSpreadsheet, Printer } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileSpreadsheet, Printer, ListFilter, SearchX } from "lucide-react";
+import { CollectionOverview, collectionIcons } from "@/components/CollectionOverview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,8 @@ export function CrudPage({
     Object.entries(filters).every(([k, v]) => !v || v === "__all" || r[k] === v)), [db, collection, q, filters, searchKeys]);
 
   const cols = fields.filter((f) => f.table);
+  const Icon = collectionIcons[collection];
+  const hasFilters = !!q || Object.values(filters).some((v) => v && v !== "__all");
   const render = (f: Field, v: Row[string]) => {
     if (f.type === "money") return brl(Number(v || 0));
     if (f.type === "date") return fmtDate(v);
@@ -83,29 +86,33 @@ export function CrudPage({
   return (
     <div className="space-y-6 animate-rise">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">{title}</h1>
-          <p className="text-muted-foreground mt-1">{subtitle}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid size-12 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary"><Icon className="size-6" /></div>
+          <div className="min-w-0"><h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p></div>
         </div>
-        <div className="flex gap-2 no-print">
+        <div className="flex flex-wrap gap-2 no-print">
           <Button variant="outline" onClick={() => exportCSV(collection, rows, fields)}><FileSpreadsheet className="size-4" />Excel</Button>
           <Button variant="outline" onClick={() => window.print()}><Printer className="size-4" />PDF</Button>
           <Button variant="premium" onClick={() => openForm(null)}><Plus className="size-4" />Novo</Button>
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card shadow-card">
+      <CollectionOverview collection={collection} />
+      <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-4"><h2 className="flex items-center gap-2 text-sm font-semibold"><ListFilter className="size-4 text-muted-foreground" />Registros</h2><Badge variant="secondary">{rows.length} de {db[collection].length}</Badge></div>
         <div className="flex flex-wrap gap-3 border-b p-4 no-print">
           <div className="relative flex-1 min-w-56">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Pesquisar..." value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input className="pl-9" aria-label={`Pesquisar ${title.toLowerCase()}`} placeholder="Pesquisar..." value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           {filterKeys.map((k) => {
-            const f = fields.find((x) => x.key === k)!;
+            const f = fields.find((x) => x.key === k);
+            if (!f) return null;
             const opts = f.options ?? [...new Set(db[collection].map((r) => String(r[k])))];
             return (
               <Select key={k} value={filters[k] ?? "__all"} onValueChange={(v) => setFilters((s) => ({ ...s, [k]: v }))}>
-                <SelectTrigger className="w-52"><SelectValue placeholder={f.label} /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-52" aria-label={`Filtrar por ${f.label.toLowerCase()}`}><SelectValue placeholder={f.label} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">{f.label}: todos</SelectItem>
                   {opts.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
@@ -113,6 +120,7 @@ export function CrudPage({
               </Select>
             );
           })}
+          {hasFilters && <Button variant="ghost" onClick={() => { setQ(""); setFilters({}); }}>Limpar filtros</Button>}
         </div>
         <Table>
           <TableHeader>
@@ -129,7 +137,7 @@ export function CrudPage({
                 </TableCell>
               </TableRow>
             ))}
-            {!rows.length && <TableRow><TableCell colSpan={cols.length + 1} className="py-10 text-center text-muted-foreground">Nenhum registro encontrado.</TableCell></TableRow>}
+            {!rows.length && <TableRow><TableCell colSpan={cols.length + 1} className="py-12 text-center text-muted-foreground"><SearchX className="mx-auto mb-3 size-7" />Nenhum registro encontrado.</TableCell></TableRow>}
           </TableBody>
         </Table>
         <div className="border-t px-4 py-3 text-sm text-muted-foreground">{rows.length} registro(s)</div>
@@ -147,7 +155,7 @@ export function CrudPage({
                   {f.type === "select" ? (
                     <Select name={f.key} value={dv} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v }))}>
                       <SelectTrigger id={f.key}><SelectValue /></SelectTrigger>
-                      <SelectContent>{f.options!.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                      <SelectContent>{f.options?.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : f.type === "member" ? (
                     <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
@@ -190,7 +198,7 @@ export function CrudPage({
           <p className="text-muted-foreground">Esta ação ficará registrada na auditoria.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDel(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={() => { remove(collection, confirmDel!.id); setConfirmDel(null); toast.success("Excluído"); }}>Excluir</Button>
+            <Button variant="destructive" onClick={() => { if (!confirmDel) return; remove(collection, confirmDel.id); setConfirmDel(null); toast.success("Excluído"); }}>Excluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

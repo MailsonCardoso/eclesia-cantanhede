@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, MapPin, UserRound } from "lucide-react";
 import { CrudPage } from "@/components/CrudPage";
 import { fmtDate, useStore } from "@/lib/store";
 
@@ -28,14 +28,16 @@ function AgendaEventos() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border bg-card p-5 shadow-card">
+      <div className="border-b pb-6">
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><CalendarDays className="size-4 text-gold" />Próximos eventos</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {upcoming.map((e) => (
-            <div key={e.id} className="rounded-xl border bg-background p-4">
+            <div key={e.id} className="rounded-xl border bg-card p-5 shadow-card">
               <div className="text-sm font-semibold text-gold">{fmtDate(e.data)}{e["hora"] ? ` · ${e["hora"]}` : ""}</div>
               <div className="mt-1 font-medium">{e.titulo}</div>
-              <div className="text-sm text-muted-foreground">{e.tipo} · {e.local}</div>
+              <div className="mt-3 text-xs font-medium text-chart-2">{e.tipo}</div>
+              <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground"><MapPin className="mt-0.5 size-4 shrink-0" />{e.local}</div>
+              {e["responsavel"] && <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground"><UserRound className="mt-0.5 size-4 shrink-0" />{e["responsavel"]}</div>}
             </div>
           ))}
           {!upcoming.length && <p className="text-sm text-muted-foreground">Nenhum evento futuro cadastrado.</p>}
