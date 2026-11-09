@@ -35,6 +35,7 @@ function Membros() {
         { key: "situacao", label: "Situação", type: "select", options: ["Ativo", "Inativo", "Transferido"], table: true },
         { key: "congregacao", label: "Congregação", type: "select", options: ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"], table: true },
         { key: "departamento", label: "Departamento" },
+        { key: "celula", label: "Célula", type: "cell", table: true },
         { key: "cargo", label: "Cargo / função", table: true },
         { key: "conjuge", label: "Cônjuge (membro)", type: "member", enabledWhen: (v) => v["estadoCivil"] === "Casado(a)" },
         { key: "pai", label: "Pai (membro)", type: "member" },

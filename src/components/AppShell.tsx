@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Church, Wallet, HandCoins, Network, Moon, Sun, CalendarClock, CalendarDays, Boxes, BarChart3, Bell, LineChart } from "lucide-react";
+import { LayoutDashboard, Users, Church, Wallet, HandCoins, Network, Moon, Sun, CalendarClock, CalendarDays, Boxes, BarChart3, Bell, LineChart, Home } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
@@ -18,6 +18,7 @@ const groups = [
       { title: "Membros", url: "/membros", icon: Users },
       { title: "Congregações", url: "/congregacoes", icon: Church },
       { title: "Departamentos", url: "/departamentos", icon: Network },
+      { title: "Células", url: "/celulas", icon: Home },
       { title: "Inventário", url: "/inventario", icon: Boxes },
     ],
   },

@@ -15,7 +15,7 @@ import { toast } from "sonner";
 export type Field = {
   key: string;
   label: string;
-  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members";
+  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell";
   options?: string[];
   table?: boolean;
   required?: boolean;
@@ -39,6 +39,7 @@ export function CrudPage({
   const [formValues, setFormValues] = useState<Record<string, string>>({});
 
   const memberNames = useMemo(() => db.members.map((m) => String(m.nome)).sort((a, b) => a.localeCompare(b)), [db.members]);
+  const cellNames = useMemo(() => db.cells.map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b)), [db.cells]);
 
   const rows = useMemo(() => db[collection].filter((r) =>
     (!q || searchKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase()))) &&
@@ -74,7 +75,7 @@ export function CrudPage({
     const data: Record<string, string | number> = {};
     visibleFields.forEach((f) => {
       if (f.type === "members") { data[f.key] = formValues[f.key] ?? ""; return; }
-      if (f.type === "member" || f.type === "select") { data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? ""); return; }
+      if (f.type === "member" || f.type === "select" || f.type === "cell") { data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? ""); return; }
       const v = String(fd.get(f.key) ?? "");
       data[f.key] = f.type === "money" || f.type === "number" ? Number(v || 0) : v;
     });
@@ -163,6 +164,14 @@ export function CrudPage({
                       <SelectContent>
                         <SelectItem value="__none">Nenhum</SelectItem>
                         {memberNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : f.type === "cell" ? (
+                    <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
+                      <SelectTrigger id={f.key}><SelectValue placeholder="Selecione uma célula" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Não participa de célula</SelectItem>
+                        {cellNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   ) : f.type === "members" ? (
