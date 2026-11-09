@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Data lives in src/lib/store.tsx (local, browser-saved demo store with audit log); the user plans a Laravel REST API backend, so replace store operations with API calls rather than adding another backend.
+- Shared MetricCard and CollectionOverview components present collection summaries; keep them derived from the store so all registration screens remain visually consistent without duplicating data.
