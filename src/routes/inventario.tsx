@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CrudPage } from "@/components/CrudPage";
-import { brl, useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/inventario")({
   head: () => ({
@@ -17,24 +16,8 @@ export const Route = createFileRoute("/inventario")({
 });
 
 function Inventario() {
-  const { db } = useStore();
-  const patrimonio = db.inventory.reduce((a, i) => a + Number(i.valor || 0) * Number(i["quantidade"] || 0), 0);
-  const itens = db.inventory.reduce((a, i) => a + Number(i["quantidade"] || 0), 0);
-
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[
-          ["Itens cadastrados", String(db.inventory.length)],
-          ["Unidades no total", String(itens)],
-          ["Valor do patrimônio", brl(patrimonio)],
-        ].map(([l, v]) => (
-          <div key={l} className="rounded-2xl border bg-card p-5 shadow-card">
-            <div className="text-sm text-muted-foreground">{l}</div>
-            <div className="mt-1 text-2xl font-semibold">{v}</div>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-8 animate-rise">
       <CrudPage title="Inventário" subtitle="Bens, equipamentos e materiais da igreja."
         collection="inventory" singular="Item"
         searchKeys={["nome", "categoria", "local"]} filterKeys={["categoria", "estado", "local"]}

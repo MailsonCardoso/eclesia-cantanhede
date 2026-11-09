@@ -1,3 +1,4 @@
+import { MetricCard } from "@/components/MetricCard";
 import { createFileRoute } from "@tanstack/react-router";
 import { Users, UserCheck, UserPlus, UserRound, HandCoins, Gift, TrendingDown, Landmark, CalendarDays, Cake } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
@@ -19,18 +20,9 @@ export const Route = createFileRoute("/")({
 
 const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-const GRADS = ["var(--grad-blue)", "var(--grad-violet)", "var(--grad-green)", "var(--grad-orange)"];
-
-function Stat({ icon: Icon, label, value, grad = 0 }: { icon: typeof Users; label: string; value: string | number; grad?: number }) {
-  return (
-    <div className="rounded-2xl border bg-card p-5 shadow-card card-hover">
-      <div className="mb-4 grid size-10 place-items-center rounded-xl text-primary-foreground shadow-lg" style={{ backgroundImage: GRADS[grad % GRADS.length] }}>
-        <Icon className="size-5" />
-      </div>
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-bold tracking-tight">{value}</div>
-    </div>
-  );
+function Stat({ icon, label, value, grad = 0 }: { icon: typeof Users; label: string; value: string | number; grad?: number }) {
+  const tones = ["blue", "violet", "green", "orange"] as const;
+  return <MetricCard icon={icon} label={label} value={value} tone={tones[grad % tones.length]} />;
 }
 
 function Dashboard() {
@@ -67,10 +59,12 @@ function Dashboard() {
 
   return (
     <div className="space-y-8 animate-rise">
-      <section className="rounded-3xl bg-hero p-8 text-sidebar-accent-foreground shadow-card">
-        <p className="text-sm uppercase tracking-[0.2em] text-gold">Painel administrativo</p>
-        <h1 className="mt-2 text-4xl font-semibold">Visão geral da igreja</h1>
-        <p className="mt-2 max-w-xl text-sidebar-foreground">{now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })} · Saldo acumulado <span className="font-semibold text-gold">{brl(saldoTotal)}</span></p>
+      <section className="flex flex-wrap items-end justify-between gap-4 border-b pb-6">
+        <div>
+        <p className="text-sm font-medium text-primary">Painel administrativo</p>
+        <h1 className="mt-2 text-3xl font-semibold">Visão geral da igreja</h1>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">{now.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })} · Saldo acumulado <span className="font-semibold text-gold">{brl(saldoTotal)}</span></p></div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground"><CalendarDays className="size-4" />{now.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" })}</div>
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -85,7 +79,7 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border bg-card p-5 shadow-card">
+        <div className="min-w-0 border-t pt-5">
           <h2 className="mb-4 text-lg font-semibold">Entradas e saídas</h2>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={series}>
@@ -99,7 +93,7 @@ function Dashboard() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="rounded-2xl border bg-card p-5 shadow-card">
+        <div className="min-w-0 border-t pt-5">
           <h2 className="mb-4 text-lg font-semibold">Crescimento de membros</h2>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={series}>
@@ -124,7 +118,7 @@ function Dashboard() {
 
 function ListCard({ title, icon: Icon, items }: { title: string; icon: typeof Users; items: [string, string][] }) {
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-card">
+    <div className="min-w-0 border-t pt-5">
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon className="size-4 text-gold" />{title}</h2>
       <ul className="space-y-3">
         {items.map(([a, b]) => (

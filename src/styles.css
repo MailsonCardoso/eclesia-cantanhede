@@ -167,7 +167,7 @@
 
 @layer base {
   body { font-family: var(--font-sans); }
-  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; }
 }
 
 @utility bg-hero { background-image: var(--gradient-hero); }
@@ -195,3 +195,11 @@
 }
 
 @media print { .no-print { display: none !important; } }
+
+/* Shared dense-data presentation, with stable sizing on narrow screens. */
+.metric-card { transition: border-color 180ms ease, box-shadow 180ms ease; }
+.metric-card:hover { border-color: color-mix(in oklch, var(--primary) 35%, var(--border)); }
+.tracking-tight, .tracking-tighter { letter-spacing: 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

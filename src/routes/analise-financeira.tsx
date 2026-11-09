@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ArrowDownLeft, ArrowUpRight, Landmark, ChartNoAxesCombined, LineChart } from "lucide-react";
+import { MetricCard } from "@/components/MetricCard";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { brl, useStore } from "@/lib/store";
@@ -53,10 +55,11 @@ function Analise() {
   return (
     <div className="space-y-8 animate-rise">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Análise financeira</h1>
+        <div className="flex items-center gap-3">
+          <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><LineChart className="size-6" /></div><div>
+          <h1 className="text-2xl font-semibold">Análise financeira</h1>
           <p className="text-sm text-muted-foreground">Compare receitas, despesas e saldo mês a mês.</p>
-        </div>
+        </div></div>
         <div className="w-48">
           <label className="mb-1 block text-xs text-muted-foreground">Meses para comparar</label>
           <Select value={String(n)} onValueChange={(v) => setN(Number(v))}>
@@ -65,15 +68,13 @@ function Analise() {
           </Select>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-4">
-        {([["Receitas no período", tot.r], ["Despesas no período", tot.d], ["Saldo no período", tot.r - tot.d], ["Média mensal de saldo", (tot.r - tot.d) / n]] as const).map(([l, v]) => (
-          <div key={l} className="rounded-2xl border bg-card p-5 shadow-card card-hover">
-            <div className="text-sm text-muted-foreground">{l}</div>
-            <div className="mt-1 text-2xl font-bold tracking-tight">{brl(v)}</div>
-          </div>
-        ))}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Receitas no período" value={brl(tot.r)} icon={ArrowDownLeft} tone="green" />
+        <MetricCard label="Despesas no período" value={brl(tot.d)} icon={ArrowUpRight} tone="orange" />
+        <MetricCard label="Saldo no período" value={brl(tot.r - tot.d)} icon={Landmark} tone="blue" />
+        <MetricCard label="Média mensal de saldo" value={brl((tot.r - tot.d) / n)} icon={ChartNoAxesCombined} tone="violet" />
       </div>
-      <div className="rounded-2xl border bg-card p-5 shadow-card">
+      <div className="min-w-0 border-t pt-6">
         <h2 className="mb-4 text-lg font-semibold">Comparativo mensal</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={rows}>
@@ -89,7 +90,7 @@ function Analise() {
         </ResponsiveContainer>
       </div>
       <div className="overflow-x-auto rounded-2xl border bg-card shadow-card">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-96 text-sm">
           <thead><tr className="border-b text-left text-muted-foreground"><th className="p-3">Mês</th><th className="p-3 text-right">Receitas</th><th className="p-3 text-right">Despesas</th><th className="p-3 text-right">Saldo</th><th className="p-3 text-right">Variação do saldo</th></tr></thead>
           <tbody>
             {rows.map((r, i) => {
@@ -109,22 +110,22 @@ function Analise() {
         </table>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border bg-card p-5 shadow-card">
+        <section className="min-w-0 border-t pt-6">
           <h2 className="text-lg font-semibold">DRE — Demonstração do Resultado</h2>
           <p className="mb-4 text-xs text-muted-foreground">Últimos {n} meses</p>
-          <table className="w-full text-sm"><tbody>
+          <div className="overflow-x-auto"><table className="w-full min-w-96 text-sm"><tbody>
             <tr className="border-b"><td className="py-2 font-semibold">(+) Receita bruta</td><td className="py-2 text-right font-semibold">{brl(totRec)}</td></tr>
             <tr><td className="py-1 pl-4 text-muted-foreground">Dízimos e ofertas</td><td className="py-1 text-right">{brl(recCt.reduce((a, [, v]) => a + v, 0))}</td></tr>
             <tr className="border-b"><td className="py-1 pl-4 text-muted-foreground">Outras receitas lançadas</td><td className="py-1 text-right">{brl(recTx.reduce((a, [, v]) => a + v, 0))}</td></tr>
             <tr className="border-b"><td className="py-2 font-semibold">(−) Despesas operacionais</td><td className="py-2 text-right font-semibold text-destructive">{brl(totDesp)}</td></tr>
             {despTx.map(([k, v]) => <tr key={k}><td className="py-1 pl-4 text-muted-foreground">{k}</td><td className="py-1 text-right">{brl(v)}</td></tr>)}
             <tr className="border-t-2"><td className="py-3 font-bold">(=) Resultado do período</td><td className={`py-3 text-right font-bold ${totRec - totDesp < 0 ? "text-destructive" : "text-primary"}`}>{brl(totRec - totDesp)}</td></tr>
-          </tbody></table>
+          </tbody></table></div>
         </section>
-        <section className="rounded-2xl border bg-card p-5 shadow-card">
+        <section className="min-w-0 border-t pt-6">
           <h2 className="text-lg font-semibold">Balancete</h2>
           <p className="mb-4 text-xs text-muted-foreground">Receitas e despesas por conta — últimos {n} meses</p>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full min-w-96 text-sm">
             <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2">Conta</th><th className="py-2 text-right">Receita</th><th className="py-2 text-right">Despesa</th></tr></thead>
             <tbody>
               <tr><td colSpan={3} className="pt-3 pb-1 text-xs font-semibold uppercase text-muted-foreground">Dízimos e ofertas — por tipo</td></tr>
@@ -138,7 +139,7 @@ function Analise() {
               {despTx.map(([k, v]) => <tr key={"d" + k}><td className="py-1 pl-3">{k}</td><td className="py-1 text-right text-muted-foreground">—</td><td className="py-1 text-right text-destructive">{brl(v)}</td></tr>)}
               <tr className="border-t-2 font-bold"><td className="py-2">Totais</td><td className="py-2 text-right">{brl(totRec)}</td><td className="py-2 text-right text-destructive">{brl(totDesp)}</td></tr>
             </tbody>
-          </table>
+          </table></div>
           <p className="mt-2 text-xs text-muted-foreground">Os blocos por forma de pagamento e congregação detalham o mesmo total de dízimos e ofertas.</p>
         </section>
       </div>
