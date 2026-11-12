@@ -6,6 +6,8 @@ use App\Traits\Auditable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Member extends Model
 {
@@ -34,9 +36,24 @@ class Member extends Model
         'mae',
         'filhos',
         'observacoes',
+        'cell_id',
+        'father_id',
+        'mother_id',
+        'spouse_id',
+        'father_name',
+        'mother_name',
+        'spouse_name',
+        'cep',
+        'logradouro',
+        'bairro',
+        'cidade',
+        'uf',
+        'category',
+        'status',
+        'role',
     ];
 
-    protected $appends = ['estadoCivil', 'idade'];
+    protected $appends = ['estadoCivil', 'idade', 'name'];
 
     protected $casts = [
         'nascimento' => 'date:Y-m-d',
@@ -44,6 +61,11 @@ class Member extends Model
         'batismo' => 'date:Y-m-d',
         'recebimento' => 'date:Y-m-d',
     ];
+
+    public function getNameAttribute(): string
+    {
+        return $this->attributes['nome'] ?? '';
+    }
 
     public function getEstadoCivilAttribute(): ?string
     {
@@ -57,15 +79,35 @@ class Member extends Model
 
     public function getIdadeAttribute(): ?int
     {
-        if (empty($this->nascimento)) {
+        if (! $this->nascimento) {
             return null;
         }
 
-        try {
-            return Carbon::parse($this->nascimento)->age;
-        } catch (\Throwable) {
-            return null;
-        }
+        return Carbon::parse($this->nascimento)->age;
+    }
+
+    public function father(): BelongsTo
+    {
+        return $this->belongsTo(Member::class, 'father_id');
+    }
+
+    public function mother(): BelongsTo
+    {
+        return $this->belongsTo(Member::class, 'mother_id');
+    }
+
+    public function spouse(): BelongsTo
+    {
+        return $this->belongsTo(Member::class, 'spouse_id');
+    }
+
+    public function childrenAsFather(): HasMany
+    {
+        return $this->hasMany(Member::class, 'father_id');
+    }
+
+    public function childrenAsMother(): HasMany
+    {
+        return $this->hasMany(Member::class, 'mother_id');
     }
 }
-

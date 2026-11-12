@@ -10,7 +10,7 @@ class MemberController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Member::query();
+        $query = Member::query()->with(['father', 'mother', 'spouse']);
 
         if ($request->filled('q')) {
             $q = $request->query('q');
@@ -68,6 +68,21 @@ class MemberController extends BaseApiController
             'mae' => ['nullable', 'string', 'max:255'],
             'filhos' => ['nullable', 'string'],
             'observacoes' => ['nullable', 'string'],
+            'cell_id' => ['nullable', 'integer'],
+            'father_id' => ['nullable', 'exists:members,id'],
+            'mother_id' => ['nullable', 'exists:members,id'],
+            'spouse_id' => ['nullable', 'exists:members,id'],
+            'father_name' => ['nullable', 'string', 'max:255'],
+            'mother_name' => ['nullable', 'string', 'max:255'],
+            'spouse_name' => ['nullable', 'string', 'max:255'],
+            'cep' => ['nullable', 'string', 'max:15'],
+            'logradouro' => ['nullable', 'string', 'max:255'],
+            'bairro' => ['nullable', 'string', 'max:100'],
+            'cidade' => ['nullable', 'string', 'max:100'],
+            'uf' => ['nullable', 'string', 'max:5'],
+            'category' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'role' => ['nullable', 'string', 'max:100'],
         ]);
 
         if (isset($validated['estadoCivil']) && !isset($validated['estado_civil'])) {
@@ -75,12 +90,15 @@ class MemberController extends BaseApiController
         }
 
         $member = Member::create($validated);
+        $member->load(['father', 'mother', 'spouse']);
 
         return response()->json($member, 201);
     }
 
     public function show(Member $member): JsonResponse
     {
+        $member->load(['father', 'mother', 'spouse']);
+
         return response()->json($member);
     }
 
@@ -109,6 +127,21 @@ class MemberController extends BaseApiController
             'mae' => ['nullable', 'string', 'max:255'],
             'filhos' => ['nullable', 'string'],
             'observacoes' => ['nullable', 'string'],
+            'cell_id' => ['nullable', 'integer'],
+            'father_id' => ['nullable', 'exists:members,id'],
+            'mother_id' => ['nullable', 'exists:members,id'],
+            'spouse_id' => ['nullable', 'exists:members,id'],
+            'father_name' => ['nullable', 'string', 'max:255'],
+            'mother_name' => ['nullable', 'string', 'max:255'],
+            'spouse_name' => ['nullable', 'string', 'max:255'],
+            'cep' => ['nullable', 'string', 'max:15'],
+            'logradouro' => ['nullable', 'string', 'max:255'],
+            'bairro' => ['nullable', 'string', 'max:100'],
+            'cidade' => ['nullable', 'string', 'max:100'],
+            'uf' => ['nullable', 'string', 'max:5'],
+            'category' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'role' => ['nullable', 'string', 'max:100'],
         ]);
 
         if (isset($validated['estadoCivil']) && !isset($validated['estado_civil'])) {
@@ -116,6 +149,7 @@ class MemberController extends BaseApiController
         }
 
         $member->update($validated);
+        $member->load(['father', 'mother', 'spouse']);
 
         return response()->json($member);
     }
@@ -129,4 +163,3 @@ class MemberController extends BaseApiController
         ]);
     }
 }
-

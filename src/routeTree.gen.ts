@@ -21,6 +21,10 @@ import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as InventarioRouteImport } from './routes/inventario'
 import { Route as MembrosRouteImport } from './routes/membros'
 import { Route as RelatorioMembrosRouteImport } from './routes/relatorio-membros'
+import { Route as PastorIndexRouteImport } from './routes/pastor/index'
+import { Route as PastorInsightsRouteImport } from './routes/pastor/insights'
+import { Route as PastorSeriesRouteImport } from './routes/pastor/series'
+import { Route as PastorPulpitoIdRouteImport } from './routes/pastor/pulpito.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +86,26 @@ const RelatorioMembrosRoute = RelatorioMembrosRouteImport.update({
   path: '/relatorio-membros',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PastorIndexRoute = PastorIndexRouteImport.update({
+  id: '/pastor/',
+  path: '/pastor/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PastorInsightsRoute = PastorInsightsRouteImport.update({
+  id: '/pastor/insights',
+  path: '/pastor/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PastorSeriesRoute = PastorSeriesRouteImport.update({
+  id: '/pastor/series',
+  path: '/pastor/series',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PastorPulpitoIdRoute = PastorPulpitoIdRouteImport.update({
+  id: '/pastor/pulpito/$id',
+  path: '/pastor/pulpito/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +120,10 @@ export interface FileRoutesByFullPath {
   '/inventario': typeof InventarioRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
+  '/pastor/insights': typeof PastorInsightsRoute
+  '/pastor/series': typeof PastorSeriesRoute
+  '/pastor/': typeof PastorIndexRoute
+  '/pastor/pulpito/$id': typeof PastorPulpitoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +138,10 @@ export interface FileRoutesByTo {
   '/inventario': typeof InventarioRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
+  '/pastor/insights': typeof PastorInsightsRoute
+  '/pastor/series': typeof PastorSeriesRoute
+  '/pastor': typeof PastorIndexRoute
+  '/pastor/pulpito/$id': typeof PastorPulpitoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +157,10 @@ export interface FileRoutesById {
   '/inventario': typeof InventarioRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
+  '/pastor/insights': typeof PastorInsightsRoute
+  '/pastor/series': typeof PastorSeriesRoute
+  '/pastor/': typeof PastorIndexRoute
+  '/pastor/pulpito/$id': typeof PastorPulpitoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +177,10 @@ export interface FileRouteTypes {
     | '/inventario'
     | '/membros'
     | '/relatorio-membros'
+    | '/pastor/insights'
+    | '/pastor/series'
+    | '/pastor/'
+    | '/pastor/pulpito/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +195,10 @@ export interface FileRouteTypes {
     | '/inventario'
     | '/membros'
     | '/relatorio-membros'
+    | '/pastor/insights'
+    | '/pastor/series'
+    | '/pastor'
+    | '/pastor/pulpito/$id'
   id:
     | '__root__'
     | '/'
@@ -169,6 +213,10 @@ export interface FileRouteTypes {
     | '/inventario'
     | '/membros'
     | '/relatorio-membros'
+    | '/pastor/insights'
+    | '/pastor/series'
+    | '/pastor/'
+    | '/pastor/pulpito/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +232,10 @@ export interface RootRouteChildren {
   InventarioRoute: typeof InventarioRoute
   MembrosRoute: typeof MembrosRoute
   RelatorioMembrosRoute: typeof RelatorioMembrosRoute
+  PastorInsightsRoute: typeof PastorInsightsRoute
+  PastorSeriesRoute: typeof PastorSeriesRoute
+  PastorIndexRoute: typeof PastorIndexRoute
+  PastorPulpitoIdRoute: typeof PastorPulpitoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +324,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RelatorioMembrosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pastor/': {
+      id: '/pastor/'
+      path: '/pastor'
+      fullPath: '/pastor/'
+      preLoaderRoute: typeof PastorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pastor/insights': {
+      id: '/pastor/insights'
+      path: '/pastor/insights'
+      fullPath: '/pastor/insights'
+      preLoaderRoute: typeof PastorInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pastor/series': {
+      id: '/pastor/series'
+      path: '/pastor/series'
+      fullPath: '/pastor/series'
+      preLoaderRoute: typeof PastorSeriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pastor/pulpito/$id': {
+      id: '/pastor/pulpito/$id'
+      path: '/pastor/pulpito/$id'
+      fullPath: '/pastor/pulpito/$id'
+      preLoaderRoute: typeof PastorPulpitoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +368,10 @@ const rootRouteChildren: RootRouteChildren = {
   InventarioRoute: InventarioRoute,
   MembrosRoute: MembrosRoute,
   RelatorioMembrosRoute: RelatorioMembrosRoute,
+  PastorInsightsRoute: PastorInsightsRoute,
+  PastorSeriesRoute: PastorSeriesRoute,
+  PastorIndexRoute: PastorIndexRoute,
+  PastorPulpitoIdRoute: PastorPulpitoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

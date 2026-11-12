@@ -1,0 +1,601 @@
+import { useState, useMemo } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  BookOpen,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Copy,
+  Edit2,
+  Layers,
+  Mic2,
+  Plus,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { fmtDate, useStore, type Row } from "@/lib/store";
+
+export const Route = createFileRoute("/pastor/")({
+  head: () => ({
+    meta: [
+      { title: "Altar Pastoral — Sermões e Esboços — EclesiaPro" },
+      { name: "description", content: "Gestão de sermões, esboços temáticos, séries e modo púlpito ao vivo." },
+    ],
+  }),
+  component: PastorAltar,
+});
+
+const STATUS_COLORS: Record<string, string> = {
+  Pregado: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+  Planejado: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+  Rascunho: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+};
+
+const COLOR_OPTIONS = [
+  { label: "Azul", value: "bg-blue-500" },
+  { label: "Verde", value: "bg-emerald-500" },
+  { label: "Âmbar", value: "bg-amber-500" },
+  { label: "Índigo", value: "bg-indigo-500" },
+  { label: "Púrpura", value: "bg-purple-500" },
+  { label: "Rosa", value: "bg-rose-500" },
+];
+
+function PastorAltar() {
+  const { db, create, update, remove } = useStore();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const [seriesFilter, setSeriesFilter] = useState("todas");
+
+  // Modal de Criação / Edição
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Form states
+  const [title, setTitle] = useState("");
+  const [verse, setVerse] = useState("");
+  const [series, setSeries] = useState("Avulso");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [status, setStatus] = useState("Planejado");
+  const [color, setColor] = useState("bg-blue-500");
+  const [intro, setIntro] = useState("");
+  const [topics, setTopics] = useState<string[]>([""]);
+  const [conclusion, setConclusion] = useState("");
+
+  const sermons = (db.pastor_sermons || []) as Row[];
+  const seriesList = (db.pastor_series || []) as Row[];
+
+  // Filtros
+  const filteredSermons = useMemo(() => {
+    return sermons.filter((s) => {
+      const matchSearch =
+        String(s.title ?? s.titulo ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        String(s.verse ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        String(s.series ?? "").toLowerCase().includes(search.toLowerCase());
+
+      const matchStatus = statusFilter === "todos" || s.status === statusFilter;
+      const matchSeries = seriesFilter === "todas" || s.series === seriesFilter;
+
+      return matchSearch && matchStatus && matchSeries;
+    });
+  }, [sermons, search, statusFilter, seriesFilter]);
+
+  // Estatísticas
+  const stats = useMemo(() => {
+    return {
+      total: sermons.length,
+      pregados: sermons.filter((s) => s.status === "Pregado").length,
+      planejados: sermons.filter((s) => s.status === "Planejado").length,
+      series: seriesList.length,
+    };
+  }, [sermons, seriesList]);
+
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setTitle("");
+    setVerse("");
+    setSeries(seriesList[0]?.title ? String(seriesList[0].title) : "Avulso");
+    setDate(new Date().toISOString().slice(0, 10));
+    setStatus("Planejado");
+    setColor("bg-blue-500");
+    setIntro("");
+    setTopics(["1. Introdução bíblica e contexto", "2. Aplicação na vida da igreja"]);
+    setConclusion("");
+    setModalOpen(true);
+  };
+
+  const handleOpenEdit = (s: Row) => {
+    setEditingId(s.id);
+    setTitle(String(s.title ?? s.titulo ?? ""));
+    setVerse(String(s.verse ?? ""));
+    setSeries(String(s.series ?? "Avulso"));
+    setDate(String(s.date ?? s.data ?? new Date().toISOString().slice(0, 10)));
+    setStatus(String(s.status ?? "Planejado"));
+    setColor(String(s.color ?? "bg-blue-500"));
+
+    const content = s.content as { intro?: string; topics?: string[]; conclusion?: string } | undefined;
+    setIntro(content?.intro ?? "");
+    setTopics(content?.topics && content.topics.length ? content.topics : [""]);
+    setConclusion(content?.conclusion ?? "");
+    setModalOpen(true);
+  };
+
+  const handleAddTopic = () => {
+    setTopics((prev) => [...prev, ""]);
+  };
+
+  const handleUpdateTopic = (index: number, val: string) => {
+    setTopics((prev) => {
+      const copy = [...prev];
+      copy[index] = val;
+      return copy;
+    });
+  };
+
+  const handleRemoveTopic = (index: number) => {
+    setTopics((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = () => {
+    if (!title.trim()) return;
+
+    const contentObj = {
+      intro: intro.trim(),
+      topics: topics.map((t) => t.trim()).filter(Boolean),
+      conclusion: conclusion.trim(),
+    };
+
+    const targetSeries = seriesList.find((x) => x.title === series || x.titulo === series);
+
+    const payload: Omit<Row, "id"> = {
+      title,
+      titulo: title,
+      verse,
+      series,
+      series_id: targetSeries ? targetSeries.id : "",
+      date,
+      data: date,
+      status,
+      color,
+      content: contentObj,
+    };
+
+    if (editingId) {
+      update("pastor_sermons", { ...payload, id: editingId });
+    } else {
+      create("pastor_sermons", payload);
+    }
+
+    setModalOpen(false);
+  };
+
+  const handleDuplicate = (s: Row) => {
+    const copy = { ...s };
+    delete (copy as { id?: string }).id;
+    copy.title = `${copy.title ?? copy.titulo} (Cópia)`;
+    copy.titulo = copy.title;
+    copy.status = "Rascunho";
+    copy.date = new Date().toISOString().slice(0, 10);
+    create("pastor_sermons", copy);
+  };
+
+  return (
+    <div className="space-y-6 animate-rise">
+      {/* Cabeçalho */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground tracking-tight flex items-center gap-2.5">
+            <BookOpen className="size-8 text-primary" />
+            Altar Pastoral
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Gestão de sermões, séries expositivas e ambiente imersivo para o púlpito.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link to="/pastor/series">
+            <Button variant="outline" className="gap-2">
+              <Layers className="size-4 text-primary" />
+              Séries
+            </Button>
+          </Link>
+          <Link to="/pastor/insights">
+            <Button variant="outline" className="gap-2">
+              <Sparkles className="size-4 text-amber-500" />
+              Insights
+            </Button>
+          </Link>
+          <Button onClick={handleOpenCreate} className="gap-2">
+            <Plus className="size-4" />
+            Novo Sermão
+          </Button>
+        </div>
+      </div>
+
+      {/* Cards de Métricas */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-card card-hover">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            Total de Sermões <BookOpen className="size-4 text-primary" />
+          </div>
+          <div className="mt-2 text-3xl font-bold tracking-tight">{stats.total}</div>
+          <div className="text-xs text-muted-foreground mt-1">Acervo do ministério</div>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-5 shadow-card card-hover">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            Mensagens Pregadas <CheckCircle2 className="size-4 text-emerald-500" />
+          </div>
+          <div className="mt-2 text-3xl font-bold tracking-tight">{stats.pregados}</div>
+          <div className="text-xs text-muted-foreground mt-1">Ministradas no altar</div>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-5 shadow-card card-hover">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            Sermões Planejados <Clock className="size-4 text-blue-500" />
+          </div>
+          <div className="mt-2 text-3xl font-bold tracking-tight">{stats.planejados}</div>
+          <div className="text-xs text-muted-foreground mt-1">Próximos cultos</div>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-5 shadow-card card-hover">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            Séries Ativas <Layers className="size-4 text-indigo-500" />
+          </div>
+          <div className="mt-2 text-3xl font-bold tracking-tight">{stats.series}</div>
+          <div className="text-xs text-muted-foreground mt-1">Campanhas temáticas</div>
+        </div>
+      </div>
+
+      {/* Filtros e Busca */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-3 shadow-card">
+        <div className="relative flex-1 min-w-[260px]">
+          <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Buscar por título, versículo ou série..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border bg-background py-2 pl-9 pr-4 text-sm outline-none focus:border-primary"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-xl border bg-background px-3 py-2 text-xs font-medium outline-none cursor-pointer"
+          >
+            <option value="todos">Todos os status</option>
+            <option value="Planejado">Planejado</option>
+            <option value="Pregado">Pregado</option>
+            <option value="Rascunho">Rascunho</option>
+          </select>
+
+          <select
+            value={seriesFilter}
+            onChange={(e) => setSeriesFilter(e.target.value)}
+            className="rounded-xl border bg-background px-3 py-2 text-xs font-medium outline-none cursor-pointer"
+          >
+            <option value="todas">Todas as séries</option>
+            <option value="Avulso">Avulso</option>
+            {seriesList.map((s) => (
+              <option key={s.id} value={String(s.title ?? s.titulo)}>
+                {String(s.title ?? s.titulo)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Grid de Sermões */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredSermons.length ? (
+          filteredSermons.map((s) => {
+            const content = s.content as { intro?: string; topics?: string[]; conclusion?: string } | undefined;
+            const topicsCount = content?.topics?.length ?? 0;
+            const cardColor = String(s.color ?? "bg-blue-500");
+
+            return (
+              <div
+                key={s.id}
+                className="flex flex-col justify-between rounded-2xl border bg-card p-5 shadow-card card-hover relative overflow-hidden group"
+              >
+                {/* Linha colorida do topo */}
+                <div className={`absolute top-0 left-0 right-0 h-1.5 ${cardColor}`} />
+
+                <div className="space-y-3">
+                  {/* Status, Série e Data */}
+                  <div className="flex items-center justify-between text-xs gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${
+                        STATUS_COLORS[String(s.status)] ?? STATUS_COLORS.Planejado
+                      }`}
+                    >
+                      {String(s.status ?? "Planejado")}
+                    </span>
+
+                    <span className="text-muted-foreground flex items-center gap-1 font-mono text-[11px]">
+                      <Calendar className="size-3" />
+                      {fmtDate(s.date ?? s.data)}
+                    </span>
+                  </div>
+
+                  {/* Título e Versículo */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground leading-snug line-clamp-2">
+                      {String(s.title ?? s.titulo)}
+                    </h3>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-mono font-medium text-foreground">
+                        {String(s.verse ?? "Sem referência")}
+                      </span>
+                      {s.series && s.series !== "Avulso" && (
+                        <span className="text-xs text-muted-foreground truncate max-w-[140px]">
+                          · {String(s.series)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Introdução / Resumo */}
+                  {content?.intro && (
+                    <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                      {content.intro}
+                    </p>
+                  )}
+
+                  {/* Quantidade de tópicos */}
+                  {topicsCount > 0 && (
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-1">
+                      <span className="size-1.5 rounded-full bg-primary" />
+                      <span>{topicsCount} tópicos estruturados</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rodapé com Ações */}
+                <div className="mt-5 pt-4 border-t flex items-center justify-between gap-2">
+                  <Link to={`/pastor/pulpito/${s.id}`} className="flex-1">
+                    <Button
+                      size="sm"
+                      className="w-full gap-2 bg-gradient-primary hover:opacity-90 shadow-sm text-xs font-semibold"
+                    >
+                      <Mic2 className="size-3.5" />
+                      Entrar no Púlpito
+                    </Button>
+                  </Link>
+
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenEdit(s)}
+                      className="size-8 text-muted-foreground hover:text-foreground"
+                      title="Editar sermão"
+                    >
+                      <Edit2 className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDuplicate(s)}
+                      className="size-8 text-muted-foreground hover:text-foreground"
+                      title="Duplicar esboço"
+                    >
+                      <Copy className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => remove("pastor_sermons", s.id)}
+                      className="size-8 text-muted-foreground hover:text-destructive"
+                      title="Excluir"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="col-span-full rounded-2xl border border-dashed p-12 text-center text-muted-foreground">
+            <BookOpen className="size-10 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="font-medium">Nenhum sermão encontrado com os filtros selecionados.</p>
+            <p className="text-xs mt-1">Crie um novo sermão ou limpe os filtros de busca.</p>
+            <Button onClick={handleOpenCreate} variant="outline" size="sm" className="mt-4 gap-2">
+              <Plus className="size-3.5" />
+              Criar Primeiro Sermão
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Modal / Dialog de Criação e Edição de Sermão */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-2xl border bg-card p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">
+                  {editingId ? "Editar Sermão / Esboço" : "Novo Sermão Pastoral"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Estrutura JSON com tópicos dinâmicos para visualização ao vivo no Púlpito.
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setModalOpen(false)}>
+                <X className="size-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              {/* Título e Versículo */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Título da Mensagem *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: A Graça que Transforma"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Versículo-Chave / Referência</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Romanos 5:1-5"
+                    value={verse}
+                    onChange={(e) => setVerse(e.target.value)}
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Série, Data e Status */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Série Temática</label>
+                  <select
+                    value={series}
+                    onChange={(e) => setSeries(e.target.value)}
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
+                  >
+                    <option value="Avulso">Avulso / Sem série</option>
+                    {seriesList.map((s) => (
+                      <option key={s.id} value={String(s.title ?? s.titulo)}>
+                        {String(s.title ?? s.titulo)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Data da Pregação</label>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Status</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
+                  >
+                    <option value="Planejado">Planejado</option>
+                    <option value="Pregado">Pregado</option>
+                    <option value="Rascunho">Rascunho</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Cor de Identificação */}
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-foreground">Cor do Card</label>
+                <div className="flex gap-2">
+                  {COLOR_OPTIONS.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setColor(c.value)}
+                      className={`size-7 rounded-full ${c.value} transition-transform ${
+                        color === c.value ? "ring-2 ring-foreground scale-110" : "opacity-80"
+                      }`}
+                      title={c.label}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Introdução */}
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-foreground">
+                  Introdução (Gancho inicial e contextualização)
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Apresente o problema, o gancho inicial e o contexto bíblico..."
+                  value={intro}
+                  onChange={(e) => setIntro(e.target.value)}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+                />
+              </div>
+
+              {/* Tópicos Dinâmicos */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-foreground">Tópicos Principais do Esboço</label>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddTopic} className="h-7 text-xs gap-1">
+                    <Plus className="size-3" />
+                    Adicionar Tópico
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {topics.map((t, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="size-6 shrink-0 grid place-items-center rounded bg-secondary text-xs font-bold font-mono">
+                        {idx + 1}
+                      </span>
+                      <input
+                        type="text"
+                        placeholder={`Tópico ${idx + 1}...`}
+                        value={t}
+                        onChange={(e) => handleUpdateTopic(idx, e.target.value)}
+                        className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus:border-primary"
+                      />
+                      {topics.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveTopic(idx)}
+                          className="size-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Conclusão */}
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-foreground">
+                  Conclusão e Apelo / Aplicação Prática
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Chamado prático, oração de encerramento e envio..."
+                  value={conclusion}
+                  onChange={(e) => setConclusion(e.target.value)}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t pt-4">
+              <Button variant="outline" onClick={() => setModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} className="gap-2">
+                Salvar Sermão
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

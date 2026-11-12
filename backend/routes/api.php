@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\Api\PastoralController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Models\Appointment;
@@ -20,6 +21,10 @@ use App\Models\Department;
 use App\Models\Event;
 use App\Models\Inventory;
 use App\Models\Member;
+use App\Models\PastoralRequest;
+use App\Models\PastorInsight;
+use App\Models\PastorSeries;
+use App\Models\PastorSermon;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -63,17 +68,45 @@ Route::apiResource('appointments', AppointmentController::class);
 Route::apiResource('inventory', InventoryController::class);
 Route::get('audit-logs', [AuditLogController::class, 'index']);
 
+// Gabinete & Conteúdo Pastoral
+Route::prefix('pastoral')->group(function () {
+    Route::get('series', [PastoralController::class, 'seriesIndex']);
+    Route::post('series', [PastoralController::class, 'seriesStore']);
+    Route::put('series/{series}', [PastoralController::class, 'seriesUpdate']);
+    Route::delete('series/{series}', [PastoralController::class, 'seriesDestroy']);
+
+    Route::get('sermons', [PastoralController::class, 'sermonsIndex']);
+    Route::post('sermons', [PastoralController::class, 'sermonStore']);
+    Route::get('sermons/{sermon}', [PastoralController::class, 'sermonShow']);
+    Route::put('sermons/{sermon}', [PastoralController::class, 'sermonUpdate']);
+    Route::delete('sermons/{sermon}', [PastoralController::class, 'sermonDestroy']);
+
+    Route::get('insights', [PastoralController::class, 'insightsIndex']);
+    Route::post('insights', [PastoralController::class, 'insightStore']);
+    Route::put('insights/{insight}', [PastoralController::class, 'insightUpdate']);
+    Route::delete('insights/{insight}', [PastoralController::class, 'insightDestroy']);
+
+    Route::get('requests', [PastoralController::class, 'requestsIndex']);
+    Route::post('requests', [PastoralController::class, 'requestStore']);
+    Route::put('requests/{pastoralRequest}', [PastoralController::class, 'requestUpdate']);
+    Route::delete('requests/{pastoralRequest}', [PastoralController::class, 'requestDestroy']);
+});
+
 // Exportação / Sincronização do estado completo (compatível com a interface DB do frontend)
 Route::get('/db-state', function () {
     return response()->json([
-        'members' => Member::orderBy('nome')->get(),
+        'members' => Member::with(['father', 'mother', 'spouse'])->orderBy('nome')->get(),
         'congregations' => Congregation::orderBy('nome')->get(),
         'departments' => Department::orderBy('nome')->get(),
         'transactions' => Transaction::orderBy('data', 'desc')->get(),
         'contributions' => Contribution::orderBy('data', 'desc')->get(),
         'events' => Event::orderBy('data', 'desc')->get(),
-        'appointments' => Appointment::orderBy('data', 'desc')->get(),
+        'appointments' => Appointment::with('member')->orderBy('data', 'desc')->get(),
         'inventory' => Inventory::orderBy('nome')->get(),
+        'pastor_series' => PastorSeries::orderBy('id', 'desc')->get(),
+        'pastor_sermons' => PastorSermon::with(['seriesRelation', 'insights'])->orderBy('date', 'desc')->get(),
+        'pastor_insights' => PastorInsight::orderBy('id', 'desc')->get(),
+        'pastoral_requests' => PastoralRequest::with('member')->orderBy('requested_at', 'desc')->get(),
         'audit' => AuditLog::orderBy('created_at', 'desc')->limit(50)->get(),
     ]);
 });
