@@ -73,11 +73,11 @@ function Financeiro() {
                     "Outras despesas",
                   ]
                 : [
-                    "Dízimos",
-                    "Ofertas",
-                    "Ofertas especiais",
-                    "Campanhas",
-                    "Doações",
+                    "Cantina / Bazar",
+                    "Eventos / Inscrições",
+                    "Doações gerais",
+                    "Rendimentos",
+                    "Aluguel de espaço",
                     "Outras receitas",
                   ],
             table: true,

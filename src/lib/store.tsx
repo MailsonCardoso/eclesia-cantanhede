@@ -818,7 +818,7 @@ export function seed(): DB {
 
   const transactions: Row[] = [];
   for (let m = 0; m < 6; m++) {
-    [["Receita", "Dízimos", 9800], ["Receita", "Ofertas", 3200], ["Receita", "Campanhas", 1500], ["Despesa", "Energia", 890], ["Despesa", "Aluguel", 3500], ["Despesa", "Ação social", 1200], ["Despesa", "Manutenção", 700]].forEach(([tipo, cat, v], j) => {
+    [["Receita", "Cantina / Bazar", 1200], ["Receita", "Eventos / Inscrições", 1800], ["Receita", "Doações gerais", 900], ["Despesa", "Energia", 890], ["Despesa", "Aluguel", 3500], ["Despesa", "Ação social", 1200], ["Despesa", "Manutenção", 700], ["Despesa", "Taxas bancárias", 150]].forEach(([tipo, cat, v], j) => {
       transactions.push({
         id: uid(),
         tipo: tipo as string,
