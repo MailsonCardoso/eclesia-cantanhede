@@ -147,7 +147,7 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     id: "usr_secretaria",
     memberId: "m_ana",
     name: "Ana Beatriz Souza",
-    email: "ana.souza@email.com",
+    email: "secretaria@eclesiapro.com",
     cpf: "102.202.302-22",
     role: "Secretaria",
     cargo: "Secretária Executiva",
@@ -159,7 +159,7 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     id: "usr_financeiro",
     memberId: "m_carlos",
     name: "Carlos Eduardo Lima",
-    email: "carlos.lima@email.com",
+    email: "financeiro@eclesiapro.com",
     cpf: "101.201.301-11",
     role: "Tesoureiro",
     cargo: "Tesoureiro Geral",
@@ -171,7 +171,7 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     id: "usr_lider",
     memberId: "m_lucas",
     name: "Lucas Barbosa",
-    email: "lucas.barbosa@email.com",
+    email: "lider@eclesiapro.com",
     cpf: "107.207.307-77",
     role: "Líder",
     cargo: "Líder de Célula",
@@ -239,7 +239,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedUsers) {
         const parsed = JSON.parse(storedUsers);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setUsers(parsed);
+          // Garante que todas as contas oficiais padrão continuem presentes e acessíveis
+          const existingIds = new Set(parsed.map((p) => p.id));
+          const missingDefaults = INITIAL_ACCOUNTS.filter((init) => !existingIds.has(init.id));
+          const merged = [...parsed, ...missingDefaults];
+          setUsers(merged);
         } else {
           setUsers(INITIAL_ACCOUNTS);
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_ACCOUNTS));
@@ -289,16 +293,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Verifica se a conta está ativa
       if (acc.status === "Inativo") return false;
 
-      // Correspondência do identificador (E-mail ou CPF)
-      const emailMatches = acc.email.toLowerCase() === cleanId;
+      // Correspondência do identificador (E-mail, alias institucional ou CPF)
+      const emailMatches =
+        acc.email.toLowerCase() === cleanId ||
+        (acc.role === "Secretaria" && (cleanId === "secretaria@eclesiapro.com" || cleanId === "ana.souza@email.com")) ||
+        (acc.role === "Tesoureiro" && (cleanId === "financeiro@eclesiapro.com" || cleanId === "carlos.lima@email.com")) ||
+        (acc.role === "Pastor" && cleanId === "pastor@eclesiapro.com") ||
+        (acc.role === "Líder" && (cleanId === "lider@eclesiapro.com" || cleanId === "lucas.barbosa@email.com")) ||
+        (acc.role === "Administrador" && cleanId === "admin@eclesiapro.com");
+
       const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
       if (!emailMatches && !cpfMatches) return false;
 
-      // Correspondência da senha (CPF como senha, com ou sem formatação, ou senha mestre de admin)
+      // Correspondência da senha:
+      // 1. CPF do membro (com ou sem pontuação)
+      // 2. Senhas padrão institucionais (admin123, pastor123, secretaria123, financeiro123, lider123)
       const passMatchesCpf = cleanPass === acc.cpf || (cleanPassDigits.length >= 10 && cleanCPF(acc.cpf) === cleanPassDigits);
-      const passMatchesAdminMaster = acc.role === "Administrador" && cleanPass === "admin123";
+      const passMatchesRoleDefault =
+        (acc.role === "Administrador" && cleanPass === "admin123") ||
+        (acc.role === "Pastor" && cleanPass === "pastor123") ||
+        (acc.role === "Secretaria" && cleanPass === "secretaria123") ||
+        (acc.role === "Tesoureiro" && cleanPass === "financeiro123") ||
+        (acc.role === "Líder" && cleanPass === "lider123");
 
-      return passMatchesCpf || passMatchesAdminMaster;
+      return passMatchesCpf || passMatchesRoleDefault;
     });
 
     if (match) {
