@@ -181,8 +181,8 @@ function RelatorioMembros() {
     const out: {
       id: string;
       nomeCasal: string;
-      marido?: Row;
-      esposa?: Row;
+      marido?: Row | undefined;
+      esposa?: Row | undefined;
       temConjugeCadastrado: boolean;
       telefoneContato: string;
       congregacao: string;

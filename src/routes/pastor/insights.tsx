@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useStore, type Row } from "@/lib/store";
+import { fmtDate, useStore, type Row, type V } from "@/lib/store";
 
 export const Route = createFileRoute("/pastor/insights")({
   head: () => ({
@@ -130,7 +130,7 @@ function PastorInsightsPage() {
       titulo: title.trim(),
       reference: reference.trim(),
       content: content.trim(),
-      tags,
+      tags: tags as unknown as V,
       sermon_id: sermonId || undefined,
     };
 

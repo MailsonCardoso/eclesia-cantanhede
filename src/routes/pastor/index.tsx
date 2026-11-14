@@ -161,7 +161,7 @@ function PastorAltar() {
       data: date,
       status,
       color,
-      content: contentObj,
+      content: contentObj as unknown as V,
     };
 
     if (editingId) {
@@ -532,7 +532,7 @@ function PastorAltar() {
                   <div className="flex items-center justify-between text-xs gap-2">
                     <span
                       className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${
-                        STATUS_COLORS[String(s.status)] ?? STATUS_COLORS.Planejado
+                        STATUS_COLORS[String(s.status)] ?? STATUS_COLORS["Planejado"]
                       }`}
                     >
                       {String(s.status ?? "Planejado")}
@@ -579,7 +579,7 @@ function PastorAltar() {
 
                 {/* Rodapé com Ações */}
                 <div className="mt-5 pt-4 border-t flex items-center justify-between gap-2">
-                  <Link to={`/pastor/pulpito/${s.id}`} className="flex-1">
+                  <Link to="/pastor/pulpito/$id" params={{ id: s.id }} className="flex-1">
                     <Button
                       size="sm"
                       className="w-full gap-2 bg-gradient-primary hover:opacity-90 shadow-sm text-xs font-semibold"
