@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CrudPage } from "@/components/CrudPage";
-import { Receipt, Printer, Download, MessageSquare, Heart, Church, CheckCircle, Smartphone } from "lucide-react";
+import { Receipt, Printer, Download, MessageSquare, Smartphone, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/contribuicoes")({
   component: Contribuicoes,
 });
 
-function downloadPdfReceipt(r: Row) {
+function downloadPdfReceipt(r: Row, cnpj: string) {
   try {
     const doc = new jsPDF({
       unit: "mm",
@@ -64,7 +64,7 @@ function downloadPdfReceipt(r: Row) {
     doc.line(14, 43, 134, 43);
 
     // Fields
-    let y = 52;
+    let y = 51;
     const addField = (label: string, value: string, isHighlight = false) => {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
@@ -82,7 +82,7 @@ function downloadPdfReceipt(r: Row) {
 
       doc.setDrawColor(241, 245, 249);
       doc.line(14, y + 3, 134, y + 3);
-      y += 11;
+      y += 10;
     };
 
     addField("Contribuinte:", String(r.membro || "Anônimo"));
@@ -91,9 +91,10 @@ function downloadPdfReceipt(r: Row) {
     addField("Data do Lançamento:", fmtDate(r.data));
     addField("Forma de Pagamento:", String(r.pagamento || "Dinheiro"));
     addField("Congregação:", String(r.congregacao || "Sede Central"));
+    addField("CNPJ da Igreja:", cnpj);
 
     // Biblical verse
-    y += 8;
+    y += 7;
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139);
@@ -103,7 +104,7 @@ function downloadPdfReceipt(r: Row) {
     doc.text(splitVerse, 74, y, { align: "center" });
 
     // Signature
-    y += 28;
+    y += 26;
     doc.setDrawColor(148, 163, 184);
     doc.line(34, y, 114, y);
     doc.setFont("helvetica", "normal");
@@ -112,7 +113,7 @@ function downloadPdfReceipt(r: Row) {
     doc.text("Tesouraria / Ministério Financeiro", 74, y + 5, { align: "center" });
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
-    doc.text(String(r.congregacao || "Igreja Local"), 74, y + 10, { align: "center" });
+    doc.text(`${r.congregacao || "Igreja Local"} · CNPJ ${cnpj}`, 74, y + 10, { align: "center" });
 
     doc.save(`recibo-${r.id}.pdf`);
     toast.success("Recibo baixado em PDF com sucesso!");
@@ -122,7 +123,7 @@ function downloadPdfReceipt(r: Row) {
   }
 }
 
-function printReceiptDirect(r: Row) {
+function printReceiptDirect(r: Row, cnpj: string) {
   const printWindow = window.open("", "_blank", "width=600,height=750");
   if (!printWindow) {
     toast.error("Não foi possível abrir a janela de impressão.");
@@ -156,7 +157,7 @@ function printReceiptDirect(r: Row) {
         <div class="header">
           <h1>EclesiaPro</h1>
           <p>Recibo Oficial de Contribuição</p>
-          <div class="num">Nº #REC-${String(r.id).slice(-6).toUpperCase()} · Emissão: ${new Date().toLocaleDateString("pt-BR")}</div>
+          <div class="num">Nº #REC-${String(r.id).slice(-6).toUpperCase()} · CNPJ: ${cnpj} · Emissão: ${new Date().toLocaleDateString("pt-BR")}</div>
         </div>
         <div class="row"><span class="label">Contribuinte:</span><span class="val">${r.membro || "Anônimo"}</span></div>
         <div class="row"><span class="label">Tipo:</span><span class="val">${r.tipo || "Dízimo"}</span></div>
@@ -164,11 +165,12 @@ function printReceiptDirect(r: Row) {
         <div class="row"><span class="label">Data:</span><span class="val">${fmtDate(r.data)}</span></div>
         <div class="row"><span class="label">Forma de Pagamento:</span><span class="val">${r.pagamento || "—"}</span></div>
         <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Sede Central"}</span></div>
+        <div class="row"><span class="label">CNPJ da Igreja:</span><span class="val">${cnpj}</span></div>
         <div class="verse">"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Co 9:7)</div>
         <div class="signature">
           <div class="line"></div>
           <div style="font-size: 13px; font-weight: 600;">Tesouraria / Ministério Financeiro</div>
-          <div style="font-size: 11px; color: #64748b;">${r.congregacao || "Igreja Local"}</div>
+          <div style="font-size: 11px; color: #64748b;">${r.congregacao || "Igreja Local"} · CNPJ ${cnpj}</div>
         </div>
         <div class="footer">Gerado pelo sistema de gestão eclesiástica EclesiaPro</div>
       </div>
@@ -179,7 +181,7 @@ function printReceiptDirect(r: Row) {
   printWindow.document.close();
 }
 
-function sendToWhatsapp(r: Row, phone: string) {
+function sendToWhatsapp(r: Row, phone: string, cnpj: string) {
   const cleanPhone = phone.replace(/\D/g, "");
   let targetPhone = cleanPhone;
   if (targetPhone.length >= 10 && !targetPhone.startsWith("55")) {
@@ -190,6 +192,7 @@ function sendToWhatsapp(r: Row, phone: string) {
     `*RECIBO DE CONTRIBUIÇÃO - ECLESIAPRO*`,
     `----------------------------------------`,
     `📄 *Recibo Nº:* #REC-${String(r.id).slice(-6).toUpperCase()}`,
+    `🏢 *CNPJ:* ${cnpj}`,
     `👤 *Contribuinte:* ${r.membro || "Anônimo"}`,
     `🏷️ *Tipo:* ${r.tipo || "Dízimo"}`,
     `💰 *Valor:* ${brl(Number(r.valor || 0))}`,
@@ -215,10 +218,12 @@ function ReceiptModal({
   row,
   onClose,
   members,
+  congregations,
 }: {
   row: Row | null;
   onClose: () => void;
   members: Array<{ id: string; nome: string; telefone?: string }>;
+  congregations: Array<Row>;
 }) {
   const memberData = useMemo(() => {
     if (!row?.membro) return null;
@@ -226,6 +231,16 @@ function ReceiptModal({
       (m) => String(m.nome).trim().toLowerCase() === String(row.membro).trim().toLowerCase()
     );
   }, [members, row?.membro]);
+
+  const churchCnpj = useMemo(() => {
+    if (!row) return "12.345.678/0001-90";
+    const matched = congregations.find(
+      (c) => String(c.nome).trim().toLowerCase() === String(row.congregacao || "").trim().toLowerCase()
+    );
+    if (matched?.cnpj) return String(matched.cnpj);
+    const sede = congregations.find((c) => Boolean(c.cnpj)) || congregations[0];
+    return String(sede?.cnpj || "12.345.678/0001-90");
+  }, [congregations, row]);
 
   const [phone, setPhone] = useState("");
 
@@ -288,9 +303,14 @@ function ReceiptModal({
               <span className="font-medium text-foreground">{row.pagamento || "—"}</span>
             </div>
 
-            <div className="flex items-center justify-between py-0.5">
+            <div className="flex items-center justify-between py-1 border-b">
               <span className="text-[11px] text-muted-foreground font-medium">Congregação</span>
               <span className="font-medium text-foreground">{row.congregacao || "Sede Central"}</span>
+            </div>
+
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-[11px] text-muted-foreground font-medium">CNPJ da Igreja</span>
+              <span className="font-mono text-[11px] font-semibold text-foreground">{churchCnpj}</span>
             </div>
           </div>
 
@@ -327,7 +347,7 @@ function ReceiptModal({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => printReceiptDirect(row)}
+            onClick={() => printReceiptDirect(row, churchCnpj)}
             className="gap-1.5 rounded-lg text-xs flex-1 h-8"
           >
             <Printer className="size-3.5" />
@@ -338,7 +358,7 @@ function ReceiptModal({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => downloadPdfReceipt(row)}
+            onClick={() => downloadPdfReceipt(row, churchCnpj)}
             className="gap-1.5 rounded-lg text-xs flex-1 h-8"
           >
             <Download className="size-3.5" />
@@ -348,7 +368,7 @@ function ReceiptModal({
           <Button
             type="button"
             size="sm"
-            onClick={() => sendToWhatsapp(row, phone)}
+            onClick={() => sendToWhatsapp(row, phone, churchCnpj)}
             className="gap-1.5 rounded-lg text-xs flex-1 h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-medium"
           >
             <MessageSquare className="size-3.5" />
@@ -412,6 +432,7 @@ function Contribuicoes() {
         row={selectedReceipt}
         onClose={() => setSelectedReceipt(null)}
         members={db.members as Array<{ id: string; nome: string; telefone?: string }>}
+        congregations={db.congregations as Array<Row>}
       />
     </>
   );
