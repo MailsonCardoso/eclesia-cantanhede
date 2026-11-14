@@ -76,6 +76,7 @@ export type Row = {
   role?: V;
   motivo?: V;
   start_date?: V;
+  celula?: V;
   [k: string]: V;
 };
 
