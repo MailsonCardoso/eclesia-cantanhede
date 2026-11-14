@@ -482,3 +482,4 @@ function PastorInsightsPage() {
     </div>
   );
 }
+

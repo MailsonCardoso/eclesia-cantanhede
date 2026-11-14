@@ -110,3 +110,38 @@ Route::get('/db-state', function () {
         'audit' => AuditLog::orderBy('created_at', 'desc')->limit(50)->get(),
     ]);
 });
+
+// Ações utilitárias para testes: limpar dados mockados ou re-semear dados de demonstração
+Route::post('/clear-mock-data', function () {
+    \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+    PastoralRequest::truncate();
+    PastorInsight::truncate();
+    PastorSermon::truncate();
+    PastorSeries::truncate();
+    Appointment::truncate();
+    Contribution::truncate();
+    Transaction::truncate();
+    Event::truncate();
+    Inventory::truncate();
+    Department::truncate();
+    Member::truncate();
+    Congregation::truncate();
+    if (\Illuminate\Support\Facades\Schema::hasTable('audit_logs')) {
+        AuditLog::truncate();
+    }
+    \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Todos os dados mockados foram limpos com sucesso.',
+    ]);
+});
+
+Route::post('/seed-mock-data', function () {
+    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+    return response()->json([
+        'success' => true,
+        'message' => 'Dados de demonstração carregados com sucesso no banco de dados.',
+    ]);
+});
+

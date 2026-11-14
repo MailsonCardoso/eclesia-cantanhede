@@ -18,8 +18,11 @@ import {
   BookOpen,
   Layers,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { useStore } from "@/lib/store";
+import { toast } from "sonner";
 import {
   Sidebar,
   SidebarContent,
@@ -99,6 +102,22 @@ export function AppShell({ children }: { children: ReactNode }) {
       .flatMap((g) => g.items as readonly { title: string; url: string }[])
       .find((i) => i.url === path)?.title ?? "EclesiaPro";
 
+  const { clearAll, loadDemoData } = useStore();
+
+  const handleClearAll = () => {
+    if (window.confirm("Atenção: deseja limpar todos os dados mockados de todas as telas para iniciar os testes com a base vazia?")) {
+      clearAll();
+      toast.success("Todos os dados mockados foram limpos! Agora você pode testar com dados reais.");
+    }
+  };
+
+  const handleLoadDemo = () => {
+    if (window.confirm("Deseja restaurar os dados de demonstração/exemplo para testes?")) {
+      loadDemoData();
+      toast.success("Dados de demonstração carregados com sucesso!");
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -150,6 +169,26 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="font-display text-lg font-semibold truncate text-foreground">{pageTitle}</div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearAll}
+                className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/40"
+                title="Limpar todos os dados mockados para testar com base vazia"
+              >
+                <Trash2 className="size-3.5" />
+                <span className="hidden sm:inline">Limpar Dados</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLoadDemo}
+                className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary"
+                title="Restaurar dados de demonstração/exemplo"
+              >
+                <Sparkles className="size-3.5 text-amber-500" />
+                <span className="hidden md:inline">Restaurar Demo</span>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"

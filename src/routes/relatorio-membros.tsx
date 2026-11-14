@@ -603,25 +603,33 @@ function RelatorioMembros() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {list.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.nome ?? m.name}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                        {m.calculatedAge} anos
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{bucketOf(m.calculatedAge!)}</TableCell>
-                    <TableCell>{fmtDate(m.nascimento ?? m.birth_date)}</TableCell>
-                    <TableCell>{m.congregacao ?? "Sede Central"}</TableCell>
-                    <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                        {m.situacao ?? m.status ?? "Ativo"}
-                      </span>
+                {list.length ? (
+                  list.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium">{m.nome ?? m.name}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                          {m.calculatedAge} anos
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{bucketOf(m.calculatedAge!)}</TableCell>
+                      <TableCell>{fmtDate(m.nascimento ?? m.birth_date)}</TableCell>
+                      <TableCell>{m.congregacao ?? "Sede Central"}</TableCell>
+                      <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          {m.situacao ?? m.status ?? "Ativo"}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      Nenhum membro cadastrado nesta congregação.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
@@ -729,25 +737,33 @@ function RelatorioMembros() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {homensList.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.nome ?? m.name}</TableCell>
-                  <TableCell>
-                    {m.calculatedAge !== null ? (
-                      <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
-                        {m.calculatedAge} anos
-                      </span>
-                    ) : (
-                      "—"
-                    )}
+              {homensList.length ? (
+                homensList.map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{m.nome ?? m.name}</TableCell>
+                    <TableCell>
+                      {m.calculatedAge !== null ? (
+                        <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                          {m.calculatedAge} anos
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>{m.estadoCivil ?? m.marital_status ?? "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">{m.telefone ?? m.phone ?? "—"}</TableCell>
+                    <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
+                    <TableCell>{m.celula ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{m.congregacao}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    Nenhum membro do ministério masculino cadastrado nesta congregação.
                   </TableCell>
-                  <TableCell>{m.estadoCivil ?? m.marital_status ?? "—"}</TableCell>
-                  <TableCell className="font-mono text-xs">{m.telefone ?? m.phone ?? "—"}</TableCell>
-                  <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
-                  <TableCell>{m.celula ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">{m.congregacao}</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
@@ -776,25 +792,33 @@ function RelatorioMembros() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mulheresList.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.nome ?? m.name}</TableCell>
-                  <TableCell>
-                    {m.calculatedAge !== null ? (
-                      <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
-                        {m.calculatedAge} anos
-                      </span>
-                    ) : (
-                      "—"
-                    )}
+              {mulheresList.length ? (
+                mulheresList.map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{m.nome ?? m.name}</TableCell>
+                    <TableCell>
+                      {m.calculatedAge !== null ? (
+                        <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
+                          {m.calculatedAge} anos
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>{m.estadoCivil ?? m.marital_status ?? "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">{m.telefone ?? m.phone ?? "—"}</TableCell>
+                    <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
+                    <TableCell>{m.celula ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{m.congregacao}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    Nenhum membro do ministério feminino cadastrado nesta congregação.
                   </TableCell>
-                  <TableCell>{m.estadoCivil ?? m.marital_status ?? "—"}</TableCell>
-                  <TableCell className="font-mono text-xs">{m.telefone ?? m.phone ?? "—"}</TableCell>
-                  <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
-                  <TableCell>{m.celula ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">{m.congregacao}</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>

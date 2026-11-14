@@ -41,3 +41,4 @@ class PastorSermon extends Model
         return $this->hasMany(PastorInsight::class, 'sermon_id');
     }
 }
+

@@ -46,3 +46,4 @@ class PastorSeries extends Model
         return $this->hasMany(PastorSermon::class, 'series_id');
     }
 }
+

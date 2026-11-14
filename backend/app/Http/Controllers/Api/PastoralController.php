@@ -282,3 +282,4 @@ class PastoralController extends BaseApiController
         return response()->json(['message' => 'Solicitação excluída com sucesso.']);
     }
 }
+

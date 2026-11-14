@@ -32,3 +32,4 @@ class PastorInsight extends Model
         return $this->belongsTo(PastorSermon::class, 'sermon_id');
     }
 }
+

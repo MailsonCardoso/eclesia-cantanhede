@@ -32,3 +32,4 @@ class PastoralRequest extends Model
         return $this->belongsTo(Member::class, 'member_id');
     }
 }
+

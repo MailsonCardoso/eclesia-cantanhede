@@ -49,7 +49,7 @@ const fallbackScript = `
 
 async function buildStaticDist() {
   console.log('--- Iniciando geracao de dist/ estatico completo ---');
-  
+
   // 1. Limpar e copiar assets estaticos de .output/public para dist/
   if (fs.existsSync('dist/assets')) {
     fs.rmSync('dist/assets', { recursive: true, force: true });
@@ -60,7 +60,7 @@ async function buildStaticDist() {
   }
 
   const env = { ASSETS: { fetch: () => new Response('not found', { status: 404 }) } };
-  const ctx = { waitUntil: () => {} };
+  const ctx = { waitUntil: () => { } };
 
   // 2. Pre-renderizar cada rota
   for (const route of routes) {

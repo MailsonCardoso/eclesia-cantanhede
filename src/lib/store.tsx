@@ -886,29 +886,71 @@ export function seed(): DB {
   };
 }
 
-const KEY = "ecclesia-db-v5";
+/**
+ * Retorna uma base de dados completamente limpa (coleções vazias) para testes.
+ */
+export function emptyDB(): DB {
+  return {
+    members: [],
+    congregations: [],
+    departments: [],
+    cells: [],
+    transactions: [],
+    contributions: [],
+    events: [],
+    appointments: [],
+    inventory: [],
+    pastor_series: [],
+    pastor_sermons: [],
+    pastor_insights: [],
+    pastoral_requests: [],
+    audit: [],
+  };
+}
+
+const KEY = "ecclesia-db-v6";
 
 type Ctx = {
   db: DB;
   create: (c: Collection, row: Omit<Row, "id">) => Row;
   update: (c: Collection, row: Row) => void;
   remove: (c: Collection, id: string) => void;
+  clearAll: () => void;
+  loadDemoData: () => void;
 };
 const StoreCtx = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [db, setDb] = useState<DB>(seed);
+  // Inicializa limpo para testes com dados reais
+  const [db, setDb] = useState<DB>(emptyDB);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Limpa versões anteriores de cache com mock para garantir teste limpo
+    try {
+      localStorage.removeItem("ecclesia-db-v5");
+      localStorage.removeItem("ecclesia-db-v4");
+      localStorage.removeItem("ecclesia-db-v3");
+      localStorage.removeItem("ecclesia-db-v2");
+      localStorage.removeItem("ecclesia-db");
+    } catch {
+      /* ignore */
+    }
+
     const raw = localStorage.getItem(KEY);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        // Garante que todas as coleções existam mesmo se o cache for parcial
-        const initial = seed();
+        const initial = emptyDB();
         const merged = { ...initial, ...parsed };
         setDb(merged);
+      } catch {
+        setDb(emptyDB());
+      }
+    } else {
+      setDb(emptyDB());
+      try {
+        localStorage.setItem(KEY, JSON.stringify(emptyDB()));
       } catch {
         /* ignore */
       }
@@ -955,6 +997,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           audit: [log(c, "exclusão", r), ...s.audit],
         };
       }),
+    clearAll: () => {
+      const clean = emptyDB();
+      setDb(clean);
+      try {
+        localStorage.setItem(KEY, JSON.stringify(clean));
+      } catch {
+        /* ignore */
+      }
+    },
+    loadDemoData: () => {
+      const demo = seed();
+      setDb(demo);
+      try {
+        localStorage.setItem(KEY, JSON.stringify(demo));
+      } catch {
+        /* ignore */
+      }
+    },
   };
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
