@@ -218,36 +218,21 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             {/* Perfil Oficial Integrado no Topo da Sidebar */}
             <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-2.5 transition-colors">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20"
-                    title={user?.name}
-                  >
-                    {user?.avatar || "US"}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20"
+                  title={user?.name}
+                >
+                  {user?.avatar || "US"}
+                </div>
+                <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+                  <div className="font-semibold text-xs text-sidebar-accent-foreground truncate leading-tight">
+                    {user?.name || "Usuário"}
                   </div>
-                  <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-                    <div className="font-semibold text-xs text-sidebar-accent-foreground truncate leading-tight">
-                      {user?.name || "Usuário"}
-                    </div>
-                    <div className="text-[10px] text-sidebar-foreground/75 truncate mt-0.5 font-medium">
-                      {user?.cargo || user?.role || "Usuário"}
-                    </div>
+                  <div className="text-[10px] text-sidebar-foreground/75 truncate mt-0.5 font-medium">
+                    {user?.cargo || user?.role || "Usuário"}
                   </div>
                 </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    logout();
-                    navigate({ to: "/login" });
-                  }}
-                  className="size-7 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 group-data-[collapsible=icon]:hidden shrink-0"
-                  title="Sair do sistema (Logout)"
-                >
-                  <LogOut className="size-3.5" />
-                </Button>
               </div>
             </div>
           </SidebarHeader>
@@ -287,11 +272,25 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="font-display text-lg font-semibold truncate text-foreground">{pageTitle}</div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Badge indicando o papel ativo do usuário em tela grande */}
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-muted/30 text-xs font-medium text-muted-foreground">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Badge indicando o papel ativo do usuário */}
+              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-muted/30 text-xs font-medium text-muted-foreground">
                 <Shield className="size-3.5 text-primary" />
                 <span>{user?.cargo || user?.role}</span>
+              </div>
+
+              {/* Central de Notificações (Sininho posicionado à frente) */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground size-9 rounded-xl"
+                  aria-label="Notificações"
+                  title="Notificações"
+                >
+                  <Bell className="size-4" />
+                </Button>
+                <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
               </div>
 
               {/* Botão de Alternar Modo Escuro / Claro */}
@@ -301,22 +300,27 @@ export function AppShell({ children }: { children: ReactNode }) {
                 onClick={() => setDark((v) => !v)}
                 className="text-muted-foreground hover:text-foreground size-9 rounded-xl"
                 aria-label="Alternar tema"
+                title={dark ? "Mudar para modo claro" : "Mudar para modo escuro"}
               >
                 {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </Button>
 
-              {/* Central de Notificações */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground size-9 rounded-xl"
-                  aria-label="Notificações"
-                >
-                  <Bell className="size-4" />
-                </Button>
-                <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
-              </div>
+              <div className="h-4 w-px bg-border my-auto mx-0.5" />
+
+              {/* Botão de Sair fixado no cantinho superior */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  logout();
+                  navigate({ to: "/login" });
+                }}
+                className="h-9 px-2.5 sm:px-3 text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors gap-1.5"
+                title="Sair do sistema (Logout)"
+              >
+                <LogOut className="size-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
             </div>
           </header>
 
