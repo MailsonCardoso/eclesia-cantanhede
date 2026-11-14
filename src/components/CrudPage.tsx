@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Plus, Search, Pencil, Trash2, FileSpreadsheet, Printer, ListFilter, SearchX, ArrowLeft, X } from "lucide-react";
+import { useMemo, useState, useRef, useEffect } from "react";
+import { Plus, Search, Pencil, Trash2, FileSpreadsheet, Printer, ListFilter, SearchX, ArrowLeft, X, UserRound } from "lucide-react";
 import { CollectionOverview, collectionIcons } from "@/components/CollectionOverview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,273 @@ export type Field = {
   enabledWhen?: (values: Record<string, string>) => boolean;
 };
 
+function MemberSearchInput({
+  value,
+  onChange,
+  placeholder,
+  members,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  members: Array<{ id: string; nome: string; congregacao?: string; cargo?: string }>;
+}) {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return members.slice(0, 8);
+    const q = query.toLowerCase().trim();
+    return members.filter((m) => String(m.nome).toLowerCase().includes(q)).slice(0, 8);
+  }, [members, query]);
+
+  if (value) {
+    return (
+      <div className="flex items-center justify-between rounded-xl border bg-background px-3.5 py-2 text-sm shadow-sm">
+        <div className="flex items-center gap-2 min-w-0">
+          <UserRound className="size-4 text-primary shrink-0" />
+          <span className="font-semibold text-foreground truncate">{value}</span>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            onChange("");
+            setQuery("");
+          }}
+          className="size-7 text-muted-foreground hover:text-destructive"
+          title="Remover / trocar membro"
+        >
+          <X className="size-3.5" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        <Input
+          placeholder={placeholder || "Digite o nome para buscar membro..."}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          className="pl-9 pr-8 rounded-xl shadow-sm"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 z-50 mt-1.5 max-h-56 overflow-y-auto rounded-2xl border bg-popover p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95">
+          {filtered.length === 0 ? (
+            <div className="p-3 text-center text-xs text-muted-foreground">
+              Nenhum membro encontrado com esse nome.
+            </div>
+          ) : (
+            filtered.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => {
+                  onChange(String(m.nome));
+                  setQuery("");
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-accent flex items-center justify-between gap-2 transition-colors cursor-pointer"
+              >
+                <div className="min-w-0">
+                  <div className="font-semibold text-foreground truncate">{String(m.nome)}</div>
+                  {(m.congregacao || m.cargo) && (
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {String(m.congregacao || "")} {m.cargo && m.cargo !== "Sem função / cargo" ? `· ${m.cargo}` : ""}
+                    </div>
+                  )}
+                </div>
+                <Badge variant="outline" className="text-[10px] shrink-0 font-normal">Selecionar</Badge>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChildrenSearchInput({
+  value,
+  onChange,
+  members,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  members: Array<{ id: string; nome: string; congregacao?: string; cargo?: string }>;
+}) {
+  const [childQuery, setChildQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
+  const currentChildren = useMemo(() => {
+    return value ? value.split("; ").map((c) => c.trim()).filter(Boolean) : [];
+  }, [value]);
+
+  const filtered = useMemo(() => {
+    if (!childQuery.trim()) return [];
+    const q = childQuery.toLowerCase().trim();
+    return members
+      .filter((m) => String(m.nome).toLowerCase().includes(q) && !currentChildren.includes(String(m.nome)))
+      .slice(0, 8);
+  }, [members, childQuery, currentChildren]);
+
+  const handleAdd = (nameToAdd: string) => {
+    const trimmed = nameToAdd.trim();
+    if (!trimmed) return;
+    if (!currentChildren.includes(trimmed)) {
+      const next = [...currentChildren, trimmed].join("; ");
+      onChange(next);
+    }
+    setChildQuery("");
+    setIsOpen(false);
+  };
+
+  const handleRemove = (nameToRemove: string) => {
+    const next = currentChildren.filter((c) => c !== nameToRemove).join("; ");
+    onChange(next);
+  };
+
+  return (
+    <div ref={containerRef} className="space-y-2">
+      <div className="relative">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Digite o nome para buscar ou cadastrar filho..."
+              value={childQuery}
+              onChange={(e) => {
+                setChildQuery(e.target.value);
+                setIsOpen(true);
+              }}
+              onFocus={() => {
+                if (childQuery.trim()) setIsOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAdd(childQuery);
+                }
+              }}
+              className="pl-9 pr-8 rounded-xl shadow-sm"
+            />
+            {childQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setChildQuery("");
+                  setIsOpen(false);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleAdd(childQuery)}
+            className="shrink-0 gap-1.5 rounded-xl font-medium"
+          >
+            <Plus className="size-4" />
+            Adicionar
+          </Button>
+        </div>
+
+        {isOpen && filtered.length > 0 && (
+          <div className="absolute left-0 right-0 z-50 mt-1.5 max-h-56 overflow-y-auto rounded-2xl border bg-popover p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95">
+            <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Membros Encontrados
+            </div>
+            {filtered.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => handleAdd(String(m.nome))}
+                className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-accent flex items-center justify-between gap-2 transition-colors cursor-pointer"
+              >
+                <div className="min-w-0">
+                  <div className="font-semibold text-foreground truncate">{String(m.nome)}</div>
+                  {(m.congregacao || m.cargo) && (
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {String(m.congregacao || "")} {m.cargo && m.cargo !== "Sem função / cargo" ? `· ${m.cargo}` : ""}
+                    </div>
+                  )}
+                </div>
+                <Badge variant="outline" className="text-[10px] shrink-0 font-normal">Adicionar Filho</Badge>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Badges dos filhos adicionados */}
+      <div className="flex flex-wrap gap-1.5 min-h-10 p-2.5 rounded-xl border bg-background/50 items-center">
+        {currentChildren.length === 0 ? (
+          <span className="text-xs text-muted-foreground italic">Nenhum filho adicionado ainda.</span>
+        ) : (
+          currentChildren.map((child) => (
+            <Badge key={child} variant="secondary" className="gap-1.5 py-1 px-2.5 rounded-lg text-xs font-normal">
+              <UserRound className="size-3 text-primary shrink-0" />
+              {child}
+              <button
+                type="button"
+                onClick={() => handleRemove(child)}
+                className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+                title="Remover"
+              >
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CrudPage({
   title, subtitle, collection, fields, searchKeys, filterKeys = [], singular, extraAction,
 }: {
@@ -38,7 +305,6 @@ export function CrudPage({
   const [confirmDel, setConfirmDel] = useState<Row | null>(null);
   // Valores controlados do formulário (para campos condicionais e seleção múltipla)
   const [formValues, setFormValues] = useState<Record<string, string>>({});
-  const [childSearch, setChildSearch] = useState("");
 
   const memberNames = useMemo(() => db.members.map((m) => String(m.nome)).sort((a, b) => a.localeCompare(b)), [db.members]);
   const cellNames = useMemo(() => db.cells.map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b)), [db.cells]);
@@ -99,23 +365,6 @@ export function CrudPage({
     }
   };
 
-  const handleAddChild = (key: string) => {
-    const trimmed = childSearch.trim();
-    if (!trimmed) return;
-    const current = (formValues[key] || "").split("; ").filter(Boolean);
-    if (!current.includes(trimmed)) {
-      const next = [...current, trimmed].join("; ");
-      setFormValues((prev) => ({ ...prev, [key]: next }));
-    }
-    setChildSearch("");
-  };
-
-  const handleRemoveChild = (key: string, childToRemove: string) => {
-    const current = (formValues[key] || "").split("; ").filter(Boolean);
-    const next = current.filter((c) => c !== childToRemove).join("; ");
-    setFormValues((prev) => ({ ...prev, [key]: next }));
-  };
-
   const openForm = (row: Row | null) => {
     setEditing(row);
     const initial: Record<string, string> = {};
@@ -135,7 +384,6 @@ export function CrudPage({
       }
     });
     setFormValues(initial);
-    setChildSearch("");
     setOpen(true);
   };
 
@@ -225,13 +473,12 @@ export function CrudPage({
                       </SelectContent>
                     </Select>
                   ) : f.type === "member" ? (
-                    <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
-                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder="Selecione um membro" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none">Nenhum</SelectItem>
-                        {memberNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <MemberSearchInput
+                      value={dv}
+                      onChange={(val) => setFormValues((s) => ({ ...s, [f.key]: val }))}
+                      placeholder={`Digite o nome para buscar ${f.label.toLowerCase()}...`}
+                      members={db.members as Array<{ id: string; nome: string; congregacao?: string; cargo?: string }>}
+                    />
                   ) : f.type === "cell" ? (
                     <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
                       <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder="Selecione uma célula" /></SelectTrigger>
@@ -241,56 +488,11 @@ export function CrudPage({
                       </SelectContent>
                     </Select>
                   ) : f.type === "children" || f.type === "members" || f.key === "filhos" ? (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Digite ou pesquise o nome do filho..."
-                          value={childSearch}
-                          onChange={(e) => setChildSearch(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAddChild(f.key);
-                            }
-                          }}
-                          list={`datalist-members-${f.key}`}
-                          className="rounded-xl shadow-sm"
-                        />
-                        <datalist id={`datalist-members-${f.key}`}>
-                          {memberNames.map((n) => (
-                            <option key={n} value={n} />
-                          ))}
-                        </datalist>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleAddChild(f.key)}
-                          className="shrink-0 gap-1.5 rounded-xl font-medium"
-                        >
-                          <Plus className="size-4" />
-                          Adicionar
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 min-h-10 p-2.5 rounded-xl border bg-background/50 items-center">
-                        {dv.split("; ").filter(Boolean).length === 0 ? (
-                          <span className="text-xs text-muted-foreground italic">Nenhum filho adicionado ainda.</span>
-                        ) : (
-                          dv.split("; ").filter(Boolean).map((child) => (
-                            <Badge key={child} variant="secondary" className="gap-1.5 py-1 px-2.5 rounded-lg text-xs font-normal">
-                              {child}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveChild(f.key, child)}
-                                className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
-                                title="Remover"
-                              >
-                                <X className="size-3" />
-                              </button>
-                            </Badge>
-                          ))
-                        )}
-                      </div>
-                    </div>
+                    <ChildrenSearchInput
+                      value={dv}
+                      onChange={(val) => setFormValues((s) => ({ ...s, [f.key]: val }))}
+                      members={db.members as Array<{ id: string; nome: string; congregacao?: string; cargo?: string }>}
+                    />
                   ) : f.type === "cpf" || f.key === "cpf" ? (
                     <Input
                       id={f.key}
