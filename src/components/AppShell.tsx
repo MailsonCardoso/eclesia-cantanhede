@@ -20,6 +20,7 @@ import {
   Sparkles,
   LogOut,
   Shield,
+  ChevronDown,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth, type UserRole } from "@/lib/auth";
@@ -37,6 +38,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const groups = [
   {
@@ -199,40 +207,17 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <Sidebar collapsible="icon" className="no-print border-r border-sidebar-border">
-          {/* Topo do Sidebar com Logo e Perfil do Usuário Integrado */}
-          <SidebarHeader className="p-3 space-y-3 border-b border-sidebar-border/60">
-            {/* Logo do Sistema */}
-            <div className="flex items-center gap-3 px-1 pt-1">
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-md">
+          {/* Topo do Sidebar com Logo Oficial */}
+          <SidebarHeader className="px-3 py-5">
+            <div className="flex items-center gap-3">
+              <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-lg">
                 <Church className="size-5" />
               </div>
-              <div className="group-data-[collapsible=icon]:hidden min-w-0">
-                <div className="font-display text-base font-semibold text-sidebar-accent-foreground leading-tight truncate">
+              <div className="group-data-[collapsible=icon]:hidden">
+                <div className="font-display text-lg font-semibold text-sidebar-accent-foreground leading-none">
                   EclesiaPro
                 </div>
-                <div className="text-[11px] text-sidebar-foreground/70 leading-none truncate">
-                  Gestão eclesiástica
-                </div>
-              </div>
-            </div>
-
-            {/* Perfil Oficial Integrado no Topo da Sidebar */}
-            <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-2.5 transition-colors">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div
-                  className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20"
-                  title={user?.name}
-                >
-                  {user?.avatar || "US"}
-                </div>
-                <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-                  <div className="font-semibold text-xs text-sidebar-accent-foreground truncate leading-tight">
-                    {user?.name || "Usuário"}
-                  </div>
-                  <div className="text-[10px] text-sidebar-foreground/75 truncate mt-0.5 font-medium">
-                    {user?.cargo || user?.role || "Usuário"}
-                  </div>
-                </div>
+                <div className="text-xs text-sidebar-foreground/70 mt-1">Gestão eclesiástica</div>
               </div>
             </div>
           </SidebarHeader>
@@ -273,13 +258,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Badge indicando o papel ativo do usuário */}
-              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-muted/30 text-xs font-medium text-muted-foreground">
-                <Shield className="size-3.5 text-primary" />
-                <span>{user?.cargo || user?.role}</span>
-              </div>
-
-              {/* Central de Notificações (Sininho posicionado à frente) */}
+              {/* Central de Notificações */}
               <div className="relative">
                 <Button
                   variant="ghost"
@@ -305,22 +284,63 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </Button>
 
-              <div className="h-4 w-px bg-border my-auto mx-0.5" />
+              <div className="h-5 w-px bg-border my-auto mx-1" />
 
-              {/* Botão de Sair fixado no cantinho superior */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  logout();
-                  navigate({ to: "/login" });
-                }}
-                className="h-9 px-2.5 sm:px-3 text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors gap-1.5"
-                title="Sair do sistema (Logout)"
-              >
-                <LogOut className="size-4" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
+              {/* Perfil no Canto Direito com Dropdown para Sair / Logoff */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-muted/70 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/20 text-left border border-transparent hover:border-border cursor-pointer select-none"
+                    title="Menu do Usuário"
+                  >
+                    <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20 shrink-0">
+                      {user?.avatar || "US"}
+                    </div>
+                    <div className="hidden sm:block min-w-0">
+                      <div className="text-xs font-semibold text-foreground leading-tight truncate">
+                        {user?.name || "Usuário"}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground truncate leading-none mt-0.5">
+                        {user?.cargo || user?.role || "Usuário"}
+                      </div>
+                    </div>
+                    <ChevronDown className="size-3.5 text-muted-foreground hidden sm:block shrink-0 opacity-70" />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-60 p-1.5 shadow-xl rounded-2xl">
+                  {/* Informações detalhadas do usuário logado */}
+                  <div className="px-2.5 py-2.5 flex items-center gap-3">
+                    <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-sm ring-1 ring-primary/20 shrink-0">
+                      {user?.avatar || "US"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-foreground truncate">{user?.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+                      <div className="mt-1">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                          <Shield className="size-3" />
+                          {user?.cargo || user?.role}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Opção de Logoff / Sair */}
+                  <DropdownMenuItem
+                    onClick={() => {
+                      logout();
+                      navigate({ to: "/login" });
+                    }}
+                    className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 rounded-xl gap-2 py-2 px-2.5 text-xs font-medium"
+                  >
+                    <LogOut className="size-4" />
+                    <span>Sair da conta (Logoff)</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 
