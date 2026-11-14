@@ -21,7 +21,7 @@ function Departamentos() {
       searchKeys={["nome", "lider"]} filterKeys={["situacao"]}
       fields={[
         { key: "nome", label: "Nome", table: true, required: true },
-        { key: "lider", label: "Líder responsável", table: true },
+        { key: "lider", label: "Líder responsável", type: "leader", table: true },
         { key: "integrantes", label: "Nº de integrantes", type: "number", table: true },
         { key: "situacao", label: "Situação", type: "select", options: ["Ativo", "Inativo"], table: true },
         { key: "descricao", label: "Descrição", type: "textarea" },

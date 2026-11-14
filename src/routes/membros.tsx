@@ -45,7 +45,7 @@ function Membros() {
           label: "Cargo / função",
           type: "select",
           options: [
-            "Membro",
+            "Sem função / cargo",
             "Diácono",
             "Obreiro",
             "Ministro de louvor",
@@ -53,7 +53,7 @@ function Membros() {
             "Instrumentista",
             "Financeiro",
             "Secretaria",
-            "Líder de pequeno grupo",
+            "Líder",
           ],
           table: true,
         },

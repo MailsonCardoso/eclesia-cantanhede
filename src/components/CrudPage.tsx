@@ -16,7 +16,7 @@ import { toast } from "sonner";
 export type Field = {
   key: string;
   label: string;
-  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell" | "department" | "time" | "cpf" | "phone" | "cep" | "children";
+  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell" | "department" | "leader" | "time" | "cpf" | "phone" | "cep" | "children";
   options?: string[];
   table?: boolean;
   required?: boolean;
@@ -43,6 +43,15 @@ export function CrudPage({
   const memberNames = useMemo(() => db.members.map((m) => String(m.nome)).sort((a, b) => a.localeCompare(b)), [db.members]);
   const cellNames = useMemo(() => db.cells.map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b)), [db.cells]);
   const departmentNames = useMemo(() => (db.departments || []).map((d) => String(d.nome)).sort((a, b) => a.localeCompare(b)), [db.departments]);
+  const leaderNames = useMemo(() => {
+    return db.members
+      .filter((m) => {
+        const c = String(m.cargo || "").trim().toLowerCase();
+        return c === "líder" || c === "lider" || c.includes("líder") || c.includes("lider");
+      })
+      .map((m) => String(m.nome))
+      .sort((a, b) => a.localeCompare(b));
+  }, [db.members]);
 
   const rows = useMemo(() => db[collection].filter((r) =>
     (!q || searchKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase()))) &&
@@ -141,7 +150,7 @@ export function CrudPage({
         data[f.key] = formValues[f.key] ?? "";
         return;
       }
-      if (f.type === "member" || f.type === "select" || f.type === "cell" || f.type === "department") {
+      if (f.type === "member" || f.type === "select" || f.type === "cell" || f.type === "department" || f.type === "leader") {
         data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? "");
         return;
       }
@@ -205,6 +214,14 @@ export function CrudPage({
                       <SelectContent>
                         <SelectItem value="__none">Nenhum / Geral</SelectItem>
                         {departmentNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : f.type === "leader" ? (
+                    <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
+                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder="Selecione o líder responsável" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Nenhum</SelectItem>
+                        {leaderNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   ) : f.type === "member" ? (
