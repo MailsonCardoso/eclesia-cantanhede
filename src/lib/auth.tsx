@@ -132,53 +132,6 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     status: "Ativo",
     createdAt: "2026-01-01T08:00:00Z",
   },
-  {
-    id: "usr_pastor",
-    name: "Pr. João Batista",
-    email: "pastor@eclesiapro.com",
-    cpf: "103.203.303-33",
-    role: "Pastor",
-    cargo: "Pastor Presidente",
-    avatar: "PB",
-    status: "Ativo",
-    createdAt: "2026-01-05T09:00:00Z",
-  },
-  {
-    id: "usr_secretaria",
-    memberId: "m_ana",
-    name: "Ana Beatriz Souza",
-    email: "secretaria@eclesiapro.com",
-    cpf: "102.202.302-22",
-    role: "Secretaria",
-    cargo: "Secretária Executiva",
-    avatar: "AS",
-    status: "Ativo",
-    createdAt: "2026-01-10T10:00:00Z",
-  },
-  {
-    id: "usr_financeiro",
-    memberId: "m_carlos",
-    name: "Carlos Eduardo Lima",
-    email: "financeiro@eclesiapro.com",
-    cpf: "101.201.301-11",
-    role: "Tesoureiro",
-    cargo: "Tesoureiro Geral",
-    avatar: "CL",
-    status: "Ativo",
-    createdAt: "2026-01-12T14:30:00Z",
-  },
-  {
-    id: "usr_lider",
-    memberId: "m_lucas",
-    name: "Lucas Barbosa",
-    email: "lider@eclesiapro.com",
-    cpf: "107.207.307-77",
-    role: "Líder",
-    cargo: "Líder de Célula",
-    avatar: "LB",
-    status: "Ativo",
-    createdAt: "2026-01-15T16:00:00Z",
-  },
 ];
 
 export function cleanCPF(cpf: string): string {
@@ -225,25 +178,33 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const AUTH_STORAGE_KEY = "eclesiapro_auth_session";
-const USERS_STORAGE_KEY = "eclesiapro_users_list_v2";
+const USERS_STORAGE_KEY = "eclesiapro_users_master_v1";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [users, setUsers] = useState<UserAccount[]>(INITIAL_ACCOUNTS);
   const [isLoading, setIsLoading] = useState(true);
 
   // Carrega lista de usuários e sessão salva
   useEffect(() => {
     try {
+      // Remove listas antigas de demonstração para garantir somente o Administrador
+      localStorage.removeItem("eclesiapro_users");
+      localStorage.removeItem("eclesiapro_users_list_v2");
+
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
       if (storedUsers) {
         const parsed = JSON.parse(storedUsers);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Garante que todas as contas oficiais padrão continuem presentes e acessíveis
-          const existingIds = new Set(parsed.map((p) => p.id));
-          const missingDefaults = INITIAL_ACCOUNTS.filter((init) => !existingIds.has(init.id));
-          const merged = [...parsed, ...missingDefaults];
-          setUsers(merged);
+          // Filtra contas antigas de mock para manter apenas usuários reais e o Administrador
+          const filtered = parsed.filter(
+            (p) => !["usr_pastor", "usr_secretaria", "usr_financeiro", "usr_lider"].includes(p.id)
+          );
+          // Garante que o Administrador mestre sempre esteja na lista
+          const hasAdmin = filtered.some((p) => p.role === "Administrador");
+          const finalList = hasAdmin ? filtered : [...INITIAL_ACCOUNTS, ...filtered];
+          setUsers(finalList);
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(finalList));
         } else {
           setUsers(INITIAL_ACCOUNTS);
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_ACCOUNTS));
@@ -288,35 +249,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Informe seu e-mail (ou CPF) e a senha de acesso." };
     }
 
-    // Busca nas contas cadastradas
+    // Busca nas contas cadastradas ativas
     const match = users.find((acc) => {
-      // Verifica se a conta está ativa
       if (acc.status === "Inativo") return false;
 
-      // Correspondência do identificador (E-mail, alias institucional ou CPF)
-      const emailMatches =
-        acc.email.toLowerCase() === cleanId ||
-        (acc.role === "Secretaria" && (cleanId === "secretaria@eclesiapro.com" || cleanId === "ana.souza@email.com")) ||
-        (acc.role === "Tesoureiro" && (cleanId === "financeiro@eclesiapro.com" || cleanId === "carlos.lima@email.com")) ||
-        (acc.role === "Pastor" && cleanId === "pastor@eclesiapro.com") ||
-        (acc.role === "Líder" && (cleanId === "lider@eclesiapro.com" || cleanId === "lucas.barbosa@email.com")) ||
-        (acc.role === "Administrador" && cleanId === "admin@eclesiapro.com");
-
+      // Correspondência do identificador (E-mail ou CPF)
+      const emailMatches = acc.email.toLowerCase() === cleanId;
       const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
       if (!emailMatches && !cpfMatches) return false;
 
-      // Correspondência da senha:
-      // 1. CPF do membro (com ou sem pontuação)
-      // 2. Senhas padrão institucionais (admin123, pastor123, secretaria123, financeiro123, lider123)
+      // Correspondência da senha (CPF como senha, com ou sem pontuação, ou senha mestre do admin)
       const passMatchesCpf = cleanPass === acc.cpf || (cleanPassDigits.length >= 10 && cleanCPF(acc.cpf) === cleanPassDigits);
-      const passMatchesRoleDefault =
-        (acc.role === "Administrador" && cleanPass === "admin123") ||
-        (acc.role === "Pastor" && cleanPass === "pastor123") ||
-        (acc.role === "Secretaria" && cleanPass === "secretaria123") ||
-        (acc.role === "Tesoureiro" && cleanPass === "financeiro123") ||
-        (acc.role === "Líder" && cleanPass === "lider123");
+      const passMatchesAdminMaster = acc.role === "Administrador" && cleanPass === "admin123";
 
-      return passMatchesCpf || passMatchesRoleDefault;
+      return passMatchesCpf || passMatchesAdminMaster;
     });
 
     if (match) {
