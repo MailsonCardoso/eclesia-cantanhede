@@ -172,6 +172,24 @@
 
 @utility bg-hero { background-image: var(--gradient-hero); }
 @utility bg-gradient-primary { background-image: var(--gradient-primary); }
+
+/* Borda superior em gradiente (estilo premium) para modais e cartões de destaque */
+@utility gradient-top {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: inherit;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: var(--gradient-primary);
+    pointer-events: none;
+  }
+}
 @utility animate-rise { animation: rise 0.45s ease-out both; }
 @utility card-hover {
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
