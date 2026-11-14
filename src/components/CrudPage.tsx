@@ -113,7 +113,7 @@ export function CrudPage({
           </div>
         </div>
 
-        <div className="rounded-3xl border bg-card p-6 md:p-8 shadow-card">
+        <div className="rounded-3xl border bg-card p-6 md:p-8 shadow-card gradient-top">
           <form id="crud-form" onSubmit={save} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {visibleFields.map((f) => {
               const dv = formValues[f.key] ?? "";
