@@ -18,15 +18,11 @@ import {
   BookOpen,
   Layers,
   Sparkles,
-  Trash2,
   LogOut,
-  ShieldCheck,
-  UserRound,
+  Shield,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { useStore } from "@/lib/store";
-import { useAuth } from "@/lib/auth";
-import { toast } from "sonner";
+import { useAuth, type UserRole } from "@/lib/auth";
 import {
   Sidebar,
   SidebarContent,
@@ -34,7 +30,6 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -42,7 +37,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 const groups = [
   {
@@ -85,6 +79,58 @@ const groups = [
   },
 ] as const;
 
+function canAccessRoute(role: UserRole | undefined, url: string): boolean {
+  if (!role || role === "Administrador") return true;
+
+  if (url === "/") return true;
+
+  switch (role) {
+    case "Pastor":
+      return (
+        url.startsWith("/pastor") ||
+        url === "/agenda-pastoral" ||
+        url === "/membros" ||
+        url === "/congregacoes" ||
+        url === "/departamentos" ||
+        url === "/celulas" ||
+        url === "/contribuicoes" ||
+        url === "/financeiro" ||
+        url === "/relatorio-membros" ||
+        url === "/agenda-eventos"
+      );
+
+    case "Secretaria":
+      return (
+        url === "/membros" ||
+        url === "/congregacoes" ||
+        url === "/departamentos" ||
+        url === "/celulas" ||
+        url === "/inventario" ||
+        url === "/relatorio-membros" ||
+        url === "/agenda-eventos"
+      );
+
+    case "Tesoureiro":
+      return (
+        url === "/financeiro" ||
+        url === "/contribuicoes" ||
+        url === "/analise-financeira" ||
+        url === "/inventario" ||
+        url === "/relatorio-membros"
+      );
+
+    case "Líder":
+      return (
+        url === "/celulas" ||
+        url === "/membros" ||
+        url === "/agenda-eventos"
+      );
+
+    default:
+      return true;
+  }
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
@@ -120,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
             <Church className="size-6" />
           </div>
-          <p className="text-xs text-muted-foreground">Carregando EclesiaPro...</p>
+          <p className="text-xs text-muted-foreground">Iniciando EclesiaPro...</p>
         </div>
       </div>
     );
@@ -141,41 +187,74 @@ export function AppShell({ children }: { children: ReactNode }) {
       .flatMap((g) => g.items as readonly { title: string; url: string }[])
       .find((i) => i.url === path)?.title ?? "EclesiaPro";
 
-  const { clearAll, loadDemoData } = useStore();
-
-  const handleClearAll = () => {
-    if (window.confirm("Atenção: deseja limpar todos os dados mockados de todas as telas para iniciar os testes com a base vazia?")) {
-      clearAll();
-      toast.success("Todos os dados mockados foram limpos! Agora você pode testar com dados reais.");
-    }
-  };
-
-  const handleLoadDemo = () => {
-    if (window.confirm("Deseja restaurar os dados de demonstração/exemplo para testes?")) {
-      loadDemoData();
-      toast.success("Dados de demonstração carregados com sucesso!");
-    }
-  };
+  // Filtra os menus de acordo com as permissões do perfil autenticado
+  const visibleGroups = groups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) => canAccessRoute(user?.role, item.url)),
+    }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <Sidebar collapsible="icon" className="no-print">
-          <SidebarHeader className="px-3 py-5">
-            <div className="flex items-center gap-3">
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-lg">
+        <Sidebar collapsible="icon" className="no-print border-r border-sidebar-border">
+          {/* Topo do Sidebar com Logo e Perfil do Usuário Integrado */}
+          <SidebarHeader className="p-3 space-y-3 border-b border-sidebar-border/60">
+            {/* Logo do Sistema */}
+            <div className="flex items-center gap-3 px-1 pt-1">
+              <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-md">
                 <Church className="size-5" />
               </div>
-              <div className="group-data-[collapsible=icon]:hidden">
-                <div className="font-display text-lg font-semibold text-sidebar-accent-foreground leading-none">
+              <div className="group-data-[collapsible=icon]:hidden min-w-0">
+                <div className="font-display text-base font-semibold text-sidebar-accent-foreground leading-tight truncate">
                   EclesiaPro
                 </div>
-                <div className="text-xs text-sidebar-foreground/70 mt-1">Gestão eclesiástica</div>
+                <div className="text-[11px] text-sidebar-foreground/70 leading-none truncate">
+                  Gestão eclesiástica
+                </div>
+              </div>
+            </div>
+
+            {/* Perfil Oficial Integrado no Topo da Sidebar */}
+            <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-2.5 transition-colors">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20"
+                    title={user?.name}
+                  >
+                    {user?.avatar || "US"}
+                  </div>
+                  <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+                    <div className="font-semibold text-xs text-sidebar-accent-foreground truncate leading-tight">
+                      {user?.name || "Usuário"}
+                    </div>
+                    <div className="text-[10px] text-sidebar-foreground/75 truncate mt-0.5 font-medium">
+                      {user?.cargo || user?.role || "Usuário"}
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    logout();
+                    navigate({ to: "/login" });
+                  }}
+                  className="size-7 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 group-data-[collapsible=icon]:hidden shrink-0"
+                  title="Sair do sistema (Logout)"
+                >
+                  <LogOut className="size-3.5" />
+                </Button>
               </div>
             </div>
           </SidebarHeader>
+
+          {/* Menus de Navegação */}
           <SidebarContent>
-            {groups.map((g) => (
+            {visibleGroups.map((g) => (
               <SidebarGroup key={g.label}>
                 <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -198,36 +277,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SidebarGroup>
             ))}
           </SidebarContent>
-          <SidebarFooter className="border-t p-3">
-            <div className="flex items-center justify-between gap-2 rounded-2xl border bg-muted/40 p-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary font-bold text-xs border border-primary/20">
-                  {user?.avatar || "AD"}
-                </div>
-                <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-                  <div className="font-semibold text-xs text-foreground truncate">
-                    {user?.name || "Administrador"}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground truncate">
-                    {user?.email || "admin@eclesiapro.com"}
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  logout();
-                  navigate({ to: "/login" });
-                }}
-                className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 group-data-[collapsible=icon]:hidden shrink-0"
-                title="Sair da conta"
-              >
-                <LogOut className="size-3.5" />
-              </Button>
-            </div>
-          </SidebarFooter>
         </Sidebar>
 
         <div className="flex flex-1 flex-col min-w-0">
@@ -237,74 +286,40 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="h-4 w-px bg-border" />
               <div className="font-display text-lg font-semibold truncate text-foreground">{pageTitle}</div>
             </div>
+
             <div className="flex items-center gap-2">
-              {/* Perfil do Administrador Logado */}
-              <div className="hidden sm:flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl border bg-card/60 shadow-sm">
-                <div className="grid size-6 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-[10.5px]">
-                  {user?.avatar || "AD"}
-                </div>
-                <div className="text-left hidden md:block">
-                  <div className="text-xs font-semibold text-foreground leading-none">
-                    {user?.name || "Administrador"}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground leading-tight pt-0.5">
-                    {user?.role || "Admin"}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    logout();
-                    navigate({ to: "/login" });
-                  }}
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1 rounded-lg ml-1"
-                  title="Sair da conta"
-                >
-                  <LogOut className="size-3.5" />
-                  <span className="hidden xl:inline">Sair</span>
-                </Button>
+              {/* Badge indicando o papel ativo do usuário em tela grande */}
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-muted/30 text-xs font-medium text-muted-foreground">
+                <Shield className="size-3.5 text-primary" />
+                <span>{user?.cargo || user?.role}</span>
               </div>
 
-              <div className="h-4 w-px bg-border hidden sm:block" />
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearAll}
-                className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/40"
-                title="Limpar todos os dados mockados para testar com base vazia"
-              >
-                <Trash2 className="size-3.5" />
-                <span className="hidden sm:inline">Limpar Dados</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLoadDemo}
-                className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary"
-                title="Restaurar dados de demonstração/exemplo"
-              >
-                <Sparkles className="size-3.5 text-amber-500" />
-                <span className="hidden md:inline">Restaurar Demo</span>
-              </Button>
+              {/* Botão de Alternar Modo Escuro / Claro */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setDark((v) => !v)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground size-9 rounded-xl"
                 aria-label="Alternar tema"
               >
                 {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </Button>
+
+              {/* Central de Notificações */}
               <div className="relative">
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" aria-label="Notificações">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground size-9 rounded-xl"
+                  aria-label="Notificações"
+                >
                   <Bell className="size-4" />
                 </Button>
-                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
+                <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
               </div>
             </div>
           </header>
+
           <main className="flex-1 p-4 md:p-8 min-w-0">{children}</main>
         </div>
       </div>

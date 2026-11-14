@@ -8,16 +8,12 @@ import {
   EyeOff,
   LogIn,
   ShieldCheck,
-  Sparkles,
-  KeyRound,
-  CheckCircle2,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { useAuth, ADMIN_CREDENTIALS } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -67,14 +63,7 @@ function LoginPage() {
         setErrorMessage(res.error || "Erro ao realizar login.");
         toast.error(res.error || "Credenciais inválidas.");
       }
-    }, 400);
-  };
-
-  const handleFillAdmin = () => {
-    setEmail(ADMIN_CREDENTIALS.email);
-    setPassword(ADMIN_CREDENTIALS.password);
-    setErrorMessage("");
-    toast.info("Credenciais de Administrador preenchidas!");
+    }, 300);
   };
 
   return (
@@ -94,16 +83,16 @@ function LoginPage() {
             EclesiaPro
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Plataforma de Gestão Eclesiástica e Administrativa
+            Plataforma de Gestão Eclesiástica Integrada
           </p>
         </div>
 
         {/* Card do Formulário de Login */}
         <div className="rounded-3xl border bg-card p-6 sm:p-8 shadow-card gradient-top relative backdrop-blur-sm">
-          <div className="space-y-1 mb-6">
-            <h2 className="text-lg font-bold text-foreground">Acesso ao Sistema</h2>
+          <div className="space-y-1 mb-6 text-center sm:text-left">
+            <h2 className="text-lg font-bold text-foreground">Acesso ao Painel</h2>
             <p className="text-xs text-muted-foreground">
-              Insira suas credenciais para gerenciar a congregação.
+              Insira seu e-mail e senha cadastrados para entrar no sistema.
             </p>
           </div>
 
@@ -124,11 +113,12 @@ function LoginPage() {
                   id="email"
                   type="email"
                   required
-                  placeholder="admin@eclesiapro.com"
+                  placeholder="seu.email@eclesiapro.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 rounded-xl shadow-sm h-10 text-sm"
+                  className="pl-10 rounded-xl shadow-sm h-11 text-sm"
                   autoComplete="username"
+                  autoFocus
                 />
               </div>
             </div>
@@ -138,7 +128,6 @@ function LoginPage() {
                 <Label htmlFor="password" className="text-xs font-semibold">
                   Senha
                 </Label>
-                <span className="text-[11px] text-muted-foreground">Senha padrão: admin123</span>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -149,7 +138,7 @@ function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 rounded-xl shadow-sm h-10 text-sm"
+                  className="pl-10 pr-10 rounded-xl shadow-sm h-11 text-sm"
                   autoComplete="current-password"
                 />
                 <button
@@ -186,52 +175,18 @@ function LoginPage() {
               ) : (
                 <>
                   <LogIn className="size-4" />
-                  <span>Acessar Painel</span>
+                  <span>Entrar no Sistema</span>
                   <ArrowRight className="size-3.5 ml-auto" />
                 </>
               )}
             </Button>
           </form>
-
-          {/* Atalho Prático com as Credenciais de Administrador */}
-          <div className="mt-6 pt-5 border-t space-y-3">
-            <div className="rounded-2xl border bg-muted/40 p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
-                  <ShieldCheck className="size-3.5 text-primary" /> Perfil de Administrador
-                </span>
-                <Badge variant="outline" className="text-[10px] bg-background">
-                  Acesso Total
-                </Badge>
-              </div>
-              <div className="text-[11px] text-muted-foreground space-y-0.5">
-                <div>
-                  <span className="font-medium text-foreground">E-mail:</span>{" "}
-                  <code>admin@eclesiapro.com</code>
-                </div>
-                <div>
-                  <span className="font-medium text-foreground">Senha:</span>{" "}
-                  <code>admin123</code>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleFillAdmin}
-                className="w-full h-8 text-xs gap-1.5 rounded-lg border-primary/30 text-primary hover:bg-primary/10"
-              >
-                <Sparkles className="size-3.5" />
-                Preencher dados de Administrador
-              </Button>
-            </div>
-          </div>
         </div>
 
-        {/* Rodapé Seguro */}
-        <div className="text-center text-[11px] text-muted-foreground flex items-center justify-center gap-2">
-          <KeyRound className="size-3 text-muted-foreground/70" />
-          <span>EclesiaPro &copy; {new Date().getFullYear()} &middot; Ambiente protegido e criptografado</span>
+        {/* Rodapé Seguro de Produção */}
+        <div className="text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+          <ShieldCheck className="size-3.5 text-muted-foreground/80" />
+          <span>Ambiente institucional protegido &bull; EclesiaPro &copy; {new Date().getFullYear()}</span>
         </div>
       </div>
     </div>
