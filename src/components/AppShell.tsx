@@ -20,6 +20,7 @@ import {
   Sparkles,
   LogOut,
   Shield,
+  ShieldCheck,
   ChevronDown,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -64,6 +65,7 @@ const groups = [
     label: "Gestão",
     items: [
       { title: "Membros", url: "/membros", icon: Users },
+      { title: "Usuários & Acessos", url: "/usuarios", icon: ShieldCheck },
       { title: "Congregações", url: "/congregacoes", icon: Church },
       { title: "Departamentos", url: "/departamentos", icon: Network },
       { title: "Células", url: "/celulas", icon: Home },

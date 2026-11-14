@@ -105,15 +105,15 @@ function LoginPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-semibold">
-                E-mail institucional
+                E-mail ou CPF
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   required
-                  placeholder="seu.email@eclesiapro.com"
+                  placeholder="seu.email@eclesiapro.com ou 000.000.000-00"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 rounded-xl shadow-sm h-11 text-sm"
@@ -126,7 +126,7 @@ function LoginPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-xs font-semibold">
-                  Senha
+                  Senha de Acesso (CPF)
                 </Label>
               </div>
               <div className="relative">
@@ -135,7 +135,7 @@ function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder="••••••••"
+                  placeholder="Digite seu CPF cadastrado"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 rounded-xl shadow-sm h-11 text-sm"

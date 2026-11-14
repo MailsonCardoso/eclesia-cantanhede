@@ -15,6 +15,7 @@ const routes = [
   '/financeiro',
   '/inventario',
   '/membros',
+  '/usuarios',
   '/pastor',
   '/pastor/series',
   '/pastor/insights',

@@ -22,6 +22,7 @@ import { Route as InventarioRouteImport } from './routes/inventario'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MembrosRouteImport } from './routes/membros'
 import { Route as RelatorioMembrosRouteImport } from './routes/relatorio-membros'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
 import { Route as PastorIndexRouteImport } from './routes/pastor/index'
 import { Route as PastorInsightsRouteImport } from './routes/pastor/insights'
 import { Route as PastorSeriesRouteImport } from './routes/pastor/series'
@@ -92,6 +93,11 @@ const RelatorioMembrosRoute = RelatorioMembrosRouteImport.update({
   path: '/relatorio-membros',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PastorIndexRoute = PastorIndexRouteImport.update({
   id: '/pastor/',
   path: '/pastor/',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
+  '/usuarios': typeof UsuariosRoute
   '/pastor/insights': typeof PastorInsightsRoute
   '/pastor/series': typeof PastorSeriesRoute
   '/pastor/': typeof PastorIndexRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
+  '/usuarios': typeof UsuariosRoute
   '/pastor/insights': typeof PastorInsightsRoute
   '/pastor/series': typeof PastorSeriesRoute
   '/pastor': typeof PastorIndexRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
+  '/usuarios': typeof UsuariosRoute
   '/pastor/insights': typeof PastorInsightsRoute
   '/pastor/series': typeof PastorSeriesRoute
   '/pastor/': typeof PastorIndexRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/membros'
     | '/relatorio-membros'
+    | '/usuarios'
     | '/pastor/insights'
     | '/pastor/series'
     | '/pastor/'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/membros'
     | '/relatorio-membros'
+    | '/usuarios'
     | '/pastor/insights'
     | '/pastor/series'
     | '/pastor'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/membros'
     | '/relatorio-membros'
+    | '/usuarios'
     | '/pastor/insights'
     | '/pastor/series'
     | '/pastor/'
@@ -245,6 +257,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MembrosRoute: typeof MembrosRoute
   RelatorioMembrosRoute: typeof RelatorioMembrosRoute
+  UsuariosRoute: typeof UsuariosRoute
   PastorInsightsRoute: typeof PastorInsightsRoute
   PastorSeriesRoute: typeof PastorSeriesRoute
   PastorIndexRoute: typeof PastorIndexRoute
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RelatorioMembrosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pastor/': {
       id: '/pastor/'
       path: '/pastor'
@@ -389,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MembrosRoute: MembrosRoute,
   RelatorioMembrosRoute: RelatorioMembrosRoute,
+  UsuariosRoute: UsuariosRoute,
   PastorInsightsRoute: PastorInsightsRoute,
   PastorSeriesRoute: PastorSeriesRoute,
   PastorIndexRoute: PastorIndexRoute,
