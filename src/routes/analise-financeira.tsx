@@ -368,7 +368,7 @@ function BalanceteView({
   onSwitchToDre: () => void;
   db: ReturnType<typeof useStore>["db"];
 }) {
-  const accounts = ["Banco do Brasil", "Nubank", "Itaú", "Santander", "Caixa Principal / Espécie"];
+  const accounts = ["Banco do Brasil", "Caixa Geral / Espécie"];
 
   const accountBalances = useMemo(() => {
     return accounts.map((acc) => {
@@ -456,7 +456,7 @@ function BalanceteView({
         <p className="text-xs text-muted-foreground leading-relaxed">
           O <strong>Balancete de Verificação</strong> é a fotografia da posição patrimonial da igreja. Enquanto a DRE analisa o resultado
           do período (se sobrou ou faltou recurso), o Balancete demonstra <strong>onde o dinheiro está depositado</strong> (discriminando
-          os saldos nas contas bancárias do Banco do Brasil, Nubank, Itaú, Santander e Caixa em Espécie) e detalha a origem das entradas
+          os saldos na conta bancária do Banco do Brasil e Caixa em Espécie) e detalha a origem das entradas
           por forma de pagamento e por congregação. É o relatório oficial para auditoria do <strong>Conselho Fiscal</strong>.
         </p>
       </div>
@@ -740,7 +740,7 @@ function Analise() {
               </div>
               <h3 className="text-lg font-bold text-foreground">Balancete de Contas</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Demonstra a posição patrimonial, saldos por contas bancárias (Banco do Brasil, Nubank, Itaú, Santander), caixa físico e movimentações por canal.
+                Demonstra a posição patrimonial, saldos na conta bancária (Banco do Brasil), caixa físico e movimentações por canal.
               </p>
             </div>
             <Button variant="outline" onClick={() => setActiveView("balancete")} className="w-full gap-2 rounded-xl">

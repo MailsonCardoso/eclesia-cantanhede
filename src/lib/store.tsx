@@ -827,7 +827,7 @@ export function seed(): DB {
         valor: Math.round((v as number) * (0.85 + ((m * 3 + j) % 7) / 20)),
         data: d(-m * 30 - j),
         pagamento: ["PIX", "Dinheiro", "Transferência"][j % 3],
-        conta: "Conta principal",
+        conta: "Banco do Brasil",
         congregacao: congs[j % 3],
       });
     });

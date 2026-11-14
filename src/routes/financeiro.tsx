@@ -97,7 +97,7 @@ function Financeiro() {
             key: "conta",
             label: "Conta bancária",
             type: "select",
-            options: ["Banco do Brasil", "Nubank", "Itaú", "Santander"],
+            options: ["Banco do Brasil"],
           },
           { key: "congregacao", label: "Congregação", type: "congregation", table: true },
         ]}
