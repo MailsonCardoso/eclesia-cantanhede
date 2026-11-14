@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
  * que é servido pela API Laravel (ex.: GET/POST/PUT/DELETE /api/members).
  */
 
-type V = string | number | boolean | object | undefined | null;
+type V = string | number | boolean | undefined;
 export type Row = {
   id: string;
   nome?: V;
