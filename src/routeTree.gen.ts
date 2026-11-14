@@ -19,6 +19,7 @@ import { Route as ContribuicoesRouteImport } from './routes/contribuicoes'
 import { Route as DepartamentosRouteImport } from './routes/departamentos'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as InventarioRouteImport } from './routes/inventario'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MembrosRouteImport } from './routes/membros'
 import { Route as RelatorioMembrosRouteImport } from './routes/relatorio-membros'
 import { Route as PastorIndexRouteImport } from './routes/pastor/index'
@@ -76,6 +77,11 @@ const InventarioRoute = InventarioRouteImport.update({
   path: '/inventario',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembrosRoute = MembrosRouteImport.update({
   id: '/membros',
   path: '/membros',
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/departamentos': typeof DepartamentosRoute
   '/financeiro': typeof FinanceiroRoute
   '/inventario': typeof InventarioRoute
+  '/login': typeof LoginRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
   '/pastor/insights': typeof PastorInsightsRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/departamentos': typeof DepartamentosRoute
   '/financeiro': typeof FinanceiroRoute
   '/inventario': typeof InventarioRoute
+  '/login': typeof LoginRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
   '/pastor/insights': typeof PastorInsightsRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/departamentos': typeof DepartamentosRoute
   '/financeiro': typeof FinanceiroRoute
   '/inventario': typeof InventarioRoute
+  '/login': typeof LoginRoute
   '/membros': typeof MembrosRoute
   '/relatorio-membros': typeof RelatorioMembrosRoute
   '/pastor/insights': typeof PastorInsightsRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/departamentos'
     | '/financeiro'
     | '/inventario'
+    | '/login'
     | '/membros'
     | '/relatorio-membros'
     | '/pastor/insights'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/departamentos'
     | '/financeiro'
     | '/inventario'
+    | '/login'
     | '/membros'
     | '/relatorio-membros'
     | '/pastor/insights'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/departamentos'
     | '/financeiro'
     | '/inventario'
+    | '/login'
     | '/membros'
     | '/relatorio-membros'
     | '/pastor/insights'
@@ -230,6 +242,7 @@ export interface RootRouteChildren {
   DepartamentosRoute: typeof DepartamentosRoute
   FinanceiroRoute: typeof FinanceiroRoute
   InventarioRoute: typeof InventarioRoute
+  LoginRoute: typeof LoginRoute
   MembrosRoute: typeof MembrosRoute
   RelatorioMembrosRoute: typeof RelatorioMembrosRoute
   PastorInsightsRoute: typeof PastorInsightsRoute
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventarioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/membros': {
       id: '/membros'
       path: '/membros'
@@ -366,6 +386,7 @@ const rootRouteChildren: RootRouteChildren = {
   DepartamentosRoute: DepartamentosRoute,
   FinanceiroRoute: FinanceiroRoute,
   InventarioRoute: InventarioRoute,
+  LoginRoute: LoginRoute,
   MembrosRoute: MembrosRoute,
   RelatorioMembrosRoute: RelatorioMembrosRoute,
   PastorInsightsRoute: PastorInsightsRoute,

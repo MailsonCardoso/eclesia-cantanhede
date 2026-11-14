@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Users,
@@ -19,9 +19,13 @@ import {
   Layers,
   Sparkles,
   Trash2,
+  LogOut,
+  ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   Sidebar,
@@ -30,6 +34,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -37,6 +42,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const groups = [
   {
@@ -81,6 +87,8 @@ const groups = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const navigate = useNavigate();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   // Dark mode premium é o padrão; o modo claro fica disponível no botão do cabeçalho.
   const [dark, setDark] = useState(true);
@@ -91,6 +99,37 @@ export function AppShell({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
+
+  // Redireciona para /login quando não estiver autenticado
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && path !== "/login") {
+      navigate({ to: "/login" });
+    }
+  }, [isLoading, isAuthenticated, path, navigate]);
+
+  // Se estiver na tela de login, renderiza em tela cheia sem sidebar nem header
+  if (path === "/login") {
+    return <div className="w-full min-h-screen bg-background text-foreground">{children}</div>;
+  }
+
+  // Se estiver carregando sessão inicial
+  if (isLoading && !isAuthenticated) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 animate-pulse">
+          <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Church className="size-6" />
+          </div>
+          <p className="text-xs text-muted-foreground">Carregando EclesiaPro...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se não estiver logado, não renderiza as telas protegidas enquanto redireciona
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // Se estiver na tela imersiva do Púlpito, renderiza sem sidebar nem headers para tela limpa
   if (path.startsWith("/pastor/pulpito")) {
@@ -159,6 +198,36 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SidebarGroup>
             ))}
           </SidebarContent>
+          <SidebarFooter className="border-t p-3">
+            <div className="flex items-center justify-between gap-2 rounded-2xl border bg-muted/40 p-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary font-bold text-xs border border-primary/20">
+                  {user?.avatar || "AD"}
+                </div>
+                <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+                  <div className="font-semibold text-xs text-foreground truncate">
+                    {user?.name || "Administrador"}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground truncate">
+                    {user?.email || "admin@eclesiapro.com"}
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  logout();
+                  navigate({ to: "/login" });
+                }}
+                className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 group-data-[collapsible=icon]:hidden shrink-0"
+                title="Sair da conta"
+              >
+                <LogOut className="size-3.5" />
+              </Button>
+            </div>
+          </SidebarFooter>
         </Sidebar>
 
         <div className="flex flex-1 flex-col min-w-0">
@@ -169,6 +238,36 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="font-display text-lg font-semibold truncate text-foreground">{pageTitle}</div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Perfil do Administrador Logado */}
+              <div className="hidden sm:flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl border bg-card/60 shadow-sm">
+                <div className="grid size-6 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-[10.5px]">
+                  {user?.avatar || "AD"}
+                </div>
+                <div className="text-left hidden md:block">
+                  <div className="text-xs font-semibold text-foreground leading-none">
+                    {user?.name || "Administrador"}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground leading-tight pt-0.5">
+                    {user?.role || "Admin"}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    logout();
+                    navigate({ to: "/login" });
+                  }}
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1 rounded-lg ml-1"
+                  title="Sair da conta"
+                >
+                  <LogOut className="size-3.5" />
+                  <span className="hidden xl:inline">Sair</span>
+                </Button>
+              </div>
+
+              <div className="h-4 w-px bg-border hidden sm:block" />
+
               <Button
                 variant="outline"
                 size="sm"

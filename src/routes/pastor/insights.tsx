@@ -361,11 +361,10 @@ function PastorInsightsPage() {
 
           <button
             onClick={() => setActiveTag(null)}
-            className={`rounded-full px-2.5 py-1 font-medium transition-all ${
-              activeTag === null
-                ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
-            }`}
+            className={`rounded-full px-2.5 py-1 font-medium transition-all ${activeTag === null
+              ? "bg-primary text-primary-foreground font-bold shadow-sm"
+              : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
+              }`}
           >
             Todas ({insights.length})
           </button>
@@ -374,11 +373,10 @@ function PastorInsightsPage() {
             <button
               key={tag}
               onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`rounded-full px-2.5 py-1 font-medium transition-all ${
-                activeTag === tag
-                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                  : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
-              }`}
+              className={`rounded-full px-2.5 py-1 font-medium transition-all ${activeTag === tag
+                ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
+                }`}
             >
               #{tag}
             </button>

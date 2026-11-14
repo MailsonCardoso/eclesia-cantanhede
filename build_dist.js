@@ -4,6 +4,7 @@ import server from './.output/server/index.mjs';
 
 const routes = [
   '/',
+  '/login',
   '/agenda-eventos',
   '/agenda-pastoral',
   '/analise-financeira',
