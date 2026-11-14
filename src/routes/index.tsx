@@ -42,22 +42,48 @@ function Dashboard() {
   const saldoTotal = db.transactions.reduce((a, t) => a + (t.tipo === "Receita" ? 1 : -1) * Number(t.valor), 0)
     + db.contributions.reduce((a, c) => a + Number(c.valor), 0);
 
+  const getJoinDate = (member: (typeof m)[0]) => {
+    const d = member.recebimento || member.batismo || member.conversao;
+    return d ? String(d).slice(0, 10) : null;
+  };
+
   const series = Array.from({ length: 6 }, (_, i) => {
     const dt = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
     const key = dt.toISOString().slice(0, 7);
     const t = db.transactions.filter((x) => String(x.data).startsWith(key));
+    const c = db.contributions.filter((x) => String(x.data).startsWith(key));
+    const monthEnd = key + "-31";
+
+    // Membros que já faziam parte da igreja até o fechamento deste mês
+    const totalMembrosNoMes = m.filter((x) => {
+      const joinDate = getJoinDate(x);
+      // Se tiver uma data de ingresso futura em relação a esse mês, ainda não havia entrado
+      if (joinDate && joinDate > monthEnd) {
+        return false;
+      }
+      return true;
+    }).length;
+
     return {
       mes: MONTHS[dt.getMonth()],
-      Entradas: t.filter((x) => x.tipo === "Receita").reduce((a, x) => a + Number(x.valor), 0),
+      Entradas:
+        t.filter((x) => x.tipo === "Receita").reduce((a, x) => a + Number(x.valor), 0) +
+        c.reduce((a, x) => a + Number(x.valor), 0),
       Saídas: t.filter((x) => x.tipo === "Despesa").reduce((a, x) => a + Number(x.valor), 0),
-      Membros: m.filter((x) => String(x.recebimento) <= key + "-31").length,
+      Membros: totalMembrosNoMes,
     };
   });
 
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const birthdays = m.filter((x) => String(x.nascimento).slice(5, 7) === mm);
   const upcoming = [...db.events].filter((e) => String(e.data) >= now.toISOString().slice(0, 10)).sort((a, b) => String(a.data).localeCompare(String(b.data))).slice(0, 4);
-  const latest = [...m].sort((a, b) => String(b.recebimento).localeCompare(String(a.recebimento))).slice(0, 5);
+  const latest = [...m]
+    .sort((a, b) => {
+      const da = getJoinDate(a) || "";
+      const dbDate = getJoinDate(b) || "";
+      return dbDate.localeCompare(da);
+    })
+    .slice(0, 5);
 
   return (
     <div className="space-y-8 animate-rise">
@@ -125,7 +151,10 @@ function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
                 <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12 }} />
+                <Tooltip
+                  formatter={(v: number) => [`${v} membros`, "Membros"]}
+                  contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12 }}
+                />
                 <Area type="monotone" dataKey="Membros" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.25} strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -136,7 +165,14 @@ function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-3">
         <ListCard title="Próximos eventos" icon={CalendarDays} items={upcoming.map((e) => [String(e.titulo), `${fmtDate(e.data)} · ${e.local}`])} />
         <ListCard title="Aniversariantes do mês" icon={Cake} items={birthdays.map((b) => [String(b.nome), `Dia ${String(b.nascimento).slice(8, 10)}`])} />
-        <ListCard title="Últimos cadastrados" icon={UserPlus} items={latest.map((x) => [String(x.nome), `${x.congregacao} · ${fmtDate(x.recebimento)}`])} />
+        <ListCard
+          title="Últimos cadastrados"
+          icon={UserPlus}
+          items={latest.map((x) => [
+            String(x.nome),
+            `${x.congregacao || "Sede Central"} · ${fmtDate(getJoinDate(x)) || "Membro ativo"}`,
+          ])}
+        />
       </div>
     </div>
   );

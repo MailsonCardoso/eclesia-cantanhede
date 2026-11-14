@@ -30,7 +30,14 @@ export function CollectionOverview({ collection }: { collection: Collection }) {
     departments: [
       { label: "Departamentos", value: rows.length, icon: Network },
       { label: "Ministérios ativos", value: rows.filter((r) => r.situacao === "Ativo").length, icon: UserCheck },
-      { label: "Integrantes informados", value: sum("integrantes"), icon: Users },
+      {
+        label: "Integrantes vinculados",
+        value: db.members.filter((m) => {
+          const d = String(m.departamento || "").trim();
+          return d && d !== "Nenhum / Geral" && d !== "__none";
+        }).length,
+        icon: Users,
+      },
     ],
     cells: [
       { label: "Células cadastradas", value: rows.length, icon: Home },
