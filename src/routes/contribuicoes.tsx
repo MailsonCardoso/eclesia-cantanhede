@@ -42,7 +42,7 @@ function Contribuicoes() {
         { key: "valor", label: "Valor", type: "money", table: true, required: true },
         { key: "data", label: "Data", type: "date", table: true, required: true },
         { key: "pagamento", label: "Forma de pagamento", type: "select", options: ["PIX", "Dinheiro", "Cartão", "Transferência"], table: true },
-        { key: "congregacao", label: "Congregação", type: "select", options: ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"], table: true },
+        { key: "congregacao", label: "Congregação", type: "congregation", table: true },
       ]}
     />
   );

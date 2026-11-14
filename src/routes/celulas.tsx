@@ -26,7 +26,7 @@ function Celulas() {
         { key: "endereco", label: "Endereço de encontro" },
         { key: "dia", label: "Dia da reunião", type: "select", options: ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"], table: true },
         { key: "hora", label: "Horário", type: "time", table: true },
-        { key: "congregacao", label: "Congregação", type: "select", options: ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"], table: true },
+        { key: "congregacao", label: "Congregação", type: "congregation", table: true },
         { key: "participantes", label: "Nº de participantes", type: "number", table: true },
         { key: "situacao", label: "Situação", type: "select", options: ["Ativa", "Inativa"], table: true },
         { key: "observacoes", label: "Observações", type: "textarea" },

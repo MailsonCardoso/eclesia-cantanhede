@@ -16,7 +16,7 @@ import { toast } from "sonner";
 export type Field = {
   key: string;
   label: string;
-  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell" | "department" | "leader" | "time" | "cpf" | "phone" | "cep" | "children";
+  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell" | "department" | "congregation" | "leader" | "time" | "cpf" | "phone" | "cep" | "children";
   options?: string[];
   table?: boolean;
   required?: boolean;
@@ -309,6 +309,7 @@ export function CrudPage({
   const memberNames = useMemo(() => db.members.map((m) => String(m.nome)).sort((a, b) => a.localeCompare(b)), [db.members]);
   const cellNames = useMemo(() => db.cells.map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b)), [db.cells]);
   const departmentNames = useMemo(() => (db.departments || []).map((d) => String(d.nome)).sort((a, b) => a.localeCompare(b)), [db.departments]);
+  const congregationNames = useMemo(() => (db.congregations || []).map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b)), [db.congregations]);
   const leaderNames = useMemo(() => {
     return db.members
       .filter((m) => {
@@ -398,7 +399,7 @@ export function CrudPage({
         data[f.key] = formValues[f.key] ?? "";
         return;
       }
-      if (f.type === "member" || f.type === "select" || f.type === "cell" || f.type === "department" || f.type === "leader") {
+      if (f.type === "member" || f.type === "select" || f.type === "cell" || f.type === "department" || f.type === "leader" || f.type === "congregation") {
         data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? "");
         return;
       }
@@ -455,6 +456,16 @@ export function CrudPage({
                     <Select name={f.key} value={dv} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v }))}>
                       <SelectTrigger id={f.key} className="rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent>{f.options?.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                    </Select>
+                  ) : f.type === "congregation" ? (
+                    <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
+                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder={`Selecione ${f.label.toLowerCase()}`} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Nenhuma / Sede</SelectItem>
+                        {[...new Set([...congregationNames, ...(f.options || [])])].map((n) => (
+                          <SelectItem key={n} value={n}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   ) : f.type === "department" ? (
                     <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
@@ -601,7 +612,13 @@ export function CrudPage({
           {filterKeys.map((k) => {
             const f = fields.find((x) => x.key === k);
             if (!f) return null;
-            const opts = f.options ?? [...new Set(db[collection].map((r) => String(r[k])))];
+            const opts = f.type === "congregation" || f.key === "congregacao"
+              ? [...new Set([...congregationNames, ...(f.options || [])])]
+              : f.type === "department"
+              ? departmentNames
+              : f.type === "leader"
+              ? leaderNames
+              : f.options ?? [...new Set(db[collection].map((r) => String(r[k])))];
             return (
               <Select key={k} value={filters[k] ?? "__all"} onValueChange={(v) => setFilters((s) => ({ ...s, [k]: v }))}>
                 <SelectTrigger className="w-full sm:w-52" aria-label={`Filtrar por ${f.label.toLowerCase()}`}><SelectValue placeholder={f.label} /></SelectTrigger>

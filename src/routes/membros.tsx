@@ -37,7 +37,7 @@ function Membros() {
         { key: "recebimento", label: "Recebido como membro", type: "date" },
         { key: "tipo", label: "Vínculo", type: "select", options: ["Membro", "Congregado"], table: true },
         { key: "situacao", label: "Situação", type: "select", options: ["Ativo", "Inativo", "Transferido"], table: true },
-        { key: "congregacao", label: "Congregação", type: "select", options: ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"], table: true },
+        { key: "congregacao", label: "Congregação", type: "congregation", table: true },
         { key: "departamento", label: "Departamento", type: "department", table: true },
         { key: "celula", label: "Célula", type: "cell", table: true },
         {

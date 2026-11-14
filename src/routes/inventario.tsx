@@ -26,7 +26,7 @@ function Inventario() {
           { key: "categoria", label: "Categoria", type: "select", options: ["Mobiliário", "Áudio", "Audiovisual", "Instrumentos", "Material didático", "Climatização", "Informática", "Cozinha", "Outros"], table: true },
           { key: "quantidade", label: "Quantidade", type: "number", table: true, required: true },
           { key: "estado", label: "Estado de conservação", type: "select", options: ["Novo", "Bom", "Regular", "Ruim"], table: true },
-          { key: "local", label: "Local", type: "select", options: ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança", "Depósito"], table: true },
+          { key: "local", label: "Local", type: "congregation", options: ["Depósito"], table: true },
           { key: "aquisicao", label: "Data de aquisição", type: "date", table: true },
           { key: "valor", label: "Valor unitário", type: "money", table: true },
           { key: "observacoes", label: "Observações", type: "textarea" },
