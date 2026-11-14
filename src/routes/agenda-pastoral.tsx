@@ -133,6 +133,204 @@ function AgendaPastoral() {
     });
   };
 
+  // Se a tela de nova solicitação estiver aberta
+  if (reqModalOpen) {
+    return (
+      <div className="space-y-6 animate-rise">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReqModalOpen(false)}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowRight className="size-4 rotate-180" />
+              Voltar para Agenda Pastoral
+            </Button>
+            <div className="h-5 w-px bg-border" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <CalendarClock className="size-6 text-primary" />
+                Nova Solicitação de Atendimento
+              </h1>
+              <p className="text-xs text-muted-foreground">Registre pedidos de visitas pastorais ou gabinete com os membros.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => setReqModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateRequest} className="px-6">
+              Salvar Solicitação
+            </Button>
+          </div>
+        </div>
+
+        <div className="max-w-4xl rounded-3xl border bg-card p-6 md:p-8 shadow-card space-y-5">
+          <div className="grid gap-5 sm:grid-cols-2 text-sm">
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Pessoa / Solicitante *</label>
+              <input
+                type="text"
+                required
+                placeholder="Nome do membro ou visitante..."
+                value={reqPerson}
+                onChange={(e) => setReqPerson(e.target.value)}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary shadow-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Tipo de Atendimento</label>
+              <select
+                value={reqType}
+                onChange={(e) => setReqType(e.target.value as "Gabinete" | "Visita")}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none cursor-pointer shadow-sm"
+              >
+                <option value="Gabinete">Gabinete Pastoral (Na igreja)</option>
+                <option value="Visita">Visita Pastoral (Na residência ou hospital)</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Motivo / Assunto do Pedido *</label>
+              <textarea
+                rows={3}
+                required
+                placeholder="Ex: Aconselhamento conjugal, oração por cura, orientação profissional..."
+                value={reqReason}
+                onChange={(e) => setReqReason(e.target.value)}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary resize-none shadow-sm"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Observações / Preferência de Horário</label>
+              <input
+                type="text"
+                placeholder="Ex: Prefere terças ou quintas após as 18h..."
+                value={reqNotes}
+                onChange={(e) => setReqNotes(e.target.value)}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary shadow-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 border-t pt-5">
+            <Button variant="outline" onClick={() => setReqModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateRequest} className="px-8">
+              Salvar Solicitação
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Se a tela de agendamento estiver aberta
+  if (scheduleModalOpen && selectedReq) {
+    return (
+      <div className="space-y-6 animate-rise">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setScheduleModalOpen(false)}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowRight className="size-4 rotate-180" />
+              Voltar para Solicitações
+            </Button>
+            <div className="h-5 w-px bg-border" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <CheckCircle2 className="size-6 text-emerald-500" />
+                Confirmar Agendamento Pastoral
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Para: <strong>{String(selectedReq.person ?? selectedReq.membro)}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => setScheduleModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmSchedule} className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-6">
+              <CheckCircle2 className="size-4" />
+              Confirmar Agendamento
+            </Button>
+          </div>
+        </div>
+
+        <div className="max-w-3xl rounded-3xl border bg-card p-6 md:p-8 shadow-card space-y-6">
+          <div className="p-4 rounded-2xl bg-secondary/60 text-xs space-y-2 border border-border/50">
+            <div className="font-semibold text-foreground flex items-center gap-2 text-sm">
+              <span className="inline-block size-2 rounded-full bg-primary" />
+              Tipo de Atendimento: {String(selectedReq.type ?? selectedReq.tipo)}
+            </div>
+            <div className="text-muted-foreground text-sm">
+              Motivo: {String(selectedReq.reason ?? selectedReq.motivo)}
+            </div>
+            {selectedReq.notes && (
+              <div className="text-muted-foreground text-xs italic">
+                Observações do solicitante: {String(selectedReq.notes)}
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 text-sm">
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Data do Atendimento *</label>
+              <input
+                type="date"
+                required
+                value={schedDate}
+                onChange={(e) => setSchedDate(e.target.value)}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none cursor-pointer shadow-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Horário *</label>
+              <input
+                type="time"
+                required
+                value={schedTime}
+                onChange={(e) => setSchedTime(e.target.value)}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none cursor-pointer shadow-sm"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Local do Atendimento</label>
+              <input
+                type="text"
+                value={schedLocation}
+                onChange={(e) => setSchedLocation(e.target.value)}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary shadow-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 border-t pt-5">
+            <Button variant="outline" onClick={() => setScheduleModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmSchedule} className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-8">
+              <CheckCircle2 className="size-4" />
+              Confirmar e Agendar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-rise">
       {/* Cards de Métricas */}
@@ -323,155 +521,6 @@ function AgendaPastoral() {
           { key: "observacoes", label: "Observações", type: "textarea" },
         ]}
       />
-
-      {/* Modal: Nova Solicitação de Atendimento */}
-      {reqModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-2xl sm:max-w-3xl rounded-3xl border border-border/80 bg-card p-6 md:p-8 shadow-2xl space-y-6 my-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Nova Solicitação de Atendimento</h2>
-                <p className="text-xs text-muted-foreground">Registre pedidos de visitas pastorais ou gabinete com os membros.</p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setReqModalOpen(false)}>
-                <X className="size-4" />
-              </Button>
-            </div>
-
-            <div className="space-y-4 text-sm">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Pessoa / Solicitante *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Nome do membro ou visitante..."
-                    value={reqPerson}
-                    onChange={(e) => setReqPerson(e.target.value)}
-                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Tipo de Atendimento</label>
-                  <select
-                    value={reqType}
-                    onChange={(e) => setReqType(e.target.value as "Gabinete" | "Visita")}
-                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
-                  >
-                    <option value="Gabinete">Gabinete Pastoral (Na igreja)</option>
-                    <option value="Visita">Visita Pastoral (Na residência ou hospital)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Motivo / Assunto do Pedido *</label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="Ex: Aconselhamento conjugal, oração por cura, orientação profissional..."
-                  value={reqReason}
-                  onChange={(e) => setReqReason(e.target.value)}
-                  className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary resize-none shadow-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Observações / Preferência de Horário</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Prefere terças ou quintas após as 18h..."
-                  value={reqNotes}
-                  onChange={(e) => setReqNotes(e.target.value)}
-                  className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t pt-4">
-              <Button variant="outline" onClick={() => setReqModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateRequest} className="px-6">Salvar Solicitação</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Agendar Solicitação */}
-      {scheduleModalOpen && selectedReq && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-xl sm:max-w-2xl rounded-3xl border border-border/80 bg-card p-6 md:p-8 shadow-2xl space-y-6 my-auto">
-            <div className="flex items-center justify-between border-b pb-4">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Confirmar Agendamento</h2>
-                <p className="text-xs text-muted-foreground">
-                  Para: <strong>{String(selectedReq.person ?? selectedReq.membro)}</strong>
-                </p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setScheduleModalOpen(false)}>
-                <X className="size-4" />
-              </Button>
-            </div>
-
-            <div className="space-y-4 text-sm">
-              <div className="p-3.5 rounded-2xl bg-secondary/60 text-xs space-y-1.5 border border-border/50">
-                <div className="font-semibold text-foreground flex items-center gap-2">
-                  <span className="inline-block size-2 rounded-full bg-primary" />
-                  Tipo: {String(selectedReq.type ?? selectedReq.tipo)}
-                </div>
-                <div className="text-muted-foreground">
-                  Motivo: {String(selectedReq.reason ?? selectedReq.motivo)}
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Data do Atendimento *</label>
-                  <input
-                    type="date"
-                    required
-                    value={schedDate}
-                    onChange={(e) => setSchedDate(e.target.value)}
-                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Horário *</label>
-                  <input
-                    type="time"
-                    required
-                    value={schedTime}
-                    onChange={(e) => setSchedTime(e.target.value)}
-                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Local do Atendimento</label>
-                <input
-                  type="text"
-                  value={schedLocation}
-                  onChange={(e) => setSchedLocation(e.target.value)}
-                  className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 border-t pt-4">
-              <Button variant="outline" onClick={() => setScheduleModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleConfirmSchedule} className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-6">
-                <CheckCircle2 className="size-4" />
-                Confirmar Agendamento
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
