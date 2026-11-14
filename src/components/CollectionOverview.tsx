@@ -1,10 +1,11 @@
-import { Users, UserCheck, Church, HeartHandshake, Network, UserRound, HandCoins, Gift, Wallet, CalendarDays, CalendarCheck, MapPin, Boxes, Package, Landmark, ArrowDownLeft, ArrowUpRight, Home, Clock } from "lucide-react";
+import { Users, UserCheck, Church, HeartHandshake, Network, UserRound, HandCoins, Gift, Wallet, CalendarDays, CalendarCheck, MapPin, Boxes, Package, Landmark, ArrowDownLeft, ArrowUpRight, Home, Clock, BookOpen, Mic, Lightbulb, ClipboardList, type LucideIcon } from "lucide-react";
 import { brl, useStore, type Collection } from "@/lib/store";
 import { MetricCard } from "@/components/MetricCard";
 
-export const collectionIcons = {
+export const collectionIcons: Record<Collection, LucideIcon> = {
   members: Users, congregations: Church, departments: Network, cells: Home, contributions: HandCoins,
   transactions: Wallet, events: CalendarDays, appointments: HeartHandshake, inventory: Boxes,
+  pastor_series: BookOpen, pastor_sermons: Mic, pastor_insights: Lightbulb, pastoral_requests: ClipboardList,
 };
 
 export function CollectionOverview({ collection }: { collection: Collection }) {
@@ -14,7 +15,7 @@ export function CollectionOverview({ collection }: { collection: Collection }) {
   const today = new Date().toISOString().slice(0, 10);
   const income = rows.filter((r) => r.tipo === "Receita").reduce((a, r) => a + Number(r.valor || 0), 0);
   const expenses = rows.filter((r) => r.tipo === "Despesa").reduce((a, r) => a + Number(r.valor || 0), 0);
-  const metrics = {
+  const metrics = ({
     members: [
       { label: "Membros cadastrados", value: rows.length, icon: Users },
       { label: "Ativos", value: rows.filter((r) => r.situacao === "Ativo").length, icon: UserCheck },
@@ -58,9 +59,9 @@ export function CollectionOverview({ collection }: { collection: Collection }) {
       { label: "Valor do patrimônio", value: brl(rows.reduce((a, r) => a + Number(r.valor || 0) * Number(r["quantidade"] || 0), 0)), icon: Landmark },
     ],
     appointments: [],
-  }[collection];
+  } as Partial<Record<Collection, { label: string; value: string | number; icon: LucideIcon }[]>>)[collection];
   const tones = ["blue", "green", "orange", "violet"] as const;
-  if (!metrics.length) return null;
+  if (!metrics?.length) return null;
   return <div className={`grid gap-3 sm:grid-cols-2 ${metrics.length === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
     {metrics.map((metric, i) => <MetricCard key={metric.label} {...metric} tone={tones[i % tones.length]} />)}
   </div>;

@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
  * que é servido pela API Laravel (ex.: GET/POST/PUT/DELETE /api/members).
  */
 
-type V = string | number | boolean | object | undefined | null;
+export type V = string | number | boolean | undefined;
 export type Row = {
   id: string;
   nome?: V;
@@ -69,6 +69,14 @@ export type Row = {
   bairro?: V;
   cidade?: V;
   uf?: V;
+  pai?: V;
+  mae?: V;
+  conjuge?: V;
+  cargo?: V;
+  role?: V;
+  motivo?: V;
+  start_date?: V;
+  celula?: V;
   [k: string]: V;
 };
 
@@ -539,7 +547,7 @@ export function seed(): DB {
   ];
 
   // 3. Sermões / Esboços com JSON Estruturado
-  const pastor_sermons: Row[] = [
+  const pastor_sermons = [
     {
       id: "srm_1",
       title: "A Justificação pela Fé e a Paz com Deus",
@@ -666,10 +674,10 @@ export function seed(): DB {
         conclusion: "Dedique hoje um tempo de qualidade a sós com o Pai; os maiores milagres começam de joelhos.",
       },
     },
-  ];
+  ] as unknown as Row[];
 
   // 4. Insights Teológicos
-  const pastor_insights: Row[] = [
+  const pastor_insights = [
     {
       id: "ins_1",
       type: "verse",
@@ -725,7 +733,7 @@ export function seed(): DB {
       tags: ["oração", "poder", "igreja", "avivamento"],
       sermon_id: "srm_6",
     },
-  ];
+  ] as unknown as Row[];
 
   // 5. Solicitações de Gabinete e Visitas
   const pastoral_requests: Row[] = [
@@ -1027,7 +1035,7 @@ export function useStore() {
 }
 
 export const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-export const fmtDate = (s?: string | number) => (s ? new Date(String(s) + "T12:00:00").toLocaleDateString("pt-BR") : "—");
+export const fmtDate = (s?: string | number | boolean) => (s ? new Date(String(s) + "T12:00:00").toLocaleDateString("pt-BR") : "—");
 
 /**
  * Exporta para CSV com suporte a acentuação UTF-8 nativa para Excel (\uFEFF BOM)

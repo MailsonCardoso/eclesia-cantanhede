@@ -48,7 +48,7 @@ function PastorSeriesPage() {
   const [description, setDescription] = useState("");
   const [total, setTotal] = useState(4);
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
+  const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]!);
 
   // Contagem dinâmica de sermões por série
   const seriesWithStats = useMemo(() => {
@@ -83,7 +83,7 @@ function PastorSeriesPage() {
     setDescription("");
     setTotal(4);
     setStartDate(new Date().toISOString().slice(0, 10));
-    setSelectedColor(COLOR_OPTIONS[0]);
+    setSelectedColor(COLOR_OPTIONS[0]!);
     setModalOpen(true);
   };
 
@@ -94,7 +94,7 @@ function PastorSeriesPage() {
     setTotal(Number(s.total) || 4);
     setStartDate(String(s.start_date ?? s.data ?? new Date().toISOString().slice(0, 10)));
 
-    const matchColor = COLOR_OPTIONS.find((c) => c.color === s.color) || COLOR_OPTIONS[0];
+    const matchColor = COLOR_OPTIONS.find((c) => c.color === s.color) || COLOR_OPTIONS[0]!;
     setSelectedColor(matchColor);
     setModalOpen(true);
   };
@@ -365,7 +365,7 @@ function PastorSeriesPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleOpenEdit(s)}
+                      onClick={() => handleOpenEdit(s as unknown as Row)}
                       className="size-8 text-muted-foreground hover:text-foreground"
                       title="Editar série"
                     >
