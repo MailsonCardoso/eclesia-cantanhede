@@ -17,7 +17,7 @@ export type Field = {
   key: string;
   label: string;
   type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell" | "department" | "congregation" | "leader" | "time" | "cpf" | "phone" | "cep" | "children";
-  options?: string[];
+  options?: string[] | ((values: Record<string, string>) => string[]);
   table?: boolean;
   required?: boolean;
   /** Só exibe o campo quando a condição sobre os valores do formulário for verdadeira. */
@@ -381,7 +381,8 @@ export function CrudPage({
       } else if (f.type === "time" || f.key === "hora" || f.key === "horario") {
         initial[f.key] = row?.[f.key] ? maskTime(String(row[f.key])) : "";
       } else {
-        initial[f.key] = String(row?.[f.key] ?? (f.options ? f.options[0] : ""));
+        const opts = typeof f.options === "function" ? f.options({ ...row, ...initial }) : f.options;
+        initial[f.key] = String(row?.[f.key] ?? (opts ? opts[0] : ""));
       }
     });
     setFormValues(initial);
@@ -453,16 +454,38 @@ export function CrudPage({
                 <div key={f.key} className={isFull ? "sm:col-span-2 lg:col-span-3 space-y-1.5" : "space-y-1.5"}>
                   <Label htmlFor={f.key} className="text-xs font-semibold">{f.label}</Label>
                   {f.type === "select" ? (
-                    <Select name={f.key} value={dv} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v }))}>
-                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue /></SelectTrigger>
-                      <SelectContent>{f.options?.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-                    </Select>
+                    (() => {
+                      const opts = typeof f.options === "function" ? f.options(formValues) : f.options;
+                      return (
+                        <Select
+                          name={f.key}
+                          value={dv}
+                          onValueChange={(v) => {
+                            setFormValues((s) => {
+                              const next = { ...s, [f.key]: v };
+                              fields.forEach((other) => {
+                                if (typeof other.options === "function" && other.key !== f.key) {
+                                  const nextOpts = other.options(next);
+                                  if (nextOpts && nextOpts.length > 0 && !nextOpts.includes(next[other.key])) {
+                                    next[other.key] = nextOpts[0];
+                                  }
+                                }
+                              });
+                              return next;
+                            });
+                          }}
+                        >
+                          <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder={`Selecione ${f.label.toLowerCase()}`} /></SelectTrigger>
+                          <SelectContent>{opts?.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                        </Select>
+                      );
+                    })()
                   ) : f.type === "congregation" ? (
                     <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
                       <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder={`Selecione ${f.label.toLowerCase()}`} /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">Nenhuma / Sede</SelectItem>
-                        {[...new Set([...congregationNames, ...(f.options || [])])].map((n) => (
+                        {[...new Set([...congregationNames, ...(typeof f.options === "function" ? f.options(formValues) : (f.options || []))])].map((n) => (
                           <SelectItem key={n} value={n}>{n}</SelectItem>
                         ))}
                       </SelectContent>
@@ -613,11 +636,17 @@ export function CrudPage({
             const f = fields.find((x) => x.key === k);
             if (!f) return null;
             const opts = f.type === "congregation" || f.key === "congregacao"
-              ? [...new Set([...congregationNames, ...(f.options || [])])]
+              ? [...new Set([...congregationNames, ...(typeof f.options === "function" ? [] : (f.options || []))])]
               : f.type === "department"
               ? departmentNames
               : f.type === "leader"
               ? leaderNames
+              : typeof f.options === "function"
+              ? [...new Set([
+                  ...f.options({ tipo: "Receita" }),
+                  ...f.options({ tipo: "Despesa" }),
+                  ...db[collection].map((r) => String(r[k] ?? "")).filter(Boolean),
+                ])]
               : f.options ?? [...new Set(db[collection].map((r) => String(r[k])))];
             return (
               <Select key={k} value={filters[k] ?? "__all"} onValueChange={(v) => setFilters((s) => ({ ...s, [k]: v }))}>

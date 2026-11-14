@@ -20,6 +20,7 @@ import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { exportCSV, fmtDate, useStore, type Row } from "@/lib/store";
+import { downloadChartAsPng } from "@/lib/chart-download";
 
 export const Route = createFileRoute("/relatorio-membros")({
   head: () => ({
@@ -558,11 +559,21 @@ function RelatorioMembros() {
       {tab === "geral" && (
         <div className="space-y-6">
           <div className="rounded-2xl border bg-card p-5 shadow-card">
-            <div className="mb-4">
-              <h3 className="font-semibold text-foreground">Distribuição Geral por Faixa Etária</h3>
-              <p className="text-xs text-muted-foreground">Membros com data de nascimento cadastrada</p>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-semibold text-foreground">Distribuição Geral por Faixa Etária</h3>
+                <p className="text-xs text-muted-foreground">Membros com data de nascimento cadastrada</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadChartAsPng("chart-faixa-etaria", "distribuicao-faixa-etaria")}
+                className="gap-2 text-xs no-print"
+              >
+                <Download className="size-3.5" /> Baixar Gráfico (PNG)
+              </Button>
             </div>
-            <div className="h-64 w-full">
+            <div id="chart-faixa-etaria" className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />

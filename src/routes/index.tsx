@@ -1,8 +1,10 @@
 import { MetricCard } from "@/components/MetricCard";
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, UserCheck, UserPlus, UserRound, HandCoins, Gift, TrendingDown, Landmark, CalendarDays, Cake } from "lucide-react";
+import { Users, UserCheck, UserPlus, UserRound, HandCoins, Gift, TrendingDown, Landmark, CalendarDays, Cake, Download } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
 import { brl, fmtDate, useStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { downloadChartAsPng } from "@/lib/chart-download";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -80,30 +82,54 @@ function Dashboard() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="min-w-0 border-t pt-5">
-          <h2 className="mb-4 text-lg font-semibold">Entradas e saídas</h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={series}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-              <Tooltip formatter={(v: number) => brl(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12 }} />
-              <Legend />
-              <Bar dataKey="Entradas" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="Saídas" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">Entradas e saídas</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => downloadChartAsPng("chart-entradas-saidas", "entradas-e-saidas")}
+              className="gap-2 text-xs no-print"
+            >
+              <Download className="size-3.5" /> Baixar Gráfico (PNG)
+            </Button>
+          </div>
+          <div id="chart-entradas-saidas" className="h-[260px] w-full">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={series}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
+                <Tooltip formatter={(v: number) => brl(v)} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12 }} />
+                <Legend />
+                <Bar dataKey="Entradas" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="Saídas" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
         <div className="min-w-0 border-t pt-5">
-          <h2 className="mb-4 text-lg font-semibold">Crescimento de membros</h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={series}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12 }} />
-              <Area type="monotone" dataKey="Membros" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.25} strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">Crescimento de membros</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => downloadChartAsPng("chart-crescimento-membros", "crescimento-membros")}
+              className="gap-2 text-xs no-print"
+            >
+              <Download className="size-3.5" /> Baixar Gráfico (PNG)
+            </Button>
+          </div>
+          <div id="chart-crescimento-membros" className="h-[260px] w-full">
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={series}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12 }} />
+                <Area type="monotone" dataKey="Membros" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.25} strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

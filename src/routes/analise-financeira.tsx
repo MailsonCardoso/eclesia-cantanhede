@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, Landmark, ChartNoAxesCombined, LineChart } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Landmark, ChartNoAxesCombined, LineChart, Download } from "lucide-react";
 import { MetricCard } from "@/components/MetricCard";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { brl, useStore } from "@/lib/store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { downloadChartAsPng } from "@/lib/chart-download";
 
 export const Route = createFileRoute("/analise-financeira")({
   head: () => ({
@@ -75,19 +77,31 @@ function Analise() {
         <MetricCard label="Média mensal de saldo" value={brl((tot.r - tot.d) / n)} icon={ChartNoAxesCombined} tone="violet" />
       </div>
       <div className="min-w-0 border-t pt-6">
-        <h2 className="mb-4 text-lg font-semibold">Comparativo mensal</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={rows}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-            <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
-            <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-            <Tooltip formatter={(v: number) => brl(v)} contentStyle={tip} />
-            <Legend />
-            <Bar dataKey="Receitas" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="Despesas" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="Saldo" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Comparativo mensal</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => downloadChartAsPng("chart-comparativo-mensal", "comparativo-mensal-financeiro")}
+            className="gap-2 text-xs no-print"
+          >
+            <Download className="size-3.5" /> Baixar Gráfico (PNG)
+          </Button>
+        </div>
+        <div id="chart-comparativo-mensal" className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={rows}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={12} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
+              <Tooltip formatter={(v: number) => brl(v)} contentStyle={tip} />
+              <Legend />
+              <Bar dataKey="Receitas" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Despesas" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Saldo" fill="var(--chart-3)" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-2xl border bg-card shadow-card">
         <table className="w-full min-w-96 text-sm">
