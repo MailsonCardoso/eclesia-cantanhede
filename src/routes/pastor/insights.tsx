@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useStore, type Row } from "@/lib/store";
+import { useStore, fmtDate, type Row } from "@/lib/store";
 
 export const Route = createFileRoute("/pastor/insights")({
   head: () => ({
