@@ -73,8 +73,11 @@ function Financeiro() {
                     "Outras despesas",
                   ]
                 : [
-                    "Cantina / Bazar",
-                    "Eventos / Inscrições",
+                    "Cantina",
+                    "Bazar",
+                    "Eventos",
+                    "Inscrições",
+                    "Campanhas",
                     "Doações gerais",
                     "Rendimentos",
                     "Aluguel de espaço",
