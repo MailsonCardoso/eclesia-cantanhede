@@ -83,10 +83,10 @@ function Celulas() {
     lider: "",
     anfitriao: "",
     endereco: "",
-    dia: "Quarta-feira",
-    hora: "19:30",
+    dia: "",
+    hora: "",
     congregacao: "",
-    participantes: "15",
+    participantes: "",
     situacao: "Ativa",
     observacoes: "",
   });
@@ -196,13 +196,13 @@ function Celulas() {
     setEditing(null);
     setForm({
       nome: "",
-      lider: leaderCandidates[0] || (membersList[0]?.nome ?? ""),
+      lider: "",
       anfitriao: "",
       endereco: "",
-      dia: "Quarta-feira",
-      hora: "19:30",
-      congregacao: congregations[0] || "",
-      participantes: "15",
+      dia: "",
+      hora: "",
+      congregacao: "",
+      participantes: "",
       situacao: "Ativa",
       observacoes: "",
     });
@@ -216,10 +216,10 @@ function Celulas() {
       lider: String(cell.lider || ""),
       anfitriao: String(cell.anfitriao || ""),
       endereco: String(cell.endereco || ""),
-      dia: String(cell.dia || "Quarta-feira"),
-      hora: String(cell.hora || "19:30"),
+      dia: String(cell.dia || ""),
+      hora: String(cell.hora || ""),
       congregacao: String(cell.congregacao || ""),
-      participantes: String(cell.participantes || "15"),
+      participantes: cell.participantes !== undefined && cell.participantes !== null ? String(cell.participantes) : "",
       situacao: String(cell.situacao || "Ativa"),
       observacoes: String(cell.observacoes || ""),
     });
@@ -348,11 +348,12 @@ function Celulas() {
               <Label htmlFor="lider" className="text-xs font-semibold">
                 Líder Responsável
               </Label>
-              <Select value={form.lider} onValueChange={(v) => setForm((s) => ({ ...s, lider: v }))}>
+              <Select value={form.lider || "__none"} onValueChange={(v) => setForm((s) => ({ ...s, lider: v === "__none" ? "" : v }))}>
                 <SelectTrigger id="lider" className="rounded-xl">
                   <SelectValue placeholder="Selecione o líder" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none">Selecione o líder</SelectItem>
                   {leaderCandidates.map((n) => (
                     <SelectItem key={n} value={n}>
                       {n} (Líder)
@@ -411,11 +412,12 @@ function Celulas() {
               <Label htmlFor="dia" className="text-xs font-semibold">
                 Dia da Reunião
               </Label>
-              <Select value={form.dia} onValueChange={(v) => setForm((s) => ({ ...s, dia: v }))}>
+              <Select value={form.dia || "__none"} onValueChange={(v) => setForm((s) => ({ ...s, dia: v === "__none" ? "" : v }))}>
                 <SelectTrigger id="dia" className="rounded-xl">
-                  <SelectValue />
+                  <SelectValue placeholder="Selecione o dia" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none">Selecione o dia</SelectItem>
                   {DIAS_SEMANA.map((d) => (
                     <SelectItem key={d} value={d}>
                       {d}
