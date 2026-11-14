@@ -145,22 +145,25 @@ export function CrudPage({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing ? `Editar ${singular.toLowerCase()}` : `Novo(a) ${singular.toLowerCase()}`}</DialogTitle></DialogHeader>
-          <form id="crud-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+        <DialogContent className="max-w-4xl lg:max-w-5xl max-h-[92vh] overflow-y-auto p-6 md:p-8 rounded-3xl">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle className="text-xl font-bold">{editing ? `Editar ${singular.toLowerCase()}` : `Novo(a) ${singular.toLowerCase()}`}</DialogTitle>
+          </DialogHeader>
+          <form id="crud-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
             {visibleFields.map((f) => {
               const dv = formValues[f.key] ?? "";
+              const isFull = f.type === "textarea" || f.type === "members" || f.key === "endereco" || f.key === "observacoes";
               return (
-                <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2 space-y-1.5" : "space-y-1.5"}>
-                  <Label htmlFor={f.key}>{f.label}</Label>
+                <div key={f.key} className={isFull ? "sm:col-span-2 lg:col-span-3 space-y-1.5" : "space-y-1.5"}>
+                  <Label htmlFor={f.key} className="text-xs font-semibold">{f.label}</Label>
                   {f.type === "select" ? (
                     <Select name={f.key} value={dv} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v }))}>
-                      <SelectTrigger id={f.key}><SelectValue /></SelectTrigger>
+                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent>{f.options?.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
                     </Select>
                   ) : f.type === "member" ? (
                     <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
-                      <SelectTrigger id={f.key}><SelectValue placeholder="Selecione um membro" /></SelectTrigger>
+                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder="Selecione um membro" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">Nenhum</SelectItem>
                         {memberNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
@@ -168,7 +171,7 @@ export function CrudPage({
                     </Select>
                   ) : f.type === "cell" ? (
                     <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
-                      <SelectTrigger id={f.key}><SelectValue placeholder="Selecione uma célula" /></SelectTrigger>
+                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder="Selecione uma célula" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">Não participa de célula</SelectItem>
                         {cellNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
@@ -178,25 +181,25 @@ export function CrudPage({
                     <select
                       id={f.key}
                       multiple
-                      className="flex min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="flex min-h-24 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm"
                       value={dv ? dv.split("; ") : []}
                       onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: Array.from(e.target.selectedOptions).map((o) => o.value).join("; ") }))}
                     >
                       {memberNames.map((n) => <option key={n} value={n}>{n}</option>)}
                     </select>
                   ) : f.type === "textarea" ? (
-                    <Textarea id={f.key} name={f.key} defaultValue={dv} />
+                    <Textarea id={f.key} name={f.key} defaultValue={dv} rows={3} className="rounded-xl resize-none shadow-sm" />
                   ) : (
-                    <Input id={f.key} name={f.key} required={f.required} defaultValue={dv}
+                    <Input id={f.key} name={f.key} required={f.required} defaultValue={dv} className="rounded-xl shadow-sm"
                       type={f.type === "money" || f.type === "number" ? "number" : f.type ?? "text"} step={f.type === "money" ? "0.01" : undefined} />
                   )}
                 </div>
               );
             })}
           </form>
-          <DialogFooter>
+          <DialogFooter className="border-t pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button variant="premium" type="submit" form="crud-form">Salvar</Button>
+            <Button variant="premium" type="submit" form="crud-form" className="px-6">Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

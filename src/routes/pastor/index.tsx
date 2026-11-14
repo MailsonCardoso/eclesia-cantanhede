@@ -418,8 +418,8 @@ function PastorAltar() {
 
       {/* Modal / Dialog de Criação e Edição de Sermão */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl rounded-2xl border bg-card p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-5xl rounded-3xl border border-border/80 bg-card p-6 md:p-8 shadow-2xl space-y-6 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h2 className="text-xl font-bold text-foreground">
@@ -434,162 +434,176 @@ function PastorAltar() {
               </Button>
             </div>
 
-            <div className="space-y-4 text-sm">
-              {/* Título e Versículo */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Título da Mensagem *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: A Graça que Transforma"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Versículo-Chave / Referência</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Romanos 5:1-5"
-                    value={verse}
-                    onChange={(e) => setVerse(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              {/* Série, Data e Status */}
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Série Temática</label>
-                  <select
-                    value={series}
-                    onChange={(e) => setSeries(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
-                  >
-                    <option value="Avulso">Avulso / Sem série</option>
-                    {seriesList.map((s) => (
-                      <option key={s.id} value={String(s.title ?? s.titulo)}>
-                        {String(s.title ?? s.titulo)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Data da Pregação</label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Status</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
-                  >
-                    <option value="Planejado">Planejado</option>
-                    <option value="Pregado">Pregado</option>
-                    <option value="Rascunho">Rascunho</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Cor de Identificação */}
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Cor do Card</label>
-                <div className="flex gap-2">
-                  {COLOR_OPTIONS.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setColor(c.value)}
-                      className={`size-7 rounded-full ${c.value} transition-transform ${
-                        color === c.value ? "ring-2 ring-foreground scale-110" : "opacity-80"
-                      }`}
-                      title={c.label}
+            <div className="grid gap-6 lg:grid-cols-12 text-sm">
+              {/* Coluna Esquerda: Informações Gerais, Introdução e Conclusão */}
+              <div className="lg:col-span-7 space-y-4">
+                {/* Título e Versículo */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-foreground">Título da Mensagem *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: A Graça que Transforma"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
                     />
-                  ))}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-foreground">Versículo-Chave / Referência</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Romanos 5:1-5"
+                      value={verse}
+                      onChange={(e) => setVerse(e.target.value)}
+                      className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Introdução */}
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">
-                  Introdução (Gancho inicial e contextualização)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Apresente o problema, o gancho inicial e o contexto bíblico..."
-                  value={intro}
-                  onChange={(e) => setIntro(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
-                />
-              </div>
-
-              {/* Tópicos Dinâmicos */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-foreground">Tópicos Principais do Esboço</label>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddTopic} className="h-7 text-xs gap-1">
-                    <Plus className="size-3" />
-                    Adicionar Tópico
-                  </Button>
+                {/* Série, Data e Status */}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-foreground">Série Temática</label>
+                    <select
+                      value={series}
+                      onChange={(e) => setSeries(e.target.value)}
+                      className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none cursor-pointer shadow-sm"
+                    >
+                      <option value="Avulso">Avulso / Sem série</option>
+                      {seriesList.map((s) => (
+                        <option key={s.id} value={String(s.title ?? s.titulo)}>
+                          {String(s.title ?? s.titulo)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-foreground">Data da Pregação</label>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none cursor-pointer shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-foreground">Status</label>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none cursor-pointer shadow-sm"
+                    >
+                      <option value="Planejado">Planejado</option>
+                      <option value="Pregado">Pregado</option>
+                      <option value="Rascunho">Rascunho</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {topics.map((t, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="size-6 shrink-0 grid place-items-center rounded bg-secondary text-xs font-bold font-mono">
-                        {idx + 1}
-                      </span>
-                      <input
-                        type="text"
-                        placeholder={`Tópico ${idx + 1}...`}
-                        value={t}
-                        onChange={(e) => handleUpdateTopic(idx, e.target.value)}
-                        className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus:border-primary"
+
+                {/* Cor de Identificação */}
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 text-foreground">Cor do Card</label>
+                  <div className="flex gap-2.5">
+                    {COLOR_OPTIONS.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setColor(c.value)}
+                        className={`size-7 rounded-full ${c.value} transition-transform ${
+                          color === c.value ? "ring-2 ring-foreground scale-110 shadow-md" : "opacity-75 hover:opacity-100"
+                        }`}
+                        title={c.label}
                       />
-                      {topics.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveTopic(idx)}
-                          className="size-8 text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="size-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Introdução */}
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">
+                    Introdução (Gancho inicial e contextualização)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Apresente o problema, o gancho inicial e o contexto bíblico..."
+                    value={intro}
+                    onChange={(e) => setIntro(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary resize-none shadow-sm"
+                  />
+                </div>
+
+                {/* Conclusão */}
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">
+                    Conclusão e Apelo / Aplicação Prática
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Chamado prático, oração de encerramento e envio..."
+                    value={conclusion}
+                    onChange={(e) => setConclusion(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary resize-none shadow-sm"
+                  />
                 </div>
               </div>
 
-              {/* Conclusão */}
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">
-                  Conclusão e Apelo / Aplicação Prática
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Chamado prático, oração de encerramento e envio..."
-                  value={conclusion}
-                  onChange={(e) => setConclusion(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
-                />
+              {/* Coluna Direita: Tópicos Dinâmicos do Esboço */}
+              <div className="lg:col-span-5">
+                <div className="rounded-2xl border border-border/80 bg-muted/20 p-4 space-y-4 flex flex-col h-full shadow-inner">
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <div>
+                      <h3 className="font-semibold text-sm text-foreground">Tópicos do Esboço</h3>
+                      <p className="text-[11px] text-muted-foreground">Pontos principais pregados no altar</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={handleAddTopic} className="h-7 text-xs gap-1 shadow-sm font-medium">
+                      <Plus className="size-3" />
+                      Adicionar Tópico
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2.5 flex-1 max-h-[360px] overflow-y-auto pr-1">
+                    {topics.map((t, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="size-6 shrink-0 grid place-items-center rounded-lg bg-secondary text-xs font-bold font-mono">
+                          {idx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          placeholder={`Tópico ${idx + 1}...`}
+                          value={t}
+                          onChange={(e) => handleUpdateTopic(idx, e.target.value)}
+                          className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus:border-primary shadow-sm"
+                        />
+                        {topics.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveTopic(idx)}
+                            className="size-7 text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto p-3 rounded-xl bg-primary/5 border border-primary/15 text-xs text-muted-foreground flex items-center gap-2">
+                    <BookOpen className="size-4 text-primary shrink-0" />
+                    <span>Estes tópicos aparecem estruturados na tela ao vivo do Modo Púlpito.</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t pt-4">
+            <div className="flex items-center justify-end gap-3 border-t pt-4">
               <Button variant="outline" onClick={() => setModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave} className="gap-2">
+              <Button onClick={handleSave} className="gap-2 px-6">
                 Salvar Sermão
               </Button>
             </div>

@@ -285,42 +285,59 @@ function PastorSeriesPage() {
 
       {/* Modal de Criação / Edição */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-2xl border bg-card p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h2 className="text-lg font-bold text-foreground">
-                {editingId ? "Editar Série Temática" : "Nova Série de Mensagens"}
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-3xl rounded-3xl border border-border/80 bg-card p-6 md:p-8 shadow-2xl space-y-6 my-auto">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">
+                  {editingId ? "Editar Série Temática" : "Nova Série de Mensagens"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Planejamento e acompanhamento do progresso das campanhas do púlpito.
+                </p>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => setModalOpen(false)}>
                 <X className="size-4" />
               </Button>
             </div>
 
-            <div className="space-y-3.5 text-sm">
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Título da Série *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Famílias Fortes no Altar"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                />
+            <div className="space-y-4 text-sm">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Título da Série *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Famílias Fortes no Altar"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Data de Início</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold mb-1 text-foreground">Descrição / Propósito Teológico</label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   placeholder="Descreva o objetivo espiritual e temas abordados na campanha..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+                  className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary resize-none shadow-sm"
                 />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 items-center">
                 <div>
                   <label className="block text-xs font-semibold mb-1 text-foreground">Meta de Mensagens (Total)</label>
                   <input
@@ -329,43 +346,34 @@ function PastorSeriesPage() {
                     max="52"
                     value={total}
                     onChange={(e) => setTotal(Number(e.target.value))}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Data de Início</label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Cor de Identificação</label>
-                <div className="flex gap-2">
-                  {COLOR_OPTIONS.map((c) => (
-                    <button
-                      key={c.color}
-                      type="button"
-                      onClick={() => setSelectedColor(c)}
-                      className={`size-7 rounded-full ${c.color} transition-transform ${
-                        selectedColor.color === c.color ? "ring-2 ring-foreground scale-110" : "opacity-80"
-                      }`}
-                      title={c.label}
-                    />
-                  ))}
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 text-foreground">Cor de Identificação</label>
+                  <div className="flex gap-2.5">
+                    {COLOR_OPTIONS.map((c) => (
+                      <button
+                        key={c.color}
+                        type="button"
+                        onClick={() => setSelectedColor(c)}
+                        className={`size-7 rounded-full ${c.color} transition-transform ${
+                          selectedColor.color === c.color ? "ring-2 ring-foreground scale-110 shadow-md" : "opacity-75 hover:opacity-100"
+                        }`}
+                        title={c.label}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t pt-4">
+            <div className="flex items-center justify-end gap-3 border-t pt-4">
               <Button variant="outline" onClick={() => setModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave}>Salvar Série</Button>
+              <Button onClick={handleSave} className="px-6">Salvar Série</Button>
             </div>
           </div>
         </div>

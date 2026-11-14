@@ -343,138 +343,156 @@ function PastorInsightsPage() {
 
       {/* Modal de Criação / Edição */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-2xl border bg-card p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h2 className="text-lg font-bold text-foreground">
-                {editingId ? "Editar Insight Teológico" : "Novo Insight Pastoral"}
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-4xl rounded-3xl border border-border/80 bg-card p-6 md:p-8 shadow-2xl space-y-6 my-auto max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">
+                  {editingId ? "Editar Insight Teológico" : "Novo Insight Pastoral"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Anotações teológicas, citações e ilustrações para enriquecer suas pregações no Púlpito.
+                </p>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => setModalOpen(false)}>
                 <X className="size-4" />
               </Button>
             </div>
 
-            <div className="space-y-3.5 text-sm">
-              <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 text-sm">
+              {/* Coluna Esquerda: Classificação e Conteúdo */}
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-foreground">Tipo de Conteúdo</label>
+                    <select
+                      value={type}
+                      onChange={(e) => setType(e.target.value as any)}
+                      className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
+                    >
+                      <option value="note">Anotação / Ideia</option>
+                      <option value="verse">Versículo Bíblico</option>
+                      <option value="quote">Citação de Autor</option>
+                      <option value="illustration">Ilustração / Metáfora</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-foreground">
+                      {type === "verse" ? "Referência Bíblica" : "Fonte / Livro / Autor"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={type === "verse" ? "Ex: Hb 11:1" : "Ex: C.S. Lewis, O Peso da Glória"}
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">Tipo de Conteúdo</label>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Título / Tema Resumo</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: A certeza inabalável da fé"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Conteúdo / Anotação *</label>
+                  <textarea
+                    rows={6}
+                    required
+                    placeholder="Digite o texto do versículo, a citação ou o esboço do pensamento..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary resize-none shadow-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Coluna Direita: Vínculo com Sermão e Tags */}
+              <div className="space-y-4 flex flex-col justify-between">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">
+                    Vincular a um Sermão Específico (Aparecerá no Púlpito)
+                  </label>
                   <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value as any)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
+                    value={sermonId}
+                    onChange={(e) => setSermonId(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
                   >
-                    <option value="note">Anotação / Ideia</option>
-                    <option value="verse">Versículo Bíblico</option>
-                    <option value="quote">Citação de Autor</option>
-                    <option value="illustration">Ilustração / Metáfora</option>
+                    <option value="">Nenhum (Insight avulso no banco)</option>
+                    {sermonsList.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {String(s.title ?? s.titulo)} ({fmtDate(s.date ?? s.data)})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold mb-1 text-foreground">
-                    {type === "verse" ? "Referência Bíblica" : "Fonte / Livro / Autor"}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={type === "verse" ? "Ex: Hb 11:1" : "Ex: C.S. Lewis, O Peso da Glória"}
-                    value={reference}
-                    onChange={(e) => setReference(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Título / Tema Resumo</label>
-                <input
-                  type="text"
-                  placeholder="Ex: A certeza inabalável da fé"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Conteúdo / Anotação *</label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Digite o texto do versículo, a citação ou o esboço do pensamento..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
-                />
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Tags para Busca</label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Ex: oração, graça, fé..."
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                    className="flex-1 rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus:border-primary"
-                  />
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddTag}>
-                    Adicionar
-                  </Button>
-                </div>
-
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {tags.map((t) => (
-                      <span
-                        key={t}
-                        className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs text-foreground"
-                      >
-                        #{t}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTag(t)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </span>
-                    ))}
+                <div className="rounded-2xl border border-border/80 bg-muted/20 p-4 space-y-3 flex-1 flex flex-col shadow-inner">
+                  <label className="block text-xs font-semibold text-foreground">Tags para Busca Instantânea</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ex: oração, graça, fé..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      className="flex-1 rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={handleAddTag} className="shadow-sm font-medium">
+                      Adicionar
+                    </Button>
                   </div>
-                )}
-              </div>
 
-              {/* Vínculo opcional com sermão */}
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">
-                  Vincular a um Sermão Específico (Aparecerá no Púlpito)
-                </label>
-                <select
-                  value={sermonId}
-                  onChange={(e) => setSermonId(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
-                >
-                  <option value="">Nenhum (Insight avulso)</option>
-                  {sermonsList.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {String(s.title ?? s.titulo)} ({fmtDate(s.date ?? s.data)})
-                    </option>
-                  ))}
-                </select>
+                  <div className="flex-1 min-h-[80px]">
+                    {tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {tags.map((t) => (
+                          <span
+                            key={t}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1 text-xs font-medium text-foreground shadow-sm"
+                          >
+                            #{t}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTag(t)}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground pt-2">Nenhuma tag adicionada. Pressione Enter ou clique em Adicionar.</p>
+                    )}
+                  </div>
+
+                  <div className="mt-auto p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-muted-foreground flex items-center gap-2">
+                    <Sparkles className="size-4 text-amber-500 shrink-0" />
+                    <span>Tags permitem filtrar seus insights rapidamente no momento da preparação do sermão.</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t pt-4">
+            <div className="flex items-center justify-end gap-3 border-t pt-4">
               <Button variant="outline" onClick={() => setModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave}>Salvar Insight</Button>
+              <Button onClick={handleSave} className="px-6">Salvar Insight</Button>
             </div>
           </div>
         </div>

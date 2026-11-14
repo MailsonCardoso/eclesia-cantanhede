@@ -326,49 +326,54 @@ function AgendaPastoral() {
 
       {/* Modal: Nova Solicitação de Atendimento */}
       {reqModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h2 className="text-lg font-bold text-foreground">Nova Solicitação de Atendimento</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-2xl sm:max-w-3xl rounded-3xl border border-border/80 bg-card p-6 md:p-8 shadow-2xl space-y-6 my-auto">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Nova Solicitação de Atendimento</h2>
+                <p className="text-xs text-muted-foreground">Registre pedidos de visitas pastorais ou gabinete com os membros.</p>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => setReqModalOpen(false)}>
                 <X className="size-4" />
               </Button>
             </div>
 
-            <div className="space-y-3 text-sm">
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Pessoa / Solicitante *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nome do membro ou visitante..."
-                  value={reqPerson}
-                  onChange={(e) => setReqPerson(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                />
-              </div>
+            <div className="space-y-4 text-sm">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Pessoa / Solicitante *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nome do membro ou visitante..."
+                    value={reqPerson}
+                    onChange={(e) => setReqPerson(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold mb-1 text-foreground">Tipo de Atendimento</label>
-                <select
-                  value={reqType}
-                  onChange={(e) => setReqType(e.target.value as "Gabinete" | "Visita")}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
-                >
-                  <option value="Gabinete">Gabinete Pastoral (Na igreja)</option>
-                  <option value="Visita">Visita Pastoral (Na residência ou hospital)</option>
-                </select>
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-foreground">Tipo de Atendimento</label>
+                  <select
+                    value={reqType}
+                    onChange={(e) => setReqType(e.target.value as "Gabinete" | "Visita")}
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
+                  >
+                    <option value="Gabinete">Gabinete Pastoral (Na igreja)</option>
+                    <option value="Visita">Visita Pastoral (Na residência ou hospital)</option>
+                  </select>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold mb-1 text-foreground">Motivo / Assunto do Pedido *</label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   required
-                  placeholder="Ex: Aconselhamento conjugal, oração por cura, orientação..."
+                  placeholder="Ex: Aconselhamento conjugal, oração por cura, orientação profissional..."
                   value={reqReason}
                   onChange={(e) => setReqReason(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+                  className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary resize-none shadow-sm"
                 />
               </div>
 
@@ -376,19 +381,19 @@ function AgendaPastoral() {
                 <label className="block text-xs font-semibold mb-1 text-foreground">Observações / Preferência de Horário</label>
                 <input
                   type="text"
-                  placeholder="Ex: Prefere quintas à tarde..."
+                  placeholder="Ex: Prefere terças ou quintas após as 18h..."
                   value={reqNotes}
                   onChange={(e) => setReqNotes(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t pt-4">
+            <div className="flex items-center justify-end gap-3 border-t pt-4">
               <Button variant="outline" onClick={() => setReqModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreateRequest}>Salvar Solicitação</Button>
+              <Button onClick={handleCreateRequest} className="px-6">Salvar Solicitação</Button>
             </div>
           </div>
         </div>
@@ -396,11 +401,11 @@ function AgendaPastoral() {
 
       {/* Modal: Agendar Solicitação */}
       {scheduleModalOpen && selectedReq && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-xl sm:max-w-2xl rounded-3xl border border-border/80 bg-card p-6 md:p-8 shadow-2xl space-y-6 my-auto">
+            <div className="flex items-center justify-between border-b pb-4">
               <div>
-                <h2 className="text-lg font-bold text-foreground">Confirmar Agendamento</h2>
+                <h2 className="text-xl font-bold text-foreground">Confirmar Agendamento</h2>
                 <p className="text-xs text-muted-foreground">
                   Para: <strong>{String(selectedReq.person ?? selectedReq.membro)}</strong>
                 </p>
@@ -410,9 +415,10 @@ function AgendaPastoral() {
               </Button>
             </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="p-3 rounded-xl bg-secondary/50 text-xs space-y-1">
-                <div className="font-semibold text-foreground">
+            <div className="space-y-4 text-sm">
+              <div className="p-3.5 rounded-2xl bg-secondary/60 text-xs space-y-1.5 border border-border/50">
+                <div className="font-semibold text-foreground flex items-center gap-2">
+                  <span className="inline-block size-2 rounded-full bg-primary" />
                   Tipo: {String(selectedReq.type ?? selectedReq.tipo)}
                 </div>
                 <div className="text-muted-foreground">
@@ -428,7 +434,7 @@ function AgendaPastoral() {
                     required
                     value={schedDate}
                     onChange={(e) => setSchedDate(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
                   />
                 </div>
                 <div>
@@ -438,7 +444,7 @@ function AgendaPastoral() {
                     required
                     value={schedTime}
                     onChange={(e) => setSchedTime(e.target.value)}
-                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none cursor-pointer"
+                    className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none cursor-pointer shadow-sm"
                   />
                 </div>
               </div>
@@ -449,16 +455,16 @@ function AgendaPastoral() {
                   type="text"
                   value={schedLocation}
                   onChange={(e) => setSchedLocation(e.target.value)}
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  className="w-full rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t pt-4">
+            <div className="flex items-center justify-end gap-3 border-t pt-4">
               <Button variant="outline" onClick={() => setScheduleModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleConfirmSchedule} className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white">
+              <Button onClick={handleConfirmSchedule} className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-6">
                 <CheckCircle2 className="size-4" />
                 Confirmar Agendamento
               </Button>
