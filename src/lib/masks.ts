@@ -36,8 +36,18 @@ export function maskTime(val: string): string {
   return `${hh}:${mm}`;
 }
 
+export function formatMoneyValue(val: string | number): string {
+  if (val === "" || val === undefined || val === null) return "";
+  const num = typeof val === "number" ? val : parseFloat(String(val).replace(",", "."));
+  if (isNaN(num)) return "";
+  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 export function maskMoney(val: string | number): string {
   if (val === "" || val === undefined || val === null) return "";
+  if (typeof val === "number") {
+    return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
   const digits = String(val).replace(/\D/g, "");
   if (!digits) return "";
   const num = parseInt(digits, 10) / 100;

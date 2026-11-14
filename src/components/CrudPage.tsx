@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { brl, exportCSV, fmtDate, useStore, type Collection, type Row } from "@/lib/store";
-import { maskCPF, maskPhone, maskCEP, maskTime, maskMoney, parseMoney } from "@/lib/masks";
+import { maskCPF, maskPhone, maskCEP, maskTime, maskMoney, parseMoney, formatMoneyValue } from "@/lib/masks";
 import { toast } from "sonner";
 
 export type Field = {
@@ -371,7 +371,7 @@ export function CrudPage({
     const initial: Record<string, string> = {};
     fields.forEach((f) => {
       if (f.type === "money" || f.key === "valor" || f.key === "valor_unitario") {
-        initial[f.key] = row?.[f.key] !== undefined && row?.[f.key] !== "" ? maskMoney(row[f.key]) : "";
+        initial[f.key] = row?.[f.key] !== undefined && row?.[f.key] !== "" ? formatMoneyValue(row[f.key]) : "";
       } else if (f.type === "cpf" || f.key === "cpf") {
         initial[f.key] = row?.[f.key] ? maskCPF(String(row[f.key])) : "";
       } else if (f.type === "phone" || f.key === "telefone") {
