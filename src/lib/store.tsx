@@ -673,7 +673,7 @@ export function seed(): DB {
         conclusion: "Dedique hoje um tempo de qualidade a sós com o Pai; os maiores milagres começam de joelhos.",
       },
     },
-  ];
+  ] as unknown as Row[];
 
   // 4. Insights Teológicos
   const pastor_insights = [
@@ -732,7 +732,7 @@ export function seed(): DB {
       tags: ["oração", "poder", "igreja", "avivamento"],
       sermon_id: "srm_6",
     },
-  ];
+  ] as unknown as Row[];
 
   // 5. Solicitações de Gabinete e Visitas
   const pastoral_requests: Row[] = [
