@@ -160,8 +160,15 @@ function DreView({
       {/* Barra de Ações Superior */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack} className="gap-2 text-xs">
-            <ArrowLeft className="size-4" /> Voltar à Análise Geral
+          <Button
+            variant="secondary"
+            onClick={onBack}
+            className="group gap-2.5 rounded-xl border border-border/80 bg-background/95 px-3.5 py-2 font-semibold text-foreground shadow-sm hover:border-primary/40 hover:bg-accent hover:shadow transition-all"
+          >
+            <div className="grid size-6 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+              <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+            </div>
+            <span className="text-xs sm:text-sm">Voltar à Análise Geral</span>
           </Button>
           <div className="h-5 w-px bg-border" />
           <div>
@@ -424,8 +431,15 @@ function BalanceteView({
       {/* Barra de Ações Superior */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack} className="gap-2 text-xs">
-            <ArrowLeft className="size-4" /> Voltar à Análise Geral
+          <Button
+            variant="secondary"
+            onClick={onBack}
+            className="group gap-2.5 rounded-xl border border-border/80 bg-background/95 px-3.5 py-2 font-semibold text-foreground shadow-sm hover:border-primary/40 hover:bg-accent hover:shadow transition-all"
+          >
+            <div className="grid size-6 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+              <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+            </div>
+            <span className="text-xs sm:text-sm">Voltar à Análise Geral</span>
           </Button>
           <div className="h-5 w-px bg-border" />
           <div>
