@@ -365,7 +365,7 @@ function PastorSeriesPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleOpenEdit(s as Row)}
+                      onClick={() => handleOpenEdit(s as unknown as Row)}
                       className="size-8 text-muted-foreground hover:text-foreground"
                       title="Editar série"
                     >
