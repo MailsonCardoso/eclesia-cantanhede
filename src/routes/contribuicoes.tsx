@@ -241,17 +241,17 @@ function ReceiptModal({
 
   return (
     <Dialog open={!!row} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md sm:max-w-lg p-0 overflow-hidden rounded-3xl border shadow-2xl">
-        <DialogHeader className="p-6 pb-4 bg-muted/40 border-b">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Receipt className="size-5" />
+      <DialogContent className="max-w-[440px] p-0 overflow-hidden rounded-2xl border shadow-2xl">
+        <DialogHeader className="px-5 py-3 bg-muted/40 border-b">
+          <div className="flex items-center gap-2.5">
+            <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
+              <Receipt className="size-4" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-foreground">
+              <DialogTitle className="text-base font-bold text-foreground">
                 Recibo de Contribuição
               </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
+              <DialogDescription className="text-[11px] text-muted-foreground">
                 Nº #REC-{String(row.id).slice(-6).toUpperCase()} · Emissão {new Date().toLocaleDateString("pt-BR")}
               </DialogDescription>
             </div>
@@ -259,52 +259,52 @@ function ReceiptModal({
         </DialogHeader>
 
         {/* Visual do Recibo */}
-        <div className="p-6 space-y-4 text-sm">
-          <div className="rounded-2xl border bg-card p-4 space-y-3 shadow-sm">
-            <div className="flex items-center justify-between pb-2 border-b">
-              <span className="text-xs text-muted-foreground font-medium">Contribuinte</span>
+        <div className="px-5 py-3 space-y-2.5 text-xs">
+          <div className="rounded-xl border bg-card px-3.5 py-2 space-y-1 shadow-sm">
+            <div className="flex items-center justify-between py-1 border-b">
+              <span className="text-[11px] text-muted-foreground font-medium">Contribuinte</span>
               <span className="font-semibold text-foreground">{row.membro || "Anônimo"}</span>
             </div>
 
-            <div className="flex items-center justify-between pb-2 border-b">
-              <span className="text-xs text-muted-foreground font-medium">Tipo de Lançamento</span>
-              <Badge variant="outline" className="font-semibold">{row.tipo}</Badge>
+            <div className="flex items-center justify-between py-1 border-b">
+              <span className="text-[11px] text-muted-foreground font-medium">Tipo de Lançamento</span>
+              <Badge variant="outline" className="text-[10px] py-0 px-2 font-semibold">{row.tipo}</Badge>
             </div>
 
-            <div className="flex items-center justify-between pb-2 border-b">
-              <span className="text-xs text-muted-foreground font-medium">Valor Contribuído</span>
-              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+            <div className="flex items-center justify-between py-1 border-b">
+              <span className="text-[11px] text-muted-foreground font-medium">Valor Contribuído</span>
+              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                 {brl(Number(row.valor || 0))}
               </span>
             </div>
 
-            <div className="flex items-center justify-between pb-2 border-b">
-              <span className="text-xs text-muted-foreground font-medium">Data</span>
+            <div className="flex items-center justify-between py-1 border-b">
+              <span className="text-[11px] text-muted-foreground font-medium">Data</span>
               <span className="font-medium text-foreground">{fmtDate(row.data)}</span>
             </div>
 
-            <div className="flex items-center justify-between pb-2 border-b">
-              <span className="text-xs text-muted-foreground font-medium">Forma de Pagamento</span>
+            <div className="flex items-center justify-between py-1 border-b">
+              <span className="text-[11px] text-muted-foreground font-medium">Forma de Pagamento</span>
               <span className="font-medium text-foreground">{row.pagamento || "—"}</span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Congregação</span>
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-[11px] text-muted-foreground font-medium">Congregação</span>
               <span className="font-medium text-foreground">{row.congregacao || "Sede Central"}</span>
             </div>
           </div>
 
-          <div className="rounded-xl bg-primary/5 p-3 text-center border border-primary/10">
-            <p className="text-[11px] italic text-muted-foreground">
+          <div className="rounded-lg bg-primary/5 px-3 py-1.5 text-center border border-primary/10">
+            <p className="text-[10.5px] italic text-muted-foreground leading-snug">
               "Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria."
-              <span className="block mt-0.5 font-semibold text-primary/80">2 Coríntios 9:7</span>
+              <span className="block text-[10px] font-semibold text-primary/80 mt-0.5">2 Coríntios 9:7</span>
             </p>
           </div>
 
           {/* Campo de Telefone para WhatsApp */}
-          <div className="space-y-1.5 pt-1">
-            <Label htmlFor="whatsapp-phone" className="text-xs font-semibold flex items-center gap-1.5">
-              <Smartphone className="size-3.5 text-emerald-600" />
+          <div className="space-y-1 pt-0.5">
+            <Label htmlFor="whatsapp-phone" className="text-[11px] font-semibold flex items-center gap-1.5 text-foreground">
+              <Smartphone className="size-3 text-emerald-600" />
               Telefone para envio via WhatsApp (Android / iOS / Web)
             </Label>
             <Input
@@ -312,22 +312,23 @@ function ReceiptModal({
               placeholder="(00) 00000-0000"
               value={phone}
               onChange={(e) => setPhone(maskPhone(e.target.value))}
-              className="rounded-xl shadow-sm text-sm"
+              className="h-8 rounded-lg shadow-sm text-xs"
             />
             {memberData?.telefone && (
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                <CheckCircle className="size-3 text-emerald-500" /> Telefone carregado do cadastro do membro
+              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <CheckCircle className="size-2.5 text-emerald-500" /> Telefone carregado do cadastro do membro
               </p>
             )}
           </div>
         </div>
 
-        <DialogFooter className="p-4 bg-muted/30 border-t flex flex-col sm:flex-row gap-2">
+        <DialogFooter className="px-5 py-2.5 bg-muted/30 border-t flex flex-col sm:flex-row gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => printReceiptDirect(row)}
-            className="gap-2 rounded-xl text-xs flex-1"
+            className="gap-1.5 rounded-lg text-xs flex-1 h-8"
           >
             <Printer className="size-3.5" />
             Imprimir
@@ -336,8 +337,9 @@ function ReceiptModal({
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => downloadPdfReceipt(row)}
-            className="gap-2 rounded-xl text-xs flex-1"
+            className="gap-1.5 rounded-lg text-xs flex-1 h-8"
           >
             <Download className="size-3.5" />
             Baixar PDF
@@ -345,8 +347,9 @@ function ReceiptModal({
 
           <Button
             type="button"
+            size="sm"
             onClick={() => sendToWhatsapp(row, phone)}
-            className="gap-2 rounded-xl text-xs flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+            className="gap-1.5 rounded-lg text-xs flex-1 h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-medium"
           >
             <MessageSquare className="size-3.5" />
             WhatsApp
