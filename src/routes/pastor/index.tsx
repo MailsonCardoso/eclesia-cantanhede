@@ -63,7 +63,7 @@ function PastorAltar() {
   const [status, setStatus] = useState("Planejado");
   const [color, setColor] = useState("bg-blue-500");
   const [intro, setIntro] = useState("");
-  const [topics, setTopics] = useState<string[]>([""]);
+  const [topics, setTopics] = useState<string[]>([]);
   const [conclusion, setConclusion] = useState("");
 
   const sermons = (db.pastor_sermons || []) as Row[];
@@ -103,7 +103,7 @@ function PastorAltar() {
     setStatus("Planejado");
     setColor("bg-blue-500");
     setIntro("");
-    setTopics(["1. Introdução bíblica e contexto", "2. Aplicação na vida da igreja"]);
+    setTopics([]);
     setConclusion("");
     setModalOpen(true);
   };
@@ -119,7 +119,7 @@ function PastorAltar() {
 
     const content = s.content as { intro?: string; topics?: string[]; conclusion?: string } | undefined;
     setIntro(content?.intro ?? "");
-    setTopics(content?.topics && content.topics.length ? content.topics : [""]);
+    setTopics(content?.topics && content.topics.length ? content.topics : []);
     setConclusion(content?.conclusion ?? "");
     setModalOpen(true);
   };
@@ -353,31 +353,37 @@ function PastorAltar() {
                 </div>
 
                 <div className="space-y-3 flex-1 overflow-y-auto pr-1">
-                  {topics.map((t, idx) => (
-                    <div key={idx} className="flex items-center gap-2.5">
-                      <span className="size-7 shrink-0 grid place-items-center rounded-lg bg-secondary text-xs font-bold font-mono">
-                        {idx + 1}
-                      </span>
-                      <input
-                        type="text"
-                        placeholder={`Tópico ${idx + 1}...`}
-                        value={t}
-                        onChange={(e) => handleUpdateTopic(idx, e.target.value)}
-                        className="flex-1 rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
-                      />
-                      {topics.length > 1 && (
+                  {topics.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-muted-foreground border border-dashed rounded-xl p-4">
+                      Nenhum tópico adicionado ainda.<br />
+                      Clique em <strong>+ Adicionar Tópico</strong> acima para definir os pontos do sermão.
+                    </div>
+                  ) : (
+                    topics.map((t, idx) => (
+                      <div key={idx} className="flex items-center gap-2.5">
+                        <span className="size-7 shrink-0 grid place-items-center rounded-lg bg-secondary text-xs font-bold font-mono">
+                          {idx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          placeholder={`Tópico ${idx + 1}...`}
+                          value={t}
+                          onChange={(e) => handleUpdateTopic(idx, e.target.value)}
+                          className="flex-1 rounded-xl border bg-background px-3.5 py-2 text-sm outline-none focus:border-primary shadow-sm"
+                        />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveTopic(idx)}
                           className="size-8 text-muted-foreground hover:text-destructive shrink-0"
+                          title="Remover tópico"
                         >
                           <X className="size-4" />
                         </Button>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    ))
+                  )}
                 </div>
 
                 <div className="mt-auto p-4 rounded-xl bg-primary/5 border border-primary/15 text-xs text-muted-foreground flex items-center gap-3">

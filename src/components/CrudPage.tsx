@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Pencil, Trash2, FileSpreadsheet, Printer, ListFilter, SearchX, ArrowLeft } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileSpreadsheet, Printer, ListFilter, SearchX, ArrowLeft, X } from "lucide-react";
 import { CollectionOverview, collectionIcons } from "@/components/CollectionOverview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,13 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { brl, exportCSV, fmtDate, useStore, type Collection, type Row } from "@/lib/store";
+import { maskCPF, maskPhone, maskCEP, maskTime, maskMoney, parseMoney } from "@/lib/masks";
 import { toast } from "sonner";
 
 export type Field = {
   key: string;
   label: string;
-  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell";
+  type?: "text" | "date" | "number" | "money" | "select" | "textarea" | "email" | "member" | "members" | "cell" | "department" | "time" | "cpf" | "phone" | "cep" | "children";
   options?: string[];
   table?: boolean;
   required?: boolean;
@@ -37,9 +38,11 @@ export function CrudPage({
   const [confirmDel, setConfirmDel] = useState<Row | null>(null);
   // Valores controlados do formulário (para campos condicionais e seleção múltipla)
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [childSearch, setChildSearch] = useState("");
 
   const memberNames = useMemo(() => db.members.map((m) => String(m.nome)).sort((a, b) => a.localeCompare(b)), [db.members]);
   const cellNames = useMemo(() => db.cells.map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b)), [db.cells]);
+  const departmentNames = useMemo(() => (db.departments || []).map((d) => String(d.nome)).sort((a, b) => a.localeCompare(b)), [db.departments]);
 
   const rows = useMemo(() => db[collection].filter((r) =>
     (!q || searchKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase()))) &&
@@ -49,7 +52,7 @@ export function CrudPage({
   const Icon = collectionIcons[collection];
   const hasFilters = !!q || Object.values(filters).some((v) => v && v !== "__all");
   const render = (f: Field, v: Row[string]) => {
-    if (f.type === "money") return brl(Number(v || 0));
+    if (f.type === "money" || f.key === "valor" || f.key === "valor_unitario") return brl(Number(v || 0));
     if (f.type === "date") return fmtDate(v);
     if (f.key === "situacao" || f.key === "tipo" || f.key === "status" || f.key === "estado") {
       const good = ["Ativo", "Ativa", "Receita", "Membro", "Dízimo", "Realizado", "Bom", "Novo"].includes(String(v));
@@ -59,11 +62,71 @@ export function CrudPage({
     return v || "—";
   };
 
+  const handleCepChange = (key: string, val: string) => {
+    const masked = maskCEP(val);
+    setFormValues((prev) => ({ ...prev, [key]: masked }));
+    const clean = masked.replace(/\D/g, "");
+    if (clean.length === 8) {
+      toast.info("Consultando CEP...");
+      fetch(`https://viacep.com.br/ws/${clean}/json/`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.erro) {
+            setFormValues((prev) => ({
+              ...prev,
+              cidade: data.localidade || prev["cidade"] || "",
+              uf: data.uf || prev["uf"] || "",
+              bairro: data.bairro || prev["bairro"] || "",
+              endereco: data.logradouro ? `${data.logradouro}${data.bairro ? `, ${data.bairro}` : ""}` : prev["endereco"] || "",
+            }));
+            toast.success(`Endereço carregado: ${data.localidade}/${data.uf}`);
+          } else {
+            toast.error("CEP não localizado.");
+          }
+        })
+        .catch(() => {
+          toast.error("Erro na busca do CEP.");
+        });
+    }
+  };
+
+  const handleAddChild = (key: string) => {
+    const trimmed = childSearch.trim();
+    if (!trimmed) return;
+    const current = (formValues[key] || "").split("; ").filter(Boolean);
+    if (!current.includes(trimmed)) {
+      const next = [...current, trimmed].join("; ");
+      setFormValues((prev) => ({ ...prev, [key]: next }));
+    }
+    setChildSearch("");
+  };
+
+  const handleRemoveChild = (key: string, childToRemove: string) => {
+    const current = (formValues[key] || "").split("; ").filter(Boolean);
+    const next = current.filter((c) => c !== childToRemove).join("; ");
+    setFormValues((prev) => ({ ...prev, [key]: next }));
+  };
+
   const openForm = (row: Row | null) => {
     setEditing(row);
     const initial: Record<string, string> = {};
-    fields.forEach((f) => { initial[f.key] = String(row?.[f.key] ?? (f.options ? f.options[0] : "")); });
+    fields.forEach((f) => {
+      if (f.type === "money" || f.key === "valor" || f.key === "valor_unitario") {
+        initial[f.key] = row?.[f.key] !== undefined && row?.[f.key] !== "" ? maskMoney(row[f.key]) : "";
+      } else if (f.type === "cpf" || f.key === "cpf") {
+        initial[f.key] = row?.[f.key] ? maskCPF(String(row[f.key])) : "";
+      } else if (f.type === "phone" || f.key === "telefone") {
+        initial[f.key] = row?.[f.key] ? maskPhone(String(row[f.key])) : "";
+      } else if (f.type === "cep" || f.key === "cep") {
+        initial[f.key] = row?.[f.key] ? maskCEP(String(row[f.key])) : "";
+      } else if (f.type === "time" || f.key === "hora" || f.key === "horario") {
+        initial[f.key] = row?.[f.key] ? maskTime(String(row[f.key])) : "";
+      } else {
+        initial[f.key] = String(row?.[f.key] ?? (f.options ? f.options[0] : ""));
+      }
+    });
     setFormValues(initial);
+    setChildSearch("");
     setOpen(true);
   };
 
@@ -74,10 +137,20 @@ export function CrudPage({
     const fd = new FormData(e.currentTarget);
     const data: Record<string, string | number> = {};
     visibleFields.forEach((f) => {
-      if (f.type === "members") { data[f.key] = formValues[f.key] ?? ""; return; }
-      if (f.type === "member" || f.type === "select" || f.type === "cell") { data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? ""); return; }
-      const v = String(fd.get(f.key) ?? "");
-      data[f.key] = f.type === "money" || f.type === "number" ? Number(v || 0) : v;
+      if (f.type === "members" || f.type === "children" || f.key === "filhos") {
+        data[f.key] = formValues[f.key] ?? "";
+        return;
+      }
+      if (f.type === "member" || f.type === "select" || f.type === "cell" || f.type === "department") {
+        data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? "");
+        return;
+      }
+      if (f.type === "money" || f.key === "valor" || f.key === "valor_unitario") {
+        data[f.key] = parseMoney(formValues[f.key] ?? fd.get(f.key) ?? 0);
+        return;
+      }
+      const v = formValues[f.key] ?? String(fd.get(f.key) ?? "");
+      data[f.key] = f.type === "number" ? Number(v || 0) : v;
     });
     if (editing?.id) { update(collection, { ...editing, ...data }); toast.success(`${singular} atualizado(a)`); }
     else { create(collection, data); toast.success(`${singular} cadastrado(a)`); }
@@ -117,7 +190,7 @@ export function CrudPage({
           <form id="crud-form" onSubmit={save} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {visibleFields.map((f) => {
               const dv = formValues[f.key] ?? "";
-              const isFull = f.type === "textarea" || f.type === "members" || f.key === "endereco" || f.key === "observacoes";
+              const isFull = f.type === "textarea" || f.type === "members" || f.type === "children" || f.key === "filhos" || f.key === "endereco" || f.key === "observacoes";
               return (
                 <div key={f.key} className={isFull ? "sm:col-span-2 lg:col-span-3 space-y-1.5" : "space-y-1.5"}>
                   <Label htmlFor={f.key} className="text-xs font-semibold">{f.label}</Label>
@@ -125,6 +198,14 @@ export function CrudPage({
                     <Select name={f.key} value={dv} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v }))}>
                       <SelectTrigger id={f.key} className="rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent>{f.options?.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                    </Select>
+                  ) : f.type === "department" ? (
+                    <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
+                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder="Selecione um departamento" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Nenhum / Geral</SelectItem>
+                        {departmentNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   ) : f.type === "member" ? (
                     <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
@@ -142,21 +223,125 @@ export function CrudPage({
                         {cellNames.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                  ) : f.type === "members" ? (
-                    <select
+                  ) : f.type === "children" || f.type === "members" || f.key === "filhos" ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Digite ou pesquise o nome do filho..."
+                          value={childSearch}
+                          onChange={(e) => setChildSearch(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddChild(f.key);
+                            }
+                          }}
+                          list={`datalist-members-${f.key}`}
+                          className="rounded-xl shadow-sm"
+                        />
+                        <datalist id={`datalist-members-${f.key}`}>
+                          {memberNames.map((n) => (
+                            <option key={n} value={n} />
+                          ))}
+                        </datalist>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleAddChild(f.key)}
+                          className="shrink-0 gap-1.5 rounded-xl font-medium"
+                        >
+                          <Plus className="size-4" />
+                          Adicionar
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 min-h-10 p-2.5 rounded-xl border bg-background/50 items-center">
+                        {dv.split("; ").filter(Boolean).length === 0 ? (
+                          <span className="text-xs text-muted-foreground italic">Nenhum filho adicionado ainda.</span>
+                        ) : (
+                          dv.split("; ").filter(Boolean).map((child) => (
+                            <Badge key={child} variant="secondary" className="gap-1.5 py-1 px-2.5 rounded-lg text-xs font-normal">
+                              {child}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveChild(f.key, child)}
+                                className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+                                title="Remover"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ) : f.type === "cpf" || f.key === "cpf" ? (
+                    <Input
                       id={f.key}
-                      multiple
-                      className="flex min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm"
-                      value={dv ? dv.split("; ") : []}
-                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: Array.from(e.target.selectedOptions).map((o) => o.value).join("; ") }))}
-                    >
-                      {memberNames.map((n) => <option key={n} value={n}>{n}</option>)}
-                    </select>
+                      name={f.key}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      value={formValues[f.key] ?? ""}
+                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: maskCPF(e.target.value) }))}
+                      className="rounded-xl shadow-sm"
+                    />
+                  ) : f.type === "phone" || f.key === "telefone" ? (
+                    <Input
+                      id={f.key}
+                      name={f.key}
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                      value={formValues[f.key] ?? ""}
+                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: maskPhone(e.target.value) }))}
+                      className="rounded-xl shadow-sm"
+                    />
+                  ) : f.type === "cep" || f.key === "cep" ? (
+                    <Input
+                      id={f.key}
+                      name={f.key}
+                      placeholder="00000-000"
+                      maxLength={9}
+                      value={formValues[f.key] ?? ""}
+                      onChange={(e) => handleCepChange(f.key, e.target.value)}
+                      className="rounded-xl shadow-sm"
+                    />
+                  ) : f.type === "time" || f.key === "hora" || f.key === "horario" ? (
+                    <Input
+                      id={f.key}
+                      name={f.key}
+                      placeholder="00:00"
+                      maxLength={5}
+                      value={formValues[f.key] ?? ""}
+                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: maskTime(e.target.value) }))}
+                      className="rounded-xl shadow-sm"
+                    />
+                  ) : f.type === "money" || f.key === "valor" || f.key === "valor_unitario" ? (
+                    <Input
+                      id={f.key}
+                      name={f.key}
+                      placeholder="R$ 0,00"
+                      value={formValues[f.key] ?? ""}
+                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: maskMoney(e.target.value) }))}
+                      className="rounded-xl shadow-sm"
+                    />
                   ) : f.type === "textarea" ? (
-                    <Textarea id={f.key} name={f.key} defaultValue={dv} rows={4} className="rounded-xl resize-none shadow-sm" />
+                    <Textarea
+                      id={f.key}
+                      name={f.key}
+                      value={formValues[f.key] ?? ""}
+                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: e.target.value }))}
+                      rows={4}
+                      className="rounded-xl resize-none shadow-sm"
+                    />
                   ) : (
-                    <Input id={f.key} name={f.key} required={f.required} defaultValue={dv} className="rounded-xl shadow-sm"
-                      type={f.type === "money" || f.type === "number" ? "number" : f.type ?? "text"} step={f.type === "money" ? "0.01" : undefined} />
+                    <Input
+                      id={f.key}
+                      name={f.key}
+                      required={f.required}
+                      value={formValues[f.key] ?? ""}
+                      onChange={(e) => setFormValues((s) => ({ ...s, [f.key]: e.target.value }))}
+                      className="rounded-xl shadow-sm"
+                      type={f.type === "number" ? "number" : f.type ?? "text"}
+                    />
                   )}
                 </div>
               );

@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fmtDate, useStore, type Row } from "@/lib/store";
+import { maskTime } from "@/lib/masks";
 
 export const Route = createFileRoute("/agenda-pastoral")({
   head: () => ({
@@ -297,13 +298,15 @@ function AgendaPastoral() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1.5 text-foreground">Horário *</label>
+              <label className="block text-xs font-semibold mb-1.5 text-foreground">Horário (00:00) *</label>
               <input
-                type="time"
+                type="text"
                 required
+                placeholder="00:00"
+                maxLength={5}
                 value={schedTime}
-                onChange={(e) => setSchedTime(e.target.value)}
-                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none cursor-pointer shadow-sm"
+                onChange={(e) => setSchedTime(maskTime(e.target.value))}
+                className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none focus:border-primary shadow-sm"
               />
             </div>
             <div className="sm:col-span-2">
@@ -502,7 +505,7 @@ function AgendaPastoral() {
         fields={[
           { key: "membro", label: "Membro", type: "member", table: true, required: true },
           { key: "data", label: "Data", type: "date", table: true, required: true },
-          { key: "hora", label: "Horário", table: true },
+          { key: "hora", label: "Horário", type: "time", table: true },
           {
             key: "tipo",
             label: "Tipo",

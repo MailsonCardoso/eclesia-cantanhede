@@ -30,9 +30,8 @@ function Financeiro() {
           { key: "descricao", label: "Descrição", table: true },
           { key: "valor", label: "Valor", type: "money", table: true, required: true },
           { key: "pagamento", label: "Forma de pagamento", type: "select", options: ["PIX", "Dinheiro", "Transferência", "Cartão", "Boleto"] },
-          { key: "conta", label: "Conta bancária", type: "select", options: ["Conta principal", "Caixa", "Poupança"] },
+          { key: "conta", label: "Conta bancária", type: "select", options: ["Banco do Brasil", "Nubank", "Itaú", "Santander"] },
           { key: "congregacao", label: "Congregação", type: "select", options: ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"], table: true },
-          { key: "comprovante", label: "Comprovante (link)" },
         ]}
       />
       <div className="border-t pt-6">
