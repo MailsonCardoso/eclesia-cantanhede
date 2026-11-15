@@ -90,13 +90,13 @@ function UsuariosPage() {
 
   // Filter members based on search in modal
   const filteredMembers = useMemo(() => {
-    if (!memberSearch.trim()) return db.members.slice(0, 6);
     const q = memberSearch.toLowerCase().trim();
+    if (!q) return [];
     const qDigits = cleanCPF(q);
     return db.members.filter((m) => {
       const matchName = (m.nome || m.name || "").toLowerCase().includes(q);
-      const matchCpf = cleanCPF(m.cpf || "").includes(qDigits);
-      const matchEmail = (m.email || "").toLowerCase().includes(q);
+      const matchCpf = qDigits.length >= 3 && cleanCPF(m.cpf || "").includes(qDigits);
+      const matchEmail = Boolean(m.email) && (m.email || "").toLowerCase().includes(q);
       return matchName || matchCpf || matchEmail;
     }).slice(0, 8);
   }, [db.members, memberSearch]);
@@ -111,8 +111,8 @@ function UsuariosPage() {
         !q ||
         u.name.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
-        cleanCPF(u.cpf).includes(qDigits) ||
-        (u.cargo && u.cargo.toLowerCase().includes(q));
+        (qDigits.length >= 3 && cleanCPF(u.cpf).includes(qDigits)) ||
+        Boolean(u.cargo && u.cargo.toLowerCase().includes(q));
 
       const matchesRole = roleFilter === "todos" || u.role === roleFilter;
       const matchesStatus = statusFilter === "todos" || u.status === statusFilter;
@@ -724,47 +724,55 @@ function UsuariosPage() {
                   )}
 
                   {/* Lista suspensa de resultados do membro */}
-                  {isMemberDropdownOpen && memberSearch.trim() && filteredMembers.length > 0 && (
+                  {isMemberDropdownOpen && memberSearch.trim() && (
                     <div className="absolute z-50 left-0 right-0 top-full mt-1.5 rounded-2xl border bg-popover shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-1 animate-in fade-in-50 zoom-in-95">
-                      <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
-                        Membros encontrados no cadastro ({filteredMembers.length})
-                      </div>
-                      {filteredMembers.map((m) => {
-                        const mName = m.nome || m.name || "";
-                        const mCargo = m.cargo || m.role || "Membro";
-                        const isSelected = selectedMemberId === m.id;
+                      {filteredMembers.length > 0 ? (
+                        <>
+                          <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
+                            Membros encontrados ({filteredMembers.length})
+                          </div>
+                          {filteredMembers.map((m) => {
+                            const mName = m.nome || m.name || "";
+                            const mCargo = m.cargo || m.role || "Membro";
+                            const isSelected = selectedMemberId === m.id;
 
-                        return (
-                          <button
-                            type="button"
-                            key={m.id}
-                            onClick={() => handleSelectMember(m)}
-                            className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
-                              isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
-                                {mName.slice(0, 2).toUpperCase()}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="text-xs font-semibold text-foreground truncate">{mName}</div>
-                                <div className="text-[10.5px] text-muted-foreground truncate">
-                                  CPF: {m.cpf || "Não informado"} &middot; {mCargo}
+                            return (
+                              <button
+                                type="button"
+                                key={m.id}
+                                onClick={() => handleSelectMember(m)}
+                                className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
+                                  isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
+                                    {mName.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-semibold text-foreground truncate">{mName}</div>
+                                    <div className="text-[10.5px] text-muted-foreground truncate">
+                                      CPF: {m.cpf || "Não informado"} &middot; {mCargo}
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
 
-                            {isSelected ? (
-                              <Check className="size-4 text-primary shrink-0" />
-                            ) : (
-                              <span className="text-[10px] font-medium text-primary px-2 py-0.5 rounded-md bg-primary/10 shrink-0">
-                                Selecionar
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
+                                {isSelected ? (
+                                  <Check className="size-4 text-primary shrink-0" />
+                                ) : (
+                                  <span className="text-[10px] font-medium text-primary px-2 py-0.5 rounded-md bg-primary/10 shrink-0">
+                                    Selecionar
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </>
+                      ) : (
+                        <div className="p-3 text-center text-xs text-muted-foreground">
+                          Nenhum membro encontrado com "{memberSearch}"
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
