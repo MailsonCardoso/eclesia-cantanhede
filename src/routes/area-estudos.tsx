@@ -169,6 +169,7 @@ function AreaEstudosPage() {
   const [formDate, setFormDate] = useState(new Date().toISOString().slice(0, 10));
   const [formStatus, setFormStatus] = useState<StudyStatus>("Agendado");
   const [formMinisteredAt, setFormMinisteredAt] = useState("");
+  const [formTargetCellId, setFormTargetCellId] = useState<string>("todas");
 
   // Estado da ministração rápida
   const [effectiveMinisterDate, setEffectiveMinisterDate] = useState(
@@ -184,18 +185,23 @@ function AreaEstudosPage() {
     });
   }, [db.studies]);
 
-  // Se o usuário for líder, ele vê somente os estudos da sua célula / seus estudos
-  // Se for admin ou pastor, pode filtrar por célula ou ver todas
+  // Se o usuário for líder, ele vê os estudos da sua célula + os estudos gerais direcionados a todas as células ("todas")
+  // Se for admin ou pastor, tem visão global e pode filtrar por célula ou ver gerais
   const cellFilteredStudies = useMemo(() => {
     if (isLeader) {
       if (!userCell) return [];
       return allStudies.filter(
         (s) =>
+          s.cell_id === "todas" ||
           s.cell_id === userCell.id ||
           (s.leader_name &&
             user?.name &&
             s.leader_name.toLowerCase() === user.name.toLowerCase())
       );
+    }
+    // Visão Pastor / Admin
+    if (selectedCellFilter === "geral_pastoral") {
+      return allStudies.filter((s) => s.cell_id === "todas");
     }
     if (selectedCellFilter !== "todas") {
       return allStudies.filter((s) => s.cell_id === selectedCellFilter);
@@ -267,6 +273,7 @@ function AreaEstudosPage() {
     setFormDate(new Date().toISOString().slice(0, 10));
     setFormStatus("Agendado");
     setFormMinisteredAt("");
+    setFormTargetCellId(isAdmin || isPastor ? "todas" : (userCell?.id || "cel_1"));
     setActiveFormTab("geral");
     setIsFormOpen(true);
   };
@@ -285,6 +292,7 @@ function AreaEstudosPage() {
     setFormDate(study.scheduled_date || new Date().toISOString().slice(0, 10));
     setFormStatus(study.status);
     setFormMinisteredAt(study.ministered_at || "");
+    setFormTargetCellId(study.cell_id || "todas");
     setActiveFormTab("geral");
     setIsFormOpen(true);
   };
@@ -297,10 +305,18 @@ function AreaEstudosPage() {
 
   // Duplicar Estudo (cria novo registro independente com status RASCUNHO)
   const handleDuplicateStudy = (study: StudyItem) => {
-    const targetCellId = study.cell_id || userCell?.id || "cel_1";
-    const targetCellName = study.cell_name || userCell?.nome || "Célula Betel";
-    const targetLeaderId = user?.id || study.leader_id || "usr_lider";
-    const targetLeaderName = user?.name || study.leader_name || "Líder de Célula";
+    // Se um líder estiver duplicando um estudo geral pastoral ("todas"), vincula automaticamente à sua célula
+    let targetCellId = study.cell_id || "todas";
+    let targetCellName = study.cell_name || "Todas as Células";
+    let targetLeaderId = user?.id || study.leader_id || "usr_lider";
+    let targetLeaderName = user?.name || study.leader_name || "Líder de Célula";
+
+    if (isLeader) {
+      targetCellId = userCell?.id || "cel_1";
+      targetCellName = userCell?.nome || "Célula Betel";
+      targetLeaderId = user?.id || "usr_lider";
+      targetLeaderName = user?.name || "Líder de Célula";
+    }
 
     const duplicatedData: Omit<StudyItem, "id"> = {
       title: `${study.title} (Cópia)`,
@@ -323,7 +339,11 @@ function AreaEstudosPage() {
     };
 
     create("studies", duplicatedData as unknown as Row);
-    toast.success("Estudo duplicado com sucesso como rascunho independente!");
+    toast.success(
+      isLeader && study.cell_id === "todas"
+        ? "Estudo pastoral duplicado e vinculado à sua célula como rascunho independente!"
+        : "Estudo duplicado com sucesso como rascunho independente!"
+    );
   };
 
   // Excluir estudo com confirmação
@@ -354,10 +374,34 @@ function AreaEstudosPage() {
       ? "Rascunho"
       : formStatus;
 
-    const cellId = userCell?.id || (selectedStudy?.cell_id || "cel_1");
-    const cellName = userCell?.nome || (selectedStudy?.cell_name || "Célula Betel");
-    const leaderId = user?.id || "usr_lider";
-    const leaderName = user?.name || "Líder de Célula";
+    // Define o destino do estudo e os responsáveis
+    let cellId = "todas";
+    let cellName = "Todas as Células (Geral)";
+    let leaderId = user?.id || "pastoral";
+    let leaderName = user?.name || "Gabinete Pastoral";
+
+    if (isLeader) {
+      cellId = userCell?.id || "cel_1";
+      cellName = userCell?.nome || "Célula Betel";
+      leaderId = user?.id || "usr_lider";
+      leaderName = user?.name || "Líder de Célula";
+    } else {
+      // Visão Administrador / Pastor
+      if (formTargetCellId === "todas") {
+        cellId = "todas";
+        cellName = "Todas as Células (Geral)";
+        leaderId = user?.id || "pastoral";
+        leaderName = `${user?.name || "Gabinete Pastoral"} (Geral)`;
+      } else {
+        const foundTarget = db.cells.find((c) => c.id === formTargetCellId);
+        if (foundTarget) {
+          cellId = foundTarget.id;
+          cellName = foundTarget.nome;
+          leaderId = foundTarget.lider_id || foundTarget.lider || "lider";
+          leaderName = foundTarget.lider || "Líder Responsável";
+        }
+      }
+    }
 
     if (formId) {
       // Atualizar
@@ -374,6 +418,10 @@ function AreaEstudosPage() {
         scheduled_date: formDate,
         ministered_at: finalStatus === "Ministrado" ? (formMinisteredAt || formDate) : "",
         status: finalStatus,
+        cell_id: cellId,
+        cell_name: cellName,
+        leader_id: leaderId,
+        leader_name: leaderName,
         updated_at: new Date().toISOString(),
       } as unknown as Row);
       toast.success("Estudo atualizado com sucesso!");
@@ -518,13 +566,13 @@ function AreaEstudosPage() {
             </p>
           </div>
 
-          {/* Cartão de Identificação do Líder & Célula */}
+          {/* Cartão de Identificação do Líder ou Coordenação Pastoral */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="p-3.5 rounded-2xl border bg-background/80 backdrop-blur shadow-sm space-y-1 min-w-[220px]">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10.5px] font-semibold text-muted-foreground flex items-center gap-1">
                   <UserCheck className="size-3 text-primary" />
-                  Líder Responsável
+                  {isAdmin || isPastor ? "Supervisão Ministerial" : "Líder Responsável"}
                 </span>
                 <span className="text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded">
                   {user?.role || "Líder"}
@@ -537,10 +585,10 @@ function AreaEstudosPage() {
               <div className="pt-1 border-t border-border/50 flex items-center justify-between text-xs">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Home className="size-3 text-emerald-500" />
-                  Célula:
+                  {isAdmin || isPastor ? "Alcance:" : "Célula:"}
                 </span>
                 <span className="font-semibold text-foreground">
-                  {userCell?.nome || "Célula Betel"}
+                  {isAdmin || isPastor ? "Todas as Células (Pastoral)" : (userCell?.nome || "Célula Betel")}
                 </span>
               </div>
             </div>
@@ -558,19 +606,24 @@ function AreaEstudosPage() {
         </div>
 
         {/* Seletor de Células (disponível para Administrador e Pastor) */}
-        {(isAdmin || isPastor) && db.cells.length > 0 && (
+        {(isAdmin || isPastor) && (
           <div className="mt-5 pt-4 border-t flex flex-wrap items-center justify-between gap-3 text-xs">
             <span className="text-muted-foreground font-medium flex items-center gap-1.5">
               <Filter className="size-3.5 text-primary" />
-              Filtrar por Célula (Visão Pastoral / Administrativa):
+              Filtrar por Destino / Célula (Visão Pastoral & Coordenação):
             </span>
-            <div className="w-full sm:w-64">
+            <div className="w-full sm:w-80">
               <Select value={selectedCellFilter} onValueChange={setSelectedCellFilter}>
-                <SelectTrigger className="h-9 rounded-xl text-xs">
-                  <SelectValue placeholder="Selecione a célula" />
+                <SelectTrigger className="h-9 rounded-xl text-xs bg-background">
+                  <SelectValue placeholder="Selecione o filtro" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todas as Células ({db.cells.length})</SelectItem>
+                  <SelectItem value="todas">
+                    Todas as Células & Estudos ({allStudies.length})
+                  </SelectItem>
+                  <SelectItem value="geral_pastoral">
+                    🌟 Apenas Estudos Gerais da Igreja (Pastoral)
+                  </SelectItem>
                   {db.cells.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome} (Líder: {c.lider || "Sem líder"})
@@ -724,21 +777,33 @@ function AreaEstudosPage() {
                   <div className="space-y-3">
                     {/* Linha de Status & Categoria */}
                     <div className="flex items-center justify-between gap-2">
-                      <Badge
-                        variant="outline"
-                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full gap-1.5 ${
-                          isMinistrado
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                            : isAgendado
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                        }`}
-                      >
-                        {isMinistrado && <CheckCircle2 className="size-3" />}
-                        {isAgendado && <Calendar className="size-3" />}
-                        {isRascunho && <FileText className="size-3" />}
-                        {study.status}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge
+                          variant="outline"
+                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full gap-1.5 ${
+                            isMinistrado
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                              : isAgendado
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                          }`}
+                        >
+                          {isMinistrado && <CheckCircle2 className="size-3" />}
+                          {isAgendado && <Calendar className="size-3" />}
+                          {isRascunho && <FileText className="size-3" />}
+                          {study.status}
+                        </Badge>
+
+                        {study.cell_id === "todas" && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30 gap-1"
+                          >
+                            <Sparkles className="size-3" />
+                            Geral Pastoral
+                          </Badge>
+                        )}
+                      </div>
 
                       <Badge
                         variant="secondary"
@@ -793,10 +858,20 @@ function AreaEstudosPage() {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between pt-1 text-[11px] opacity-80">
-                        <span className="truncate">Célula: {study.cell_name}</span>
-                        <span className="truncate">Líder: {study.leader_name}</span>
-                      </div>
+                      {study.cell_id === "todas" ? (
+                        <div className="flex items-center justify-between pt-1 text-[11px] text-violet-700 dark:text-violet-300 bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded-lg">
+                          <span className="flex items-center gap-1 font-bold">
+                            <Sparkles className="size-3 shrink-0" />
+                            Todas as Células da Igreja
+                          </span>
+                          <span className="truncate opacity-90 font-medium">{study.leader_name}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between pt-1 text-[11px] opacity-80">
+                          <span className="truncate">Célula: {study.cell_name}</span>
+                          <span className="truncate">Líder: {study.leader_name}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -925,6 +1000,41 @@ function AreaEstudosPage() {
             {/* SEÇÃO 1: INFORMAÇÕES GERAIS */}
             {activeFormTab === "geral" && (
               <div className="space-y-3.5 animate-in fade-in-50 duration-200">
+                {/* Seletor de Destino do Estudo (para Administrador e Pastor) */}
+                {(isAdmin || isPastor) && (
+                  <div className="space-y-1.5 p-3.5 rounded-2xl border border-primary/20 bg-primary/5">
+                    <Label htmlFor="study-destination" className="text-xs font-bold flex items-center justify-between text-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Church className="size-3.5 text-primary" />
+                        Destinar Estudo Bíblico para:
+                      </span>
+                      <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-bold">
+                        Visão Ministerial
+                      </Badge>
+                    </Label>
+                    <Select value={formTargetCellId} onValueChange={setFormTargetCellId}>
+                      <SelectTrigger id="study-destination" className="h-11 rounded-xl text-sm bg-background">
+                        <SelectValue placeholder="Selecione o destino do estudo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todas">
+                          🌟 Todas as Células (Estudo Geral da Igreja / Pastoral)
+                        </SelectItem>
+                        {db.cells.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.nome} — Líder: {c.lider || "Sem líder"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">
+                      {formTargetCellId === "todas"
+                        ? "Todos os líderes de célula terão acesso a este estudo em seus cadernos digitais para ministrar aos irmãos."
+                        : "Este estudo será direcionado especificamente para a célula selecionada."}
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <Label htmlFor="study-title" className="text-xs font-bold">
                     Título do Estudo <span className="text-destructive">*</span>
@@ -1142,11 +1252,20 @@ function AreaEstudosPage() {
                 <div className="rounded-2xl border bg-muted/40 p-3.5 space-y-1 text-xs">
                   <div className="font-semibold text-foreground flex items-center gap-1.5">
                     <Home className="size-3.5 text-primary" />
-                    Vínculo do Estudo
+                    Destino & Autoria do Estudo
                   </div>
                   <p className="text-muted-foreground">
-                    Célula: <strong>{userCell?.nome || "Célula Betel"}</strong> &middot; Líder:{" "}
-                    <strong>{user?.name || "Líder de Célula"}</strong>
+                    {formTargetCellId === "todas" ? (
+                      <span>
+                        Destino: <strong className="text-violet-600 dark:text-violet-400">Todas as Células da Igreja (Estudo Geral Pastoral)</strong> &middot; Autor:{" "}
+                        <strong>{user?.name || "Gabinete Pastoral"}</strong>
+                      </span>
+                    ) : (
+                      <span>
+                        Célula: <strong>{db.cells.find((c) => c.id === formTargetCellId)?.nome || userCell?.nome || "Célula Betel"}</strong> &middot; Líder Responsável:{" "}
+                        <strong>{db.cells.find((c) => c.id === formTargetCellId)?.lider || user?.name || "Líder de Célula"}</strong>
+                      </span>
+                    )}
                   </p>
                 </div>
 
@@ -1204,7 +1323,7 @@ function AreaEstudosPage() {
             <div className="space-y-5">
               {/* Barra de Ferramentas do Leitor */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3.5 no-print">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge
                     variant="outline"
                     className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
@@ -1217,6 +1336,17 @@ function AreaEstudosPage() {
                   >
                     {selectedStudy.status}
                   </Badge>
+
+                  {selectedStudy.cell_id === "todas" && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30 gap-1"
+                    >
+                      <Sparkles className="size-3" />
+                      Estudo Geral Pastoral
+                    </Badge>
+                  )}
+
                   <span className="text-xs text-muted-foreground font-semibold">
                     {selectedStudy.theme}
                   </span>

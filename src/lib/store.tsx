@@ -881,48 +881,7 @@ export function seed(): DB {
     { id: uid(), nome: "Caixas de som ativas", categoria: "Áudio", quantidade: 4, estado: "Bom", local: DEFAULT_CONGREGATION, aquisicao: "2023-09-08", valor: 1800 },
   ];
 
-  const studies: Row[] = [
-    {
-      id: "std_1",
-      title: "O Poder da Comunhão e do Amor Fraternal",
-      theme: "Vida em Comunidade",
-      biblical_reference: "Atos 2:42-47",
-      objective: "Compreender que o crescimento espiritual e a perseverança na fé acontecem através da comunhão sincera e do cuidado mútuo na célula.",
-      introduction: "Na igreja primitiva, os discípulos não caminhavam sozinhos. Eles se reuniam de casa em casa com singeleza de coração, compartilhando o pão e a vida.",
-      development: "1. A perseverança na doutrina e nas orações (v. 42):\nO alimento da nossa fé é a Palavra de Deus e a busca constante em oração.\n\n2. Tudo em comum e generosidade prática (v. 44-45):\nO amor cristão não é teórico, ele supre as necessidades e estende a mão nas horas difíceis.\n\n3. Alegria e louvor diário (v. 46-47):\nUma célula saudável atrai as pessoas pelo testemunho de alegria e acolhimento.",
-      reflection_questions: "1. De que maneira a nossa célula tem te ajudado a não caminhar sozinho na fé?\n2. O que podemos fazer esta semana para demonstrar amor prático a alguém necessitado?\n3. Qual área da sua vida espiritual você sente que precisa de mais oração e apoio dos irmãos?",
-      conclusion: "A comunhão na célula é um presente de Deus para fortalecer nossa caminhada. Quando nos unimos em amor e oração, o Senhor acrescenta diariamente aqueles que vão sendo salvos.",
-      scheduled_date: d(3),
-      ministered_at: "",
-      status: "Agendado",
-      cell_id: cells[0]?.id || "cel_1",
-      cell_name: cells[0]?.nome || "Célula Betel",
-      leader_id: "usr_lider",
-      leader_name: cells[0]?.lider || "Mailson Costa Cardoso",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "std_2",
-      title: "Vencendo a Ansiedade com Oração e Gratidão",
-      theme: "Fé e Confiança",
-      biblical_reference: "Filipenses 4:6-7",
-      objective: "Aprender a entregar as preocupações e cargas a Deus através da oração com ação de graças, experimentando a paz que excede todo entendimento.",
-      introduction: "Vivemos em uma sociedade acelerada onde a ansiedade tem roubado a paz de muitas famílias. A Bíblia nos dá o antídoto seguro para acalmar o coração.",
-      development: "1. Não estejais inquietos por coisa alguma (v. 6a):\nDeus conhece nossas necessidades antes mesmo de pedirmos.\n\n2. Sejam conhecidas as vossas petições com ação de graças (v. 6b):\nA oração acompanhada de gratidão muda a nossa perspectiva da crise para o Deus da provisão.\n\n3. A paz de Deus guardará vossos corações (v. 7):\nA paz não é ausência de problemas, mas a presença constante de Cristo guardando nossa mente.",
-      reflection_questions: "1. Qual tem sido a sua maior fonte de preocupação ou ansiedade ultimamente?\n2. Você tem conseguido agradecer a Deus mesmo em meio às dificuldades?\n3. Como podemos orar uns pelos outros hoje para experimentar essa paz de Deus?",
-      conclusion: "Entregue hoje nas mãos do Senhor tudo aquilo que foge ao seu controle. A paz de Cristo é a sentinela que guarda o seu coração.",
-      scheduled_date: d(-4),
-      ministered_at: d(-4),
-      status: "Ministrado",
-      cell_id: cells[0]?.id || "cel_1",
-      cell_name: cells[0]?.nome || "Célula Betel",
-      leader_id: "usr_lider",
-      leader_name: cells[0]?.lider || "Mailson Costa Cardoso",
-      created_at: d(-10),
-      updated_at: d(-4),
-    },
-  ];
+  const studies: Row[] = [];
 
   return {
     members,
@@ -1077,8 +1036,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(raw);
         const initial = emptyDB();
         const merged = { ...initial, ...parsed };
-        if (!merged.studies || merged.studies.length === 0) {
-          merged.studies = seed().studies;
+        if (merged.studies) {
+          // Remove estudos mockados antigos para manter a base 100% limpa
+          merged.studies = merged.studies.filter((s: Row) => s.id !== "std_1" && s.id !== "std_2");
+        } else {
+          merged.studies = [];
         }
         const sanitized = sanitizeCongregations(merged);
         setDb(sanitized);
