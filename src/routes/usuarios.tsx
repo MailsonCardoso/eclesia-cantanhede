@@ -59,6 +59,7 @@ function UsuariosPage() {
   // Modal State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [confirmDelUser, setConfirmDelUser] = useState<{ id: string; name: string } | null>(null);
 
   // Form State
   const [selectedMemberId, setSelectedMemberId] = useState("");
@@ -281,19 +282,24 @@ function UsuariosPage() {
     }
   };
 
-  // Handle Delete with Confirmation
-  const handleDelete = (id: string, userName: string) => {
+  // Handle Delete with Confirmation Modal
+  const handleRequestDelete = (id: string, userName: string) => {
     if (currentLoggedUser?.id === id) {
       toast.error("Você não pode excluir sua própria conta conectada.");
       return;
     }
+    setConfirmDelUser({ id, name: userName });
+  };
 
-    if (window.confirm(`Tem certeza de que deseja remover o acesso do usuário "${userName}"?`)) {
-      const res = deleteUser(id);
-      if (!res.success) {
-        toast.error(res.error || "Erro ao excluir usuário.");
-      }
+  const handleConfirmDelete = () => {
+    if (!confirmDelUser) return;
+    const res = deleteUser(confirmDelUser.id);
+    if (res.success) {
+      toast.success(`Acesso do usuário "${confirmDelUser.name}" revogado com sucesso.`);
+    } else {
+      toast.error(res.error || "Erro ao excluir usuário.");
     }
+    setConfirmDelUser(null);
   };
 
   if (!isAdmin) {
@@ -620,7 +626,7 @@ function UsuariosPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(u.id, u.name)}
+                    onClick={() => handleRequestDelete(u.id, u.name)}
                     disabled={isMe}
                     className="h-8 px-2.5 rounded-xl text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                     title={isMe ? "Você não pode excluir sua própria conta" : "Remover usuário"}
@@ -1003,6 +1009,44 @@ function UsuariosPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE USUÁRIO */}
+      <Dialog open={!!confirmDelUser} onOpenChange={(o) => !o && setConfirmDelUser(null)}>
+        <DialogContent className="max-w-md p-5 rounded-3xl">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-xs font-bold text-destructive">
+              <Trash2 className="size-4" />
+              <span>Revogar Acesso do Operador</span>
+            </div>
+            <DialogTitle className="text-lg font-bold">
+              Excluir Usuário do Sistema?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Tem certeza de que deseja remover o acesso do operador <strong>"{confirmDelUser?.name}"</strong>? O login e todas as permissões concedidas a este membro serão revogados.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDelUser(null)}
+              className="rounded-xl text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              className="rounded-xl text-xs font-bold gap-1.5"
+            >
+              <Trash2 className="size-4" />
+              <span>Excluir Definitivamente</span>
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

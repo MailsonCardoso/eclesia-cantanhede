@@ -18,6 +18,15 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { fmtDate, useStore, type Row, type V } from "@/lib/store";
 
 export const Route = createFileRoute("/pastor/")({
@@ -54,6 +63,7 @@ function PastorAltar() {
   // Modal de Criação / Edição
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDelSermon, setConfirmDelSermon] = useState<Row | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -618,9 +628,9 @@ function PastorAltar() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => remove("pastor_sermons", s.id)}
-                      className="size-8 text-muted-foreground hover:text-destructive"
-                      title="Excluir"
+                      onClick={() => setConfirmDelSermon(s)}
+                      className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                      title="Excluir sermão"
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -641,6 +651,49 @@ function PastorAltar() {
           </div>
         )}
       </div>
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE SERMÃO */}
+      <Dialog open={!!confirmDelSermon} onOpenChange={(o) => !o && setConfirmDelSermon(null)}>
+        <DialogContent className="max-w-md p-5 rounded-3xl">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-xs font-bold text-destructive">
+              <Trash2 className="size-4" />
+              <span>Confirmar Exclusão</span>
+            </div>
+            <DialogTitle className="text-lg font-bold">
+              Excluir Esboço do Sermão?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Tem certeza de que deseja excluir permanentemente o sermão <strong>"{confirmDelSermon?.titulo || confirmDelSermon?.title}"</strong>? Esta ação não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDelSermon(null)}
+              className="rounded-xl text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (!confirmDelSermon) return;
+                remove("pastor_sermons", confirmDelSermon.id);
+                toast.success("Sermão excluído com sucesso.");
+                setConfirmDelSermon(null);
+              }}
+              className="rounded-xl text-xs font-bold gap-1.5"
+            >
+              <Trash2 className="size-4" />
+              <span>Excluir Definitivamente</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

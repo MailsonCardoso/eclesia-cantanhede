@@ -16,6 +16,15 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { fmtDate, useStore, type Row, type V } from "@/lib/store";
 
 export const Route = createFileRoute("/pastor/insights")({
@@ -47,6 +56,7 @@ function PastorInsightsPage() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDelInsight, setConfirmDelInsight] = useState<Row | null>(null);
 
   // Form states
   const [type, setType] = useState<"note" | "verse" | "quote" | "illustration">("note");
@@ -497,8 +507,9 @@ function PastorInsightsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => remove("pastor_insights", ins.id)}
-                      className="size-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => setConfirmDelInsight(ins)}
+                      className="size-7 text-muted-foreground hover:text-destructive cursor-pointer"
+                      title="Excluir insight"
                     >
                       <Trash2 className="size-3" />
                     </Button>
@@ -519,6 +530,49 @@ function PastorInsightsPage() {
           </div>
         )}
       </div>
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE INSIGHT */}
+      <Dialog open={!!confirmDelInsight} onOpenChange={(o) => !o && setConfirmDelInsight(null)}>
+        <DialogContent className="max-w-md p-5 rounded-3xl">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-xs font-bold text-destructive">
+              <Trash2 className="size-4" />
+              <span>Confirmar Exclusão</span>
+            </div>
+            <DialogTitle className="text-lg font-bold">
+              Excluir Insight Teológico?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Tem certeza de que deseja excluir permanentemente o insight <strong>"{confirmDelInsight?.title || confirmDelInsight?.titulo || confirmDelInsight?.content?.toString().slice(0, 40)}"</strong>? Esta ação não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDelInsight(null)}
+              className="rounded-xl text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (!confirmDelInsight) return;
+                remove("pastor_insights", confirmDelInsight.id);
+                toast.success("Insight excluído com sucesso.");
+                setConfirmDelInsight(null);
+              }}
+              className="rounded-xl text-xs font-bold gap-1.5"
+            >
+              <Trash2 className="size-4" />
+              <span>Excluir Definitivamente</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

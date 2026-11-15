@@ -151,9 +151,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Dark mode premium é o padrão; o modo claro fica disponível no botão do cabeçalho.
   const [dark, setDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     setDark(localStorage.getItem("theme") !== "light");
   }, []);
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem("theme", dark ? "dark" : "light");
@@ -199,12 +203,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   // Se não estiver logado, não renderiza as telas protegidas enquanto redireciona
-  if (!isAuthenticated) {
+  if (mounted && !isAuthenticated) {
     return null;
   }
 
   // Se a rota não for autorizada para o perfil, não renderiza durante o redirecionamento
-  if (!canAccessRoute(user?.role, path)) {
+  if (mounted && !canAccessRoute(user?.role, path)) {
     return null;
   }
 

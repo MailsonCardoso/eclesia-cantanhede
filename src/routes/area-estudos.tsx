@@ -150,6 +150,7 @@ function AreaEstudosPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isMinisterModalOpen, setIsMinisterModalOpen] = useState(false);
+  const [confirmDelStudy, setConfirmDelStudy] = useState<{ id: string; title: string } | null>(null);
   const [selectedStudy, setSelectedStudy] = useState<StudyItem | null>(null);
 
   // Tamanho da fonte do modo leitura (celular)
@@ -346,15 +347,19 @@ function AreaEstudosPage() {
     );
   };
 
-  // Excluir estudo com confirmação
-  const handleDeleteStudy = (id: string, title: string) => {
-    if (confirm(`Tem certeza que deseja excluir o estudo "${title}"?`)) {
-      remove("studies", id);
-      toast.success("Estudo excluído com sucesso.");
-      if (selectedStudy?.id === id) {
-        setIsReaderOpen(false);
-      }
+  // Excluir estudo com confirmação modal
+  const handleRequestDeleteStudy = (id: string, title: string) => {
+    setConfirmDelStudy({ id, title });
+  };
+
+  const handleConfirmDeleteStudy = () => {
+    if (!confirmDelStudy) return;
+    remove("studies", confirmDelStudy.id);
+    toast.success("Estudo excluído com sucesso.");
+    if (selectedStudy?.id === confirmDelStudy.id) {
+      setIsReaderOpen(false);
     }
+    setConfirmDelStudy(null);
   };
 
   // Salvar formulário (Salvar Estudo ou Salvar como Rascunho)
@@ -922,7 +927,7 @@ function AreaEstudosPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDeleteStudy(study.id, study.title)}
+                      onClick={() => handleRequestDeleteStudy(study.id, study.title)}
                       className="h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive cursor-pointer"
                       title="Excluir Estudo"
                     >
@@ -1588,6 +1593,44 @@ function AreaEstudosPage() {
             >
               <Check className="size-4" />
               <span>Confirmar Ministração</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 4: CONFIRMAÇÃO DE EXCLUSÃO DE ESTUDO */}
+      <Dialog open={!!confirmDelStudy} onOpenChange={(o) => !o && setConfirmDelStudy(null)}>
+        <DialogContent className="max-w-md p-5 rounded-3xl">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-xs font-bold text-destructive">
+              <Trash2 className="size-4" />
+              <span>Confirmar Exclusão</span>
+            </div>
+            <DialogTitle className="text-lg font-bold">
+              Excluir Estudo Bíblico?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Tem certeza de que deseja excluir permanentemente o estudo <strong>"{confirmDelStudy?.title}"</strong>? Esta ação não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDelStudy(null)}
+              className="rounded-xl text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmDeleteStudy}
+              className="rounded-xl text-xs font-bold gap-1.5"
+            >
+              <Trash2 className="size-4" />
+              <span>Excluir Definitivamente</span>
             </Button>
           </DialogFooter>
         </DialogContent>

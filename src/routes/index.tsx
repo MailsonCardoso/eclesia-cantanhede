@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/MetricCard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Users, UserCheck, UserPlus, UserRound, HandCoins, Gift, TrendingDown, Landmark, CalendarDays, Cake, Download } from "lucide-react";
@@ -32,16 +32,23 @@ function Stat({ icon, label, value, grad = 0 }: { icon: typeof Users; label: str
 function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (user?.role === "Tesoureiro") {
-      navigate({ to: "/analise-financeira" });
-    } else if (user?.role === "Líder") {
-      navigate({ to: "/area-estudos" });
-    }
-  }, [user, navigate]);
+    setMounted(true);
+  }, []);
 
-  if (user?.role === "Tesoureiro" || user?.role === "Líder") {
+  useEffect(() => {
+    if (mounted) {
+      if (user?.role === "Tesoureiro") {
+        navigate({ to: "/analise-financeira" });
+      } else if (user?.role === "Líder") {
+        navigate({ to: "/area-estudos" });
+      }
+    }
+  }, [mounted, user, navigate]);
+
+  if (mounted && (user?.role === "Tesoureiro" || user?.role === "Líder")) {
     return null;
   }
 

@@ -14,6 +14,15 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { fmtDate, useStore, type Row } from "@/lib/store";
 
 export const Route = createFileRoute("/pastor/series")({
@@ -42,6 +51,7 @@ function PastorSeriesPage() {
   // Modal de Criação / Edição
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDelSerie, setConfirmDelSerie] = useState<Row | null>(null);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -375,8 +385,8 @@ function PastorSeriesPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => remove("pastor_series", s.id)}
-                      className="size-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setConfirmDelSerie(s as unknown as Row)}
+                      className="size-8 text-muted-foreground hover:text-destructive cursor-pointer"
                       title="Excluir série"
                     >
                       <Trash2 className="size-3.5" />
@@ -398,6 +408,49 @@ function PastorSeriesPage() {
           </div>
         )}
       </div>
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE SÉRIE */}
+      <Dialog open={!!confirmDelSerie} onOpenChange={(o) => !o && setConfirmDelSerie(null)}>
+        <DialogContent className="max-w-md p-5 rounded-3xl">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-xs font-bold text-destructive">
+              <Trash2 className="size-4" />
+              <span>Confirmar Exclusão</span>
+            </div>
+            <DialogTitle className="text-lg font-bold">
+              Excluir Série Temática?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Tem certeza de que deseja excluir permanentemente a série <strong>"{confirmDelSerie?.title || confirmDelSerie?.titulo}"</strong>? Esta ação não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDelSerie(null)}
+              className="rounded-xl text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (!confirmDelSerie) return;
+                remove("pastor_series", confirmDelSerie.id);
+                toast.success("Série excluída com sucesso.");
+                setConfirmDelSerie(null);
+              }}
+              className="rounded-xl text-xs font-bold gap-1.5"
+            >
+              <Trash2 className="size-4" />
+              <span>Excluir Definitivamente</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
