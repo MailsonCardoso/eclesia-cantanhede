@@ -963,9 +963,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const sanitizeCongregations = (data: DB): DB => {
       const isOldMock = (name?: string) =>
         !name ||
+        !String(name).trim() ||
         name === "Sede Central" ||
         name === "Sede Geral" ||
         name === "Sede" ||
+        name === "Sede/Geral" ||
+        name === "Nenhuma / Sede" ||
+        name === "__none" ||
         name === "Congregação Vila Nova" ||
         name === "Congregação Jardim Esperança";
 
@@ -1058,7 +1062,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value: Ctx = {
     db,
     create: (c, row) => {
-      const r = { ...row, id: uid() } as Row;
+      const cong =
+        row.congregacao && row.congregacao !== "__none" && row.congregacao !== "Nenhuma / Sede"
+          ? row.congregacao
+          : (c === "transactions" || c === "contributions" || c === "members" || c === "cells" || c === "inventory" ? DEFAULT_CONGREGATION : row.congregacao);
+      const r = { ...row, ...(cong ? { congregacao: cong } : {}), id: uid() } as Row;
       setDb((s) => ({
         ...s,
         [c]: [r, ...(s[c] || [])],
@@ -1066,12 +1074,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }));
       return r;
     },
-    update: (c, row) =>
+    update: (c, row) => {
+      const cong =
+        row.congregacao && row.congregacao !== "__none" && row.congregacao !== "Nenhuma / Sede"
+          ? row.congregacao
+          : (c === "transactions" || c === "contributions" || c === "members" || c === "cells" || c === "inventory" ? DEFAULT_CONGREGATION : row.congregacao);
+      const updatedRow = { ...row, ...(cong ? { congregacao: cong } : {}) };
       setDb((s) => ({
         ...s,
-        [c]: (s[c] || []).map((r) => (r.id === row.id ? row : r)),
-        audit: [log(c, "edição", row), ...s.audit],
-      })),
+        [c]: (s[c] || []).map((r) => (r.id === row.id ? updatedRow : r)),
+        audit: [log(c, "edição", updatedRow), ...s.audit],
+      }));
+    },
     remove: (c, id) =>
       setDb((s) => {
         const r = (s[c] || []).find((x) => x.id === id);

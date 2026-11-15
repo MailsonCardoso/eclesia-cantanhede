@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { brl, fmtDate, useStore, type Row } from "@/lib/store";
+import { brl, DEFAULT_CONGREGATION, fmtDate, useStore, type Row } from "@/lib/store";
 import { maskPhone } from "@/lib/masks";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -424,7 +424,7 @@ function Contribuicoes() {
             options: ["PIX", "Dinheiro", "Cartão", "Transferência"],
             table: true,
           },
-          { key: "congregacao", label: "Congregação", type: "congregation", table: true },
+          { key: "congregacao", label: "Congregação", type: "congregation", options: [DEFAULT_CONGREGATION], table: true },
         ]}
       />
 

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CrudPage } from "@/components/CrudPage";
 import { Download, TrendingUp } from "lucide-react";
-import { brl, useStore } from "@/lib/store";
+import { brl, DEFAULT_CONGREGATION, useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { downloadChartAsPng } from "@/lib/chart-download";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -99,7 +99,7 @@ function Financeiro() {
             type: "select",
             options: ["Banco do Brasil"],
           },
-          { key: "congregacao", label: "Congregação", type: "congregation", table: true },
+          { key: "congregacao", label: "Congregação", type: "congregation", options: [DEFAULT_CONGREGATION], table: true },
         ]}
       />
 

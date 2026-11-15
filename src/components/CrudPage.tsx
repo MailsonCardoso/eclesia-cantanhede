@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { brl, exportCSV, fmtDate, useStore, type Collection, type Row } from "@/lib/store";
+import { brl, exportCSV, fmtDate, useStore, DEFAULT_CONGREGATION, type Collection, type Row } from "@/lib/store";
 import { maskCPF, maskPhone, maskCEP, maskTime, maskMoney, parseMoney, formatMoneyValue } from "@/lib/masks";
 import { toast } from "sonner";
 
@@ -335,6 +335,9 @@ export function CrudPage({
       const bad = ["Inativo", "Cancelado", "Ruim"].includes(String(v));
       return <Badge variant={good ? "default" : bad ? "destructive" : "secondary"}>{v}</Badge>;
     }
+    if (f.type === "congregation" || f.key === "congregacao") {
+      return v || DEFAULT_CONGREGATION;
+    }
     return v || "—";
   };
 
@@ -380,6 +383,10 @@ export function CrudPage({
         initial[f.key] = row?.[f.key] ? maskCEP(String(row[f.key])) : "";
       } else if (f.type === "time" || f.key === "hora" || f.key === "horario") {
         initial[f.key] = row?.[f.key] ? maskTime(String(row[f.key])) : "";
+      } else if (f.type === "congregation" || f.key === "congregacao") {
+        initial[f.key] = String(row?.[f.key] || DEFAULT_CONGREGATION);
+      } else if (f.type === "date" && f.key === "data") {
+        initial[f.key] = row?.[f.key] ? String(row[f.key]) : new Date().toISOString().slice(0, 10);
       } else {
         const opts = typeof f.options === "function" ? f.options({ ...row, ...initial }) : f.options;
         initial[f.key] = String(row?.[f.key] ?? (opts ? opts[0] : ""));
@@ -400,7 +407,11 @@ export function CrudPage({
         data[f.key] = formValues[f.key] ?? "";
         return;
       }
-      if (f.type === "member" || f.type === "select" || f.type === "cell" || f.type === "department" || f.type === "leader" || f.type === "congregation") {
+      if (f.type === "congregation" || f.key === "congregacao") {
+        data[f.key] = formValues[f.key] || DEFAULT_CONGREGATION;
+        return;
+      }
+      if (f.type === "member" || f.type === "select" || f.type === "cell" || f.type === "department" || f.type === "leader") {
         data[f.key] = formValues[f.key] ?? String(fd.get(f.key) ?? "");
         return;
       }
@@ -482,12 +493,25 @@ export function CrudPage({
                       );
                     })()
                   ) : f.type === "congregation" ? (
-                    <Select name={f.key} value={dv || "__none"} onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v === "__none" ? "" : v }))}>
-                      <SelectTrigger id={f.key} className="rounded-xl"><SelectValue placeholder={`Selecione ${f.label.toLowerCase()}`} /></SelectTrigger>
+                    <Select
+                      name={f.key}
+                      value={dv || DEFAULT_CONGREGATION}
+                      onValueChange={(v) => setFormValues((s) => ({ ...s, [f.key]: v || DEFAULT_CONGREGATION }))}
+                    >
+                      <SelectTrigger id={f.key} className="rounded-xl">
+                        <SelectValue placeholder={`Selecione ${f.label.toLowerCase()}`} />
+                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none">Nenhuma / Sede</SelectItem>
-                        {[...new Set([...congregationNames, ...(typeof f.options === "function" ? f.options(formValues) : (f.options || []))])].map((n) => (
-                          <SelectItem key={n} value={n}>{n}</SelectItem>
+                        {Array.from(
+                          new Set([
+                            DEFAULT_CONGREGATION,
+                            ...congregationNames,
+                            ...(typeof f.options === "function" ? f.options(formValues) : (f.options || [])),
+                          ].filter(Boolean))
+                        ).map((n) => (
+                          <SelectItem key={n} value={n}>
+                            {n}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
