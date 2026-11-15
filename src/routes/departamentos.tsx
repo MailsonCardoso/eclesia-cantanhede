@@ -348,15 +348,16 @@ function Departamentos() {
                       {n} (Líder / Ministro)
                     </SelectItem>
                   ))}
-                  {membersList
-                    .filter((m) => !leaderCandidates.includes(m.nome))
-                    .map((m) => (
-                      <SelectItem key={m.nome} value={m.nome}>
-                        {m.nome}
-                      </SelectItem>
-                    ))}
+                  {form.lider && !leaderCandidates.includes(form.lider) && (
+                    <SelectItem value={form.lider}>
+                      {form.lider} (Atual)
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Exibindo exclusivamente membros com cargo de liderança cadastrado em Membros.
+              </p>
             </div>
 
             {/* Bloco de Integrantes: Sem opção de mudar manualmente */}
