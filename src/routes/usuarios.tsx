@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Users,
@@ -33,7 +33,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useAuth, type UserRole, type UserAccount, ROLE_DEFINITIONS, formatCPF, cleanCPF } from "@/lib/auth";
+import { useAuth, type UserRole, type UserAccount, ROLE_DEFINITIONS, formatCPF, cleanCPF, getInitials } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -71,6 +71,19 @@ function UsuariosPage() {
   // Member Autocomplete Search in Dialog
   const [memberSearch, setMemberSearch] = useState("");
   const [isMemberDropdownOpen, setIsMemberDropdownOpen] = useState(false);
+  const [isChangingMember, setIsChangingMember] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fecha o dropdown ao clicar fora
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsMemberDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   // Protection: Restrict to Administrador
   const isAdmin = currentLoggedUser?.role === "Administrador";
@@ -132,6 +145,7 @@ function UsuariosPage() {
     setStatus("Ativo");
     setMemberSearch("");
     setIsMemberDropdownOpen(false);
+    setIsChangingMember(true);
     setIsDialogOpen(true);
   };
 
@@ -147,6 +161,7 @@ function UsuariosPage() {
     setStatus(userToEdit.status);
     setMemberSearch(userToEdit.name);
     setIsMemberDropdownOpen(false);
+    setIsChangingMember(false);
     setIsDialogOpen(true);
   };
 
@@ -157,6 +172,7 @@ function UsuariosPage() {
     setName(memberName);
     setMemberSearch(memberName);
     setIsMemberDropdownOpen(false);
+    setIsChangingMember(false);
 
     if (member.email) {
       setEmail(member.email);
@@ -597,12 +613,12 @@ function UsuariosPage() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-5 pt-3">
-            {/* Campo 1: Autocomplete de Membro Cadastrado */}
-            <div className="space-y-1.5 relative">
+            {/* Campo 1: Membro Cadastrado / Vínculo */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                   <Users className="size-3.5 text-primary" />
-                  Membro da Congregação (Busca em Tempo Real)
+                  Membro da Congregação
                 </Label>
                 {selectedMemberId && (
                   <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
@@ -611,77 +627,146 @@ function UsuariosPage() {
                 )}
               </div>
 
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  type="text"
-                  placeholder="Digite o nome do membro cadastrado para vincular..."
-                  value={memberSearch}
-                  onChange={(e) => {
-                    setMemberSearch(e.target.value);
-                    setName(e.target.value);
-                    setIsMemberDropdownOpen(true);
-                  }}
-                  onFocus={() => setIsMemberDropdownOpen(true)}
-                  className="pl-10 h-11 rounded-xl text-sm bg-background"
-                />
-                {memberSearch && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMemberSearch("");
-                      setName("");
-                      setSelectedMemberId("");
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Lista suspensa de resultados do membro */}
-              {isMemberDropdownOpen && filteredMembers.length > 0 && (
-                <div className="absolute z-50 left-0 right-0 top-full mt-1.5 rounded-2xl border bg-popover shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-1 animate-in fade-in-50 zoom-in-95">
-                  <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
-                    Membros encontrados no cadastro ({filteredMembers.length})
+              {!isChangingMember && (selectedMemberId || (editingUser && name)) ? (
+                /* Card Fixo e Elegante do Membro Vinculado (Evita sobreposição com os campos abaixo) */
+                <div className="rounded-2xl border bg-muted/40 p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-sm hover:border-primary/40 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary font-bold text-xs shrink-0">
+                      {getInitials(name || editingUser?.name || "MB")}
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-foreground truncate">
+                          {name || editingUser?.name}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold py-0 shrink-0"
+                        >
+                          Vinculado
+                        </Badge>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        <span>CPF: {cpf || editingUser?.cpf || "Não informado"}</span>
+                        {(cargo || editingUser?.cargo) && (
+                          <span> &middot; {cargo || editingUser?.cargo}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {filteredMembers.map((m) => {
-                    const mName = m.nome || m.name || "";
-                    const mCargo = m.cargo || m.role || "Membro";
-                    const isSelected = selectedMemberId === m.id;
 
-                    return (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsChangingMember(true);
+                      setMemberSearch("");
+                      setIsMemberDropdownOpen(false);
+                    }}
+                    className="h-8 text-xs rounded-xl gap-1.5 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Edit2 className="size-3" />
+                    <span>Trocar Membro</span>
+                  </Button>
+                </div>
+              ) : (
+                /* Campo de Busca em Tempo Real com Dropdown Flutuante */
+                <div ref={searchContainerRef} className="space-y-1.5 relative">
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder="Digite o nome do membro cadastrado para vincular..."
+                      value={memberSearch}
+                      onChange={(e) => {
+                        setMemberSearch(e.target.value);
+                        setName(e.target.value);
+                        setIsMemberDropdownOpen(true);
+                      }}
+                      onFocus={() => {
+                        if (memberSearch.trim()) {
+                          setIsMemberDropdownOpen(true);
+                        }
+                      }}
+                      className="pl-10 pr-9 h-11 rounded-xl text-sm bg-background shadow-sm"
+                    />
+                    {memberSearch && (
                       <button
                         type="button"
-                        key={m.id}
-                        onClick={() => handleSelectMember(m)}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
-                          isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
-                        }`}
+                        onClick={() => {
+                          setMemberSearch("");
+                          setName("");
+                          setSelectedMemberId("");
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 cursor-pointer"
+                        title="Limpar busca"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
-                            {mName.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-semibold text-foreground truncate">{mName}</div>
-                            <div className="text-[10.5px] text-muted-foreground truncate">
-                              CPF: {m.cpf || "Não informado"} &middot; {mCargo}
-                            </div>
-                          </div>
-                        </div>
-
-                        {isSelected ? (
-                          <Check className="size-4 text-primary shrink-0" />
-                        ) : (
-                          <span className="text-[10px] font-medium text-primary px-2 py-0.5 rounded-md bg-primary/10 shrink-0">
-                            Selecionar
-                          </span>
-                        )}
+                        <X className="size-3.5" />
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
+
+                  {/* Cancelar troca se já houver membro anterior */}
+                  {(selectedMemberId || editingUser) && (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsChangingMember(false);
+                          setIsMemberDropdownOpen(false);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      >
+                        Cancelar troca de membro
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Lista suspensa de resultados do membro */}
+                  {isMemberDropdownOpen && memberSearch.trim() && filteredMembers.length > 0 && (
+                    <div className="absolute z-50 left-0 right-0 top-full mt-1.5 rounded-2xl border bg-popover shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-1 animate-in fade-in-50 zoom-in-95">
+                      <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
+                        Membros encontrados no cadastro ({filteredMembers.length})
+                      </div>
+                      {filteredMembers.map((m) => {
+                        const mName = m.nome || m.name || "";
+                        const mCargo = m.cargo || m.role || "Membro";
+                        const isSelected = selectedMemberId === m.id;
+
+                        return (
+                          <button
+                            type="button"
+                            key={m.id}
+                            onClick={() => handleSelectMember(m)}
+                            className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
+                              isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
+                                {mName.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-semibold text-foreground truncate">{mName}</div>
+                                <div className="text-[10.5px] text-muted-foreground truncate">
+                                  CPF: {m.cpf || "Não informado"} &middot; {mCargo}
+                                </div>
+                              </div>
+                            </div>
+
+                            {isSelected ? (
+                              <Check className="size-4 text-primary shrink-0" />
+                            ) : (
+                              <span className="text-[10px] font-medium text-primary px-2 py-0.5 rounded-md bg-primary/10 shrink-0">
+                                Selecionar
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
