@@ -119,7 +119,8 @@ const ageYears = (years: number, month = 5, day = 15) => {
   return x.toISOString().slice(0, 10);
 };
 
-const congs = ["Sede Central", "Congregação Vila Nova", "Congregação Jardim Esperança"];
+export const DEFAULT_CONGREGATION = "Batista Corpo e Família";
+const congs = [DEFAULT_CONGREGATION];
 const cellNames = ["Célula Ágape", "Célula Betel", "Célula Canaã", "Célula Emanuel", "Célula Shalom"];
 
 export function seed(): DB {
@@ -276,7 +277,7 @@ export function seed(): DB {
       situacao: "Ativo",
       status: "Ativo",
       tipo: "Membro",
-      congregacao: congs[1],
+      congregacao: congs[0],
       departamento: "Homens",
       cargo: "Pastor Auxiliar",
       spouse_id: "m_debora",
@@ -302,7 +303,7 @@ export function seed(): DB {
       situacao: "Ativo",
       status: "Ativo",
       tipo: "Membro",
-      congregacao: congs[1],
+      congregacao: congs[0],
       departamento: "Mulheres",
       cargo: "Líder de Ministério",
       spouse_id: "m_elias",
@@ -322,7 +323,7 @@ export function seed(): DB {
       endereco: "Av. Brasil, 450",
       situacao: "Ativo",
       tipo: "Congregado",
-      congregacao: congs[1],
+      congregacao: congs[0],
       departamento: "Crianças",
       father_id: "m_elias",
       father_name: "Elias Martins",
@@ -344,7 +345,7 @@ export function seed(): DB {
       endereco: "Av. Brasil, 450",
       situacao: "Ativo",
       tipo: "Membro",
-      congregacao: congs[1],
+      congregacao: congs[0],
       departamento: "Adolescentes",
       father_id: "m_elias",
       father_name: "Elias Martins",
@@ -370,7 +371,7 @@ export function seed(): DB {
       batismo: "2015-10-18",
       situacao: "Ativo",
       tipo: "Membro",
-      congregacao: congs[2],
+      congregacao: congs[0],
       departamento: "Jovens",
       cargo: "Líder de Jovens",
       spouse_id: "m_fernanda",
@@ -393,7 +394,7 @@ export function seed(): DB {
       batismo: "2016-03-27",
       situacao: "Ativo",
       tipo: "Membro",
-      congregacao: congs[2],
+      congregacao: congs[0],
       departamento: "Louvor",
       cargo: "Ministra de Louvor",
       spouse_id: "m_gabriel",
@@ -413,7 +414,7 @@ export function seed(): DB {
       endereco: "Rua Primavera, 85",
       situacao: "Ativo",
       tipo: "Congregado",
-      congregacao: congs[2],
+      congregacao: congs[0],
       departamento: "Crianças",
       father_id: "m_gabriel",
       father_name: "Gabriel Almeida",
@@ -478,7 +479,7 @@ export function seed(): DB {
       batismo: "1995-09-17",
       situacao: "Ativo",
       tipo: "Membro",
-      congregacao: congs[1],
+      congregacao: congs[0],
       departamento: "Intercessão",
       cargo: "Diácono",
     },
@@ -782,16 +783,19 @@ export function seed(): DB {
   ];
 
   // 6. Coleções padrão existentes mantidas
-  const congregations: Row[] = congs.map((c, i) => ({
-    id: uid(),
-    nome: c,
-    cnpj: i === 0 ? "12.345.678/0001-90" : "",
-    endereco: `Av. Principal, ${500 + i * 120}`,
-    telefone: `(11) 3${300 + i}-4${100 + i}`,
-    pastor: ["Pr. João Silva", "Pr. Marcos Reis", "Pr. André Luz"][i],
-    fundacao: `19${88 + i * 5}-03-15`,
-    situacao: "Ativa",
-  }));
+  const congregations: Row[] = [
+    {
+      id: "cong_sede",
+      nome: DEFAULT_CONGREGATION,
+      cnpj: "12.345.678/0001-90",
+      endereco: "Av. Principal, 500 - Centro",
+      telefone: "(98) 3211-4500",
+      pastor: "Pr. João Batista",
+      fundacao: "1988-03-15",
+      situacao: "Ativa",
+      tipo: "Sede",
+    },
+  ];
 
   const deps = ["Louvor", "Jovens", "Crianças", "Adolescentes", "Mulheres", "Homens", "Intercessão", "Evangelismo", "Ação Social", "Escola Bíblica Dominical"];
   const departments: Row[] = deps.map((n, i) => ({
@@ -811,7 +815,7 @@ export function seed(): DB {
     endereco: `Rua das Palmeiras, ${50 + i * 33}`,
     dia: ["Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"][i],
     hora: ["19:30", "20:00", "19:00", "20:00", "16:00"][i],
-    congregacao: congs[i % 3],
+    congregacao: DEFAULT_CONGREGATION,
     participantes: 8 + ((i * 5) % 12),
     situacao: "Ativa",
   }));
@@ -828,7 +832,7 @@ export function seed(): DB {
         data: d(-m * 30 - j),
         pagamento: ["PIX", "Dinheiro", "Transferência"][j % 3],
         conta: "Banco do Brasil",
-        congregacao: congs[j % 3],
+        congregacao: DEFAULT_CONGREGATION,
       });
     });
   }
@@ -840,19 +844,19 @@ export function seed(): DB {
     valor: 50 + ((i * 73) % 600),
     data: d(-i * 2),
     pagamento: ["PIX", "Dinheiro", "Cartão"][i % 3],
-    congregacao: congs[i % 3],
+    congregacao: DEFAULT_CONGREGATION,
   }));
 
   const events: Row[] = [
-    { id: uid(), titulo: "Culto de Celebração", data: d(3), hora: "19:00", tipo: "Culto", local: "Sede Central", responsavel: "Pr. João Silva" },
-    { id: uid(), titulo: "Conferência de Jovens", data: d(10), hora: "15:00", tipo: "Conferência", local: "Sede Central", responsavel: "Gabriel Almeida" },
-    { id: uid(), titulo: "Ação Social no Bairro", data: d(17), hora: "09:00", tipo: "Social", local: "Vila Nova", responsavel: "Marta Oliveira" },
-    { id: uid(), titulo: "Santa Ceia", data: d(24), hora: "19:30", tipo: "Culto", local: "Todas as congregações", responsavel: "Pr. João Silva" },
-    { id: uid(), titulo: "Ensaio do Louvor", data: d(1), hora: "20:00", tipo: "Ensaio", local: "Sede Central", responsavel: "Lucas Barbosa" },
-    { id: uid(), titulo: "Escola Bíblica Dominical", data: d(5), hora: "09:00", tipo: "EBD", local: "Todas as congregações", responsavel: "Débora Ferreira" },
-    { id: uid(), titulo: "Vigília de Oração", data: d(12), hora: "22:00", tipo: "Vigília", local: "Sede Central", responsavel: "Pr. Marcos Reis" },
+    { id: uid(), titulo: "Culto de Celebração", data: d(3), hora: "19:00", tipo: "Culto", local: DEFAULT_CONGREGATION, responsavel: "Pr. João Batista" },
+    { id: uid(), titulo: "Conferência de Jovens", data: d(10), hora: "15:00", tipo: "Conferência", local: DEFAULT_CONGREGATION, responsavel: "Gabriel Almeida" },
+    { id: uid(), titulo: "Ação Social no Bairro", data: d(17), hora: "09:00", tipo: "Social", local: DEFAULT_CONGREGATION, responsavel: "Marta Oliveira" },
+    { id: uid(), titulo: "Santa Ceia", data: d(24), hora: "19:30", tipo: "Culto", local: DEFAULT_CONGREGATION, responsavel: "Pr. João Batista" },
+    { id: uid(), titulo: "Ensaio do Louvor", data: d(1), hora: "20:00", tipo: "Ensaio", local: DEFAULT_CONGREGATION, responsavel: "Lucas Barbosa" },
+    { id: uid(), titulo: "Escola Bíblica Dominical", data: d(5), hora: "09:00", tipo: "EBD", local: DEFAULT_CONGREGATION, responsavel: "Débora Ferreira" },
+    { id: uid(), titulo: "Vigília de Oração", data: d(12), hora: "22:00", tipo: "Vigília", local: DEFAULT_CONGREGATION, responsavel: "Pr. João Batista" },
     { id: uid(), titulo: "Evangelismo na Praça", data: d(19), hora: "16:00", tipo: "Evangelismo", local: "Praça Central", responsavel: "Tiago Nunes" },
-    { id: uid(), titulo: "Reunião de Obreiros", data: d(8), hora: "19:00", tipo: "Reunião", local: "Sede Central", responsavel: "Pr. André Luz" },
+    { id: uid(), titulo: "Reunião de Obreiros", data: d(8), hora: "19:00", tipo: "Reunião", local: DEFAULT_CONGREGATION, responsavel: "Pr. João Batista" },
   ];
 
   const appointments: Row[] = [
@@ -864,16 +868,16 @@ export function seed(): DB {
   ];
 
   const inventory: Row[] = [
-    { id: uid(), nome: "Cadeiras plásticas", categoria: "Mobiliário", quantidade: 220, estado: "Bom", local: "Sede Central", aquisicao: "2021-05-10", valor: 85 },
-    { id: uid(), nome: "Mesa de som 16 canais", categoria: "Áudio", quantidade: 1, estado: "Bom", local: "Sede Central", aquisicao: "2019-11-02", valor: 4200 },
-    { id: uid(), nome: "Microfones sem fio", categoria: "Áudio", quantidade: 6, estado: "Regular", local: "Sede Central", aquisicao: "2022-03-18", valor: 950 },
-    { id: uid(), nome: "Projetor multimídia", categoria: "Audiovisual", quantidade: 2, estado: "Bom", local: "Sede Central", aquisicao: "2023-01-25", valor: 2800 },
-    { id: uid(), nome: "Instrumentos musicais (bateria)", categoria: "Instrumentos", quantidade: 1, estado: "Bom", local: "Sede Central", aquisicao: "2020-08-14", valor: 5600 },
-    { id: uid(), nome: "Bíblias para EBD", categoria: "Material didático", quantidade: 45, estado: "Regular", local: "Congregação Vila Nova", aquisicao: "2022-07-30", valor: 60 },
-    { id: uid(), nome: "Ar-condicionado 24.000 BTU", categoria: "Climatização", quantidade: 4, estado: "Bom", local: "Sede Central", aquisicao: "2021-12-05", valor: 3900 },
-    { id: uid(), nome: "Computador da secretaria", categoria: "Informática", quantidade: 2, estado: "Regular", local: "Sede Central", aquisicao: "2020-02-20", valor: 3200 },
-    { id: uid(), nome: "Cadeiras de madeira", categoria: "Mobiliário", quantidade: 60, estado: "Regular", local: "Congregação Jardim Esperança", aquisicao: "2018-06-11", valor: 120 },
-    { id: uid(), nome: "Caixas de som ativas", categoria: "Áudio", quantidade: 4, estado: "Bom", local: "Congregação Vila Nova", aquisicao: "2023-09-08", valor: 1800 },
+    { id: uid(), nome: "Cadeiras plásticas", categoria: "Mobiliário", quantidade: 220, estado: "Bom", local: DEFAULT_CONGREGATION, aquisicao: "2021-05-10", valor: 85 },
+    { id: uid(), nome: "Mesa de som 16 canais", categoria: "Áudio", quantidade: 1, estado: "Bom", local: DEFAULT_CONGREGATION, aquisicao: "2019-11-02", valor: 4200 },
+    { id: uid(), nome: "Microfones sem fio", categoria: "Áudio", quantidade: 6, estado: "Regular", local: DEFAULT_CONGREGATION, aquisicao: "2022-03-18", valor: 950 },
+    { id: uid(), nome: "Projetor multimídia", categoria: "Audiovisual", quantidade: 2, estado: "Bom", local: DEFAULT_CONGREGATION, aquisicao: "2023-01-25", valor: 2800 },
+    { id: uid(), nome: "Instrumentos musicais (bateria)", categoria: "Instrumentos", quantidade: 1, estado: "Bom", local: DEFAULT_CONGREGATION, aquisicao: "2020-08-14", valor: 5600 },
+    { id: uid(), nome: "Bíblias para EBD", categoria: "Material didático", quantidade: 45, estado: "Regular", local: DEFAULT_CONGREGATION, aquisicao: "2022-07-30", valor: 60 },
+    { id: uid(), nome: "Ar-condicionado 24.000 BTU", categoria: "Climatização", quantidade: 4, estado: "Bom", local: DEFAULT_CONGREGATION, aquisicao: "2021-12-05", valor: 3900 },
+    { id: uid(), nome: "Computador da secretaria", categoria: "Informática", quantidade: 2, estado: "Regular", local: DEFAULT_CONGREGATION, aquisicao: "2020-02-20", valor: 3200 },
+    { id: uid(), nome: "Cadeiras de madeira", categoria: "Mobiliário", quantidade: 60, estado: "Regular", local: DEFAULT_CONGREGATION, aquisicao: "2018-06-11", valor: 120 },
+    { id: uid(), nome: "Caixas de som ativas", categoria: "Áudio", quantidade: 4, estado: "Bom", local: DEFAULT_CONGREGATION, aquisicao: "2023-09-08", valor: 1800 },
   ];
 
   return {
@@ -894,13 +898,25 @@ export function seed(): DB {
   };
 }
 
+export const SEDE_CONGREGATION: Row = {
+  id: "cong_sede",
+  nome: DEFAULT_CONGREGATION,
+  cnpj: "12.345.678/0001-90",
+  endereco: "Av. Principal, 500 - Centro",
+  telefone: "(98) 3211-4500",
+  pastor: "Pr. João Batista",
+  fundacao: "1988-03-15",
+  situacao: "Ativa",
+  tipo: "Sede",
+};
+
 /**
- * Retorna uma base de dados completamente limpa (coleções vazias) para testes.
+ * Retorna uma base de dados limpa com a congregação Sede Batista Corpo e Família como padrão.
  */
 export function emptyDB(): DB {
   return {
     members: [],
-    congregations: [],
+    congregations: [SEDE_CONGREGATION],
     departments: [],
     cells: [],
     transactions: [],
@@ -929,7 +945,6 @@ type Ctx = {
 const StoreCtx = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  // Inicializa limpo para testes com dados reais
   const [db, setDb] = useState<DB>(emptyDB);
   const [ready, setReady] = useState(false);
 
@@ -945,23 +960,85 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
 
+    const sanitizeCongregations = (data: DB): DB => {
+      const isOldMock = (name?: string) =>
+        !name ||
+        name === "Sede Central" ||
+        name === "Sede Geral" ||
+        name === "Sede" ||
+        name === "Congregação Vila Nova" ||
+        name === "Congregação Jardim Esperança";
+
+      // Filtra congregações antigas de mock para manter apenas congregações reais ou a Sede
+      let congsList = (data.congregations || []).filter((c) => !isOldMock(c.nome));
+      if (!congsList.some((c) => c.nome === DEFAULT_CONGREGATION)) {
+        congsList = [SEDE_CONGREGATION, ...congsList];
+      }
+
+      if (congsList.length === 0) {
+        congsList = [SEDE_CONGREGATION];
+      }
+
+      // Atualiza referências em membros
+      const members = (data.members || []).map((m) =>
+        isOldMock(m.congregacao) ? { ...m, congregacao: DEFAULT_CONGREGATION } : m
+      );
+
+      // Atualiza referências em células
+      const cells = (data.cells || []).map((c) =>
+        isOldMock(c.congregacao) ? { ...c, congregacao: DEFAULT_CONGREGATION } : c
+      );
+
+      // Atualiza referências em transações
+      const transactions = (data.transactions || []).map((t) =>
+        isOldMock(t.congregacao) ? { ...t, congregacao: DEFAULT_CONGREGATION } : t
+      );
+
+      // Atualiza referências em contribuições
+      const contributions = (data.contributions || []).map((c) =>
+        isOldMock(c.congregacao) ? { ...c, congregacao: DEFAULT_CONGREGATION } : c
+      );
+
+      // Atualiza referências em eventos
+      const events = (data.events || []).map((e) =>
+        isOldMock(e.local) ? { ...e, local: DEFAULT_CONGREGATION } : e
+      );
+
+      // Atualiza referências em inventário
+      const inventory = (data.inventory || []).map((i) =>
+        isOldMock(i.local) ? { ...i, local: DEFAULT_CONGREGATION } : i
+      );
+
+      return {
+        ...data,
+        congregations: congsList,
+        members,
+        cells,
+        transactions,
+        contributions,
+        events,
+        inventory,
+      };
+    };
+
     const raw = localStorage.getItem(KEY);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         const initial = emptyDB();
         const merged = { ...initial, ...parsed };
-        setDb(merged);
+        const sanitized = sanitizeCongregations(merged);
+        setDb(sanitized);
+        localStorage.setItem(KEY, JSON.stringify(sanitized));
       } catch {
-        setDb(emptyDB());
+        const clean = emptyDB();
+        setDb(clean);
+        localStorage.setItem(KEY, JSON.stringify(clean));
       }
     } else {
-      setDb(emptyDB());
-      try {
-        localStorage.setItem(KEY, JSON.stringify(emptyDB()));
-      } catch {
-        /* ignore */
-      }
+      const clean = emptyDB();
+      setDb(clean);
+      localStorage.setItem(KEY, JSON.stringify(clean));
     }
     setReady(true);
   }, []);

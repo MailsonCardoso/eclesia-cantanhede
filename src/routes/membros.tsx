@@ -441,7 +441,7 @@ function Membros() {
     recebimento: "",
     tipo: "Membro",
     situacao: "Ativo",
-    congregacao: "",
+    congregacao: "Batista Corpo e Família",
     departamento: "",
     celula: "",
     cargo: "Sem função / cargo",
@@ -1404,7 +1404,7 @@ function Membros() {
                     <div className="flex items-center gap-2 text-foreground font-medium truncate">
                       <Church className="size-3.5 text-primary shrink-0" />
                       <span className="text-muted-foreground font-normal">Congregação:</span>
-                      <span className="truncate">{member.congregacao || "Sede Central"}</span>
+                      <span className="truncate">{member.congregacao || "Batista Corpo e Família"}</span>
                     </div>
 
                     {member.departamento && member.departamento !== "Nenhum / Geral" && (
@@ -1540,7 +1540,7 @@ function Membros() {
                   </TableCell>
                   <TableCell className="text-xs">{member.cpf || "—"}</TableCell>
                   <TableCell className="text-xs font-medium">{member.telefone || "—"}</TableCell>
-                  <TableCell className="text-xs">{member.congregacao || "Sede Central"}</TableCell>
+                  <TableCell className="text-xs">{member.congregacao || "Batista Corpo e Família"}</TableCell>
                   <TableCell className="text-xs">
                     {member.cargo && member.cargo !== "Sem função / cargo" ? (
                       <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/30">
@@ -1687,7 +1687,7 @@ function Membros() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-2xl border bg-muted/20 p-4 text-xs">
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Congregação</span>
-                    <span className="font-semibold text-foreground">{selectedMember.congregacao || "Sede Central"}</span>
+                    <span className="font-semibold text-foreground">{selectedMember.congregacao || "Batista Corpo e Família"}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Departamento</span>

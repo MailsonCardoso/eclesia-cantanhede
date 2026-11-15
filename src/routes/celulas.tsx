@@ -85,7 +85,7 @@ function Celulas() {
     endereco: "",
     dia: "",
     hora: "",
-    congregacao: "",
+    congregacao: "Batista Corpo e Família",
     participantes: "",
     situacao: "Ativa",
     observacoes: "",
@@ -201,7 +201,7 @@ function Celulas() {
       endereco: "",
       dia: "",
       hora: "",
-      congregacao: "",
+      congregacao: "Batista Corpo e Família",
       participantes: "",
       situacao: "Ativa",
       observacoes: "",
@@ -640,7 +640,7 @@ function Celulas() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="font-bold text-base text-foreground truncate">{cell.nome}</h2>
-                      <p className="text-xs text-muted-foreground truncate">{cell.congregacao || "Sede Central"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{cell.congregacao || "Batista Corpo e Família"}</p>
                     </div>
                   </div>
 

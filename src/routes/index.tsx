@@ -170,7 +170,7 @@ function Dashboard() {
           icon={UserPlus}
           items={latest.map((x) => [
             String(x.nome),
-            `${x.congregacao || "Sede Central"} · ${fmtDate(getJoinDate(x)) || "Membro ativo"}`,
+            `${x.congregacao || "Batista Corpo e Família"} · ${fmtDate(getJoinDate(x)) || "Membro ativo"}`,
           ])}
         />
       </div>
