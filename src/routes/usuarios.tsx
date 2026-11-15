@@ -56,8 +56,8 @@ function UsuariosPage() {
   const [roleFilter, setRoleFilter] = useState<string>("todos");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
 
-  // Modal State
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Modal & Form State
+  const [openForm, setOpenForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
   const [confirmDelUser, setConfirmDelUser] = useState<{ id: string; name: string } | null>(null);
 
@@ -148,7 +148,7 @@ function UsuariosPage() {
     return { total, admins, pastores, secretaria, tesouraria, lideres, ativos };
   }, [users]);
 
-  // Open Modal for New User
+  // Open Form for New User
   const handleOpenNewUser = () => {
     setEditingUser(null);
     setSelectedMemberId("");
@@ -161,10 +161,10 @@ function UsuariosPage() {
     setMemberSearch("");
     setIsMemberDropdownOpen(false);
     setIsChangingMember(true);
-    setIsDialogOpen(true);
+    setOpenForm(true);
   };
 
-  // Open Modal for Editing User
+  // Open Form for Editing User
   const handleOpenEditUser = (userToEdit: UserAccount) => {
     setEditingUser(userToEdit);
     setSelectedMemberId(userToEdit.memberId || "");
@@ -177,7 +177,7 @@ function UsuariosPage() {
     setMemberSearch(userToEdit.name);
     setIsMemberDropdownOpen(false);
     setIsChangingMember(false);
-    setIsDialogOpen(true);
+    setOpenForm(true);
   };
 
   // Select Member from Autocomplete
@@ -256,7 +256,7 @@ function UsuariosPage() {
       });
 
       if (res.success) {
-        setIsDialogOpen(false);
+        setOpenForm(false);
       } else {
         toast.error(res.error || "Erro ao atualizar usuário.");
       }
@@ -275,7 +275,7 @@ function UsuariosPage() {
       });
 
       if (res.success) {
-        setIsDialogOpen(false);
+        setOpenForm(false);
       } else {
         toast.error(res.error || "Erro ao cadastrar usuário.");
       }
@@ -325,6 +325,418 @@ function UsuariosPage() {
   }
 
   const roleInfo = ROLE_DEFINITIONS[role];
+
+  if (openForm) {
+    return (
+      <div className="space-y-6 animate-rise">
+        {/* Cabeçalho da Tela de Formulário com Botão Voltar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setOpenForm(false)}
+              className="group gap-2.5 rounded-xl border border-border/80 bg-background/95 px-3.5 py-2 font-semibold text-foreground shadow-sm hover:border-primary/40 hover:bg-accent hover:shadow transition-all cursor-pointer"
+            >
+              <div className="grid size-6 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+              </div>
+              <span className="text-xs sm:text-sm">Voltar para Usuários & Acessos</span>
+            </Button>
+            <div className="h-5 w-px bg-border" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <KeyRound className="size-6 text-primary" />
+                {editingUser ? "Editar Operador do Sistema" : "Vincular Membro & Criar Acesso"}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Selecione um membro cadastrado da congregação para vincular o perfil e liberar o login pelo E-mail e CPF.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setOpenForm(false)} className="rounded-xl">
+              Cancelar
+            </Button>
+            <Button
+              variant="premium"
+              type="submit"
+              form="usuario-form"
+              className="px-6 font-bold shadow-md rounded-xl cursor-pointer"
+            >
+              <CheckCircle2 className="size-4 mr-1.5" />
+              {editingUser ? "Atualizar Usuário" : "Salvar & Conceder Acesso"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Card do Formulário */}
+        <div className="rounded-3xl border bg-card p-6 md:p-8 shadow-card gradient-top">
+          <form id="usuario-form" onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto">
+            {/* Seção 1: Membro Cadastrado / Vínculo */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Users className="size-3.5 text-primary" />
+                  Membro da Congregação
+                </Label>
+                {selectedMemberId && (
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="size-3" /> Membro Vinculado
+                  </span>
+                )}
+              </div>
+
+              {!isChangingMember && (selectedMemberId || (editingUser && name)) ? (
+                /* Card Fixo e Elegante do Membro Vinculado */
+                <div className="rounded-2xl border bg-muted/40 p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-sm hover:border-primary/40 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary font-bold text-sm shrink-0">
+                      {getInitials(name || editingUser?.name || "MB")}
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-foreground truncate">
+                          {name || editingUser?.name}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold py-0 shrink-0"
+                        >
+                          Vinculado
+                        </Badge>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        <span>CPF: {cpf || editingUser?.cpf || "Não informado"}</span>
+                        {(cargo || editingUser?.cargo) && (
+                          <span> &middot; {cargo || editingUser?.cargo}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsChangingMember(true);
+                      setMemberSearch("");
+                      setIsMemberDropdownOpen(false);
+                    }}
+                    className="h-9 text-xs rounded-xl gap-1.5 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Edit2 className="size-3.5" />
+                    <span>Trocar Membro</span>
+                  </Button>
+                </div>
+              ) : (
+                /* Campo de Busca em Tempo Real com Dropdown Flutuante */
+                <div ref={searchContainerRef} className="space-y-1.5 relative">
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder="Digite o nome do membro cadastrado para vincular..."
+                      value={memberSearch}
+                      onChange={(e) => {
+                        setMemberSearch(e.target.value);
+                        setName(e.target.value);
+                        setIsMemberDropdownOpen(true);
+                      }}
+                      onFocus={() => {
+                        if (memberSearch.trim()) {
+                          setIsMemberDropdownOpen(true);
+                        }
+                      }}
+                      className="pl-10 pr-9 h-11 rounded-xl text-sm bg-background shadow-sm"
+                    />
+                    {memberSearch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMemberSearch("");
+                          setName("");
+                          setSelectedMemberId("");
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 cursor-pointer"
+                        title="Limpar busca"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Cancelar troca se já houver membro anterior */}
+                  {(selectedMemberId || editingUser) && (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsChangingMember(false);
+                          setIsMemberDropdownOpen(false);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      >
+                        Cancelar troca de membro
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Lista suspensa de resultados do membro */}
+                  {isMemberDropdownOpen && memberSearch.trim() && (
+                    <div className="absolute z-50 left-0 right-0 top-full mt-1.5 rounded-2xl border bg-popover shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-1 animate-in fade-in-50 zoom-in-95">
+                      {filteredMembers.length > 0 ? (
+                        <>
+                          <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
+                            Membros encontrados ({filteredMembers.length})
+                          </div>
+                          {filteredMembers.map((m) => {
+                            const mName = m.nome || m.name || "";
+                            const mCargo = m.cargo || m.role || "Membro";
+                            const isSelected = selectedMemberId === m.id;
+
+                            return (
+                              <button
+                                type="button"
+                                key={m.id}
+                                onClick={() => handleSelectMember(m)}
+                                className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
+                                  isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
+                                    {mName.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-semibold text-foreground truncate">{mName}</div>
+                                    <div className="text-[10.5px] text-muted-foreground truncate">
+                                      CPF: {m.cpf || "Não informado"} &middot; {mCargo}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {isSelected ? (
+                                  <Check className="size-4 text-primary shrink-0" />
+                                ) : (
+                                  <span className="text-[10px] font-medium text-primary px-2 py-0.5 rounded-md bg-primary/10 shrink-0">
+                                    Selecionar
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </>
+                      ) : (
+                        <div className="p-3 text-center text-xs text-muted-foreground">
+                          Nenhum membro encontrado com "{memberSearch}"
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Linha com E-mail e CPF (as duas credenciais de acesso) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="user-email" className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Mail className="size-3.5 text-primary" />
+                  E-mail de Login
+                </Label>
+                <Input
+                  id="user-email"
+                  type="email"
+                  required
+                  placeholder="ex: operador@eclesiapro.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11 rounded-xl text-sm"
+                />
+                <span className="text-[10.5px] text-muted-foreground">
+                  Identificador para entrar no sistema.
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="user-cpf" className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <KeyRound className="size-3.5 text-amber-500" />
+                  CPF do Membro (Senha de Acesso)
+                </Label>
+                <Input
+                  id="user-cpf"
+                  type="text"
+                  required
+                  placeholder="000.000.000-00"
+                  value={cpf}
+                  onChange={(e) => setCpf(formatCPF(e.target.value))}
+                  maxLength={14}
+                  className="h-11 rounded-xl text-sm font-mono"
+                />
+                <span className="text-[10.5px] text-muted-foreground">
+                  O CPF será a senha de acesso ao painel.
+                </span>
+              </div>
+            </div>
+
+            {/* Linha com Função/Cargo customizado */}
+            <div className="space-y-1.5">
+              <Label htmlFor="user-cargo" className="text-xs font-bold text-foreground">
+                Título / Cargo Exibido (Opcional)
+              </Label>
+              <Input
+                id="user-cargo"
+                placeholder={ROLE_DEFINITIONS[role].label}
+                value={cargo}
+                onChange={(e) => setCargo(e.target.value)}
+                className="h-11 rounded-xl text-sm"
+              />
+            </div>
+
+            {/* Seleção do Perfil & Nível de Acesso */}
+            <div className="space-y-2.5">
+              <Label className="text-xs font-bold text-foreground flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="size-3.5 text-primary" />
+                  Perfil & Nível de Acesso do Operador
+                </span>
+                <span className="text-[11px] text-muted-foreground font-normal">
+                  Define quais telas e ações serão liberadas
+                </span>
+              </Label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                {(Object.keys(ROLE_DEFINITIONS) as UserRole[]).map((rKey) => {
+                  const item = ROLE_DEFINITIONS[rKey];
+                  const isSelected = role === rKey;
+
+                  return (
+                    <button
+                      type="button"
+                      key={rKey}
+                      onClick={() => setRole(rKey)}
+                      className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm"
+                          : "border-border/70 hover:border-border hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                          {item.label}
+                        </span>
+                        {isSelected && <Check className="size-4 text-primary shrink-0" />}
+                      </div>
+                      <p className="text-[10.5px] text-muted-foreground mt-1 line-clamp-2">
+                        {item.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Verificação Automática do Vínculo de Célula para Líder */}
+              {role === "Líder" && (
+                <div className="pt-1 animate-in fade-in-50 duration-200">
+                  {linkedCell ? (
+                    <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs space-y-1.5 shadow-2xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          <span>Célula Vinculada: {linkedCell.nome}</span>
+                        </div>
+                        <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] shrink-0 font-mono">
+                          ID: {linkedCell.id}
+                        </Badge>
+                      </div>
+                      <p className="text-[11.5px] leading-relaxed text-emerald-700/90 dark:text-emerald-300/90">
+                        Vínculo verificado com sucesso no módulo Células. Este operador receberá acesso <strong>exclusivo</strong> à <strong>Área de Estudos</strong> da célula <strong>{linkedCell.nome}</strong>.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs space-y-1.5 shadow-2xs">
+                      <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400">
+                        <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span>Atenção: Vínculo de Célula Não Encontrado</span>
+                      </div>
+                      <p className="text-[11.5px] leading-relaxed text-amber-700/90 dark:text-amber-300/90">
+                        Este membro ainda não está cadastrado como líder responsável em nenhuma célula na tela <strong>Células</strong>. Para liberar a Área de Estudos, vincule-o primeiro como líder de uma célula ativa.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Resumo Visual das Permissões do Perfil Selecionado */}
+            <div className="rounded-2xl border bg-muted/30 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Sparkles className="size-3.5 text-primary" />
+                  Módulos com acesso liberado para este perfil:
+                </span>
+                <Badge variant="outline" className={`text-[10px] font-bold ${roleInfo.badgeClass}`}>
+                  {roleInfo.modules.length} Módulos
+                </Badge>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {roleInfo.modules.map((m) => (
+                  <span
+                    key={m.path}
+                    className="text-[10px] font-medium bg-background border px-2.5 py-1 rounded-lg text-foreground shadow-2xs"
+                  >
+                    {m.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Aviso de Confirmação do Acesso */}
+            <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-xs">
+              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+              <span>
+                <strong>Acesso imediato:</strong> Este usuário poderá acessar o sistema informando o e-mail <code>{email || "seu.email"}</code> ou CPF, e a senha será o CPF <code>{cpf || "000.000.000-00"}</code>.
+              </span>
+            </div>
+
+            {/* Botões do Rodapé */}
+            <div className="pt-4 border-t flex flex-wrap items-center justify-between gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpenForm(false)}
+                className="h-11 px-5 rounded-xl border-border/80 font-medium hover:bg-muted text-foreground cursor-pointer flex items-center gap-2"
+              >
+                <ArrowLeft className="size-4" />
+                <span>Voltar para Usuários</span>
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setOpenForm(false)}
+                  className="h-11 px-4 rounded-xl text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  variant="premium"
+                  className="h-11 px-6 rounded-xl font-bold gap-2 shadow-md hover:shadow-lg cursor-pointer"
+                >
+                  <CheckCircle2 className="size-4" />
+                  <span>{editingUser ? "Atualizar Usuário" : "Salvar & Conceder Acesso"}</span>
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-rise">
@@ -640,377 +1052,6 @@ function UsuariosPage() {
           })}
         </div>
       )}
-
-      {/* Modal / Dialog de Cadastro & Edição de Usuário */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
-          <DialogHeader className="space-y-1">
-            <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wide uppercase">
-              <KeyRound className="size-4" />
-              Controle de Acesso Institucional
-            </div>
-            <DialogTitle className="text-xl sm:text-2xl font-bold font-display">
-              {editingUser ? "Editar Operador do Sistema" : "Vincular Membro & Criar Acesso"}
-            </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
-              Selecione um membro cadastrado da congregação para vincular o perfil e liberar o login pelo E-mail e CPF.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-5 pt-3">
-            {/* Campo 1: Membro Cadastrado / Vínculo */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Users className="size-3.5 text-primary" />
-                  Membro da Congregação
-                </Label>
-                {selectedMemberId && (
-                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="size-3" /> Membro Vinculado
-                  </span>
-                )}
-              </div>
-
-              {!isChangingMember && (selectedMemberId || (editingUser && name)) ? (
-                /* Card Fixo e Elegante do Membro Vinculado (Evita sobreposição com os campos abaixo) */
-                <div className="rounded-2xl border bg-muted/40 p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-sm hover:border-primary/40 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary font-bold text-xs shrink-0">
-                      {getInitials(name || editingUser?.name || "MB")}
-                    </div>
-                    <div className="min-w-0 space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-foreground truncate">
-                          {name || editingUser?.name}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold py-0 shrink-0"
-                        >
-                          Vinculado
-                        </Badge>
-                      </div>
-                      <div className="text-[11px] text-muted-foreground truncate">
-                        <span>CPF: {cpf || editingUser?.cpf || "Não informado"}</span>
-                        {(cargo || editingUser?.cargo) && (
-                          <span> &middot; {cargo || editingUser?.cargo}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIsChangingMember(true);
-                      setMemberSearch("");
-                      setIsMemberDropdownOpen(false);
-                    }}
-                    className="h-8 text-xs rounded-xl gap-1.5 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    <Edit2 className="size-3" />
-                    <span>Trocar Membro</span>
-                  </Button>
-                </div>
-              ) : (
-                /* Campo de Busca em Tempo Real com Dropdown Flutuante */
-                <div ref={searchContainerRef} className="space-y-1.5 relative">
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="text"
-                      placeholder="Digite o nome do membro cadastrado para vincular..."
-                      value={memberSearch}
-                      onChange={(e) => {
-                        setMemberSearch(e.target.value);
-                        setName(e.target.value);
-                        setIsMemberDropdownOpen(true);
-                      }}
-                      onFocus={() => {
-                        if (memberSearch.trim()) {
-                          setIsMemberDropdownOpen(true);
-                        }
-                      }}
-                      className="pl-10 pr-9 h-11 rounded-xl text-sm bg-background shadow-sm"
-                    />
-                    {memberSearch && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMemberSearch("");
-                          setName("");
-                          setSelectedMemberId("");
-                        }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 cursor-pointer"
-                        title="Limpar busca"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Cancelar troca se já houver membro anterior */}
-                  {(selectedMemberId || editingUser) && (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsChangingMember(false);
-                          setIsMemberDropdownOpen(false);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                      >
-                        Cancelar troca de membro
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Lista suspensa de resultados do membro */}
-                  {isMemberDropdownOpen && memberSearch.trim() && (
-                    <div className="absolute z-50 left-0 right-0 top-full mt-1.5 rounded-2xl border bg-popover shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-1 animate-in fade-in-50 zoom-in-95">
-                      {filteredMembers.length > 0 ? (
-                        <>
-                          <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
-                            Membros encontrados ({filteredMembers.length})
-                          </div>
-                          {filteredMembers.map((m) => {
-                            const mName = m.nome || m.name || "";
-                            const mCargo = m.cargo || m.role || "Membro";
-                            const isSelected = selectedMemberId === m.id;
-
-                            return (
-                              <button
-                                type="button"
-                                key={m.id}
-                                onClick={() => handleSelectMember(m)}
-                                className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer ${
-                                  isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-muted"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
-                                    {mName.slice(0, 2).toUpperCase()}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="text-xs font-semibold text-foreground truncate">{mName}</div>
-                                    <div className="text-[10.5px] text-muted-foreground truncate">
-                                      CPF: {m.cpf || "Não informado"} &middot; {mCargo}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {isSelected ? (
-                                  <Check className="size-4 text-primary shrink-0" />
-                                ) : (
-                                  <span className="text-[10px] font-medium text-primary px-2 py-0.5 rounded-md bg-primary/10 shrink-0">
-                                    Selecionar
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </>
-                      ) : (
-                        <div className="p-3 text-center text-xs text-muted-foreground">
-                          Nenhum membro encontrado com "{memberSearch}"
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Linha com E-mail e CPF (as duas credenciais de acesso) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="space-y-1.5">
-                <Label htmlFor="user-email" className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Mail className="size-3.5 text-primary" />
-                  E-mail de Login
-                </Label>
-                <Input
-                  id="user-email"
-                  type="email"
-                  required
-                  placeholder="ex: operador@eclesiapro.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-10 rounded-xl text-sm"
-                />
-                <span className="text-[10.5px] text-muted-foreground">
-                  Identificador para entrar no sistema.
-                </span>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="user-cpf" className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <KeyRound className="size-3.5 text-amber-500" />
-                  CPF do Membro (Senha de Acesso)
-                </Label>
-                <Input
-                  id="user-cpf"
-                  type="text"
-                  required
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={(e) => setCpf(formatCPF(e.target.value))}
-                  maxLength={14}
-                  className="h-10 rounded-xl text-sm font-mono"
-                />
-                <span className="text-[10.5px] text-muted-foreground">
-                  O CPF será a senha de acesso ao painel.
-                </span>
-              </div>
-            </div>
-
-            {/* Linha com Função/Cargo customizado */}
-            <div className="space-y-1.5">
-              <Label htmlFor="user-cargo" className="text-xs font-bold text-foreground">
-                Título / Cargo Exibido (Opcional)
-              </Label>
-              <Input
-                id="user-cargo"
-                placeholder={ROLE_DEFINITIONS[role].label}
-                value={cargo}
-                onChange={(e) => setCargo(e.target.value)}
-                className="h-10 rounded-xl text-sm"
-              />
-            </div>
-
-            {/* Seleção do Perfil & Nível de Acesso */}
-            <div className="space-y-2.5">
-              <Label className="text-xs font-bold text-foreground flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="size-3.5 text-primary" />
-                  Perfil & Nível de Acesso do Operador
-                </span>
-                <span className="text-[11px] text-muted-foreground font-normal">
-                  Define quais telas e ações serão liberadas
-                </span>
-              </Label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {(Object.keys(ROLE_DEFINITIONS) as UserRole[]).map((rKey) => {
-                  const item = ROLE_DEFINITIONS[rKey];
-                  const isSelected = role === rKey;
-
-                  return (
-                    <button
-                      type="button"
-                      key={rKey}
-                      onClick={() => setRole(rKey)}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                        isSelected
-                          ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm"
-                          : "border-border/70 hover:border-border hover:bg-muted/40"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                          {item.label}
-                        </span>
-                        {isSelected && <Check className="size-4 text-primary shrink-0" />}
-                      </div>
-                      <p className="text-[10.5px] text-muted-foreground mt-1 line-clamp-2">
-                        {item.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Verificação Automática do Vínculo de Célula para Líder */}
-              {role === "Líder" && (
-                <div className="pt-1 animate-in fade-in-50 duration-200">
-                  {linkedCell ? (
-                    <div className="p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs space-y-1.5 shadow-2xs">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
-                          <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                          <span>Célula Vinculada: {linkedCell.nome}</span>
-                        </div>
-                        <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] shrink-0 font-mono">
-                          ID: {linkedCell.id}
-                        </Badge>
-                      </div>
-                      <p className="text-[11.5px] leading-relaxed text-emerald-700/90 dark:text-emerald-300/90">
-                        Vínculo verificado com sucesso no módulo Células. Este operador receberá acesso <strong>exclusivo</strong> à <strong>Área de Estudos</strong> da célula <strong>{linkedCell.nome}</strong>.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="p-3.5 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs space-y-1.5 shadow-2xs">
-                      <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400">
-                        <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                        <span>Atenção: Vínculo de Célula Não Encontrado</span>
-                      </div>
-                      <p className="text-[11.5px] leading-relaxed text-amber-700/90 dark:text-amber-300/90">
-                        Este membro ainda não está cadastrado como líder responsável em nenhuma célula na tela <strong>Células</strong>. Para liberar a Área de Estudos, vincule-o primeiro como líder de uma célula ativa.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Resumo Visual das Permissões do Perfil Selecionado */}
-            <div className="rounded-2xl border bg-muted/30 p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Sparkles className="size-3.5 text-primary" />
-                  Módulos com acesso liberado para este perfil:
-                </span>
-                <Badge variant="outline" className={`text-[10px] font-bold ${roleInfo.badgeClass}`}>
-                  {roleInfo.modules.length} Módulos
-                </Badge>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {roleInfo.modules.map((m) => (
-                  <span
-                    key={m.path}
-                    className="text-[10px] font-medium bg-background border px-2 py-0.5 rounded-lg text-foreground shadow-2xs"
-                  >
-                    {m.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Aviso de Confirmação do Acesso */}
-            <div className="flex items-start gap-2.5 p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-xs">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <span>
-                <strong>Acesso imediato:</strong> Este usuário poderá acessar o sistema informando o e-mail <code>{email || "seu.email"}</code> ou CPF, e a senha será o CPF <code>{cpf || "000.000.000-00"}</code>.
-              </span>
-            </div>
-
-            {/* Botões do Rodapé com "Voltar" destacado */}
-            <DialogFooter className="pt-2 gap-2 sm:gap-3 sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                className="h-11 px-5 rounded-xl border-border/80 font-medium hover:bg-muted text-foreground cursor-pointer flex items-center gap-2"
-              >
-                <ArrowLeft className="size-4" />
-                <span>Voltar / Cancelar</span>
-              </Button>
-
-              <Button
-                type="submit"
-                variant="premium"
-                className="h-11 px-6 rounded-xl font-bold gap-2 shadow-md hover:shadow-lg cursor-pointer"
-              >
-                <CheckCircle2 className="size-4" />
-                <span>{editingUser ? "Atualizar Usuário" : "Salvar & Conceder Acesso"}</span>
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE USUÁRIO */}
       <Dialog open={!!confirmDelUser} onOpenChange={(o) => !o && setConfirmDelUser(null)}>

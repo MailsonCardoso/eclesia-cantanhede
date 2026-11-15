@@ -539,6 +539,431 @@ function AreaEstudosPage() {
     );
   }
 
+  // TELA CHEIA DEDICADA DE CRIAÇÃO / EDIÇÃO DE ESTUDO
+  if (isFormOpen) {
+    return (
+      <div className="space-y-6 animate-rise max-w-5xl mx-auto pb-12">
+        {/* Cabeçalho da Tela de Formulário com Botão Voltar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setIsFormOpen(false)}
+              className="group gap-2.5 rounded-xl border border-border/80 bg-background/95 px-3.5 py-2 font-semibold text-foreground shadow-sm hover:border-primary/40 hover:bg-accent hover:shadow transition-all cursor-pointer"
+            >
+              <div className="grid size-6 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+              </div>
+              <span className="text-xs sm:text-sm">Voltar para Meus Estudos</span>
+            </Button>
+            <div className="h-5 w-px bg-border" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <BookMarked className="size-6 text-primary" />
+                {formId ? "Editar Estudo Bíblico" : "Novo Estudo Bíblico"}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Prepare, organize e acompanhe os estudos que serão ministrados na sua célula.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => setIsFormOpen(false)} className="rounded-xl">
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => handleSaveForm(true)}
+              className="rounded-xl text-xs font-bold gap-1.5 cursor-pointer"
+            >
+              <FileText className="size-4" />
+              <span>Salvar Rascunho</span>
+            </Button>
+            <Button
+              type="submit"
+              form="estudo-form"
+              variant="premium"
+              className="px-6 rounded-xl text-xs font-bold gap-2 shadow-md hover:shadow-lg cursor-pointer"
+            >
+              <CheckCircle2 className="size-4" />
+              <span>{formId ? "Atualizar Estudo" : "Salvar Estudo"}</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Abas de Navegação Entre as 3 Seções */}
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/60 rounded-2xl max-w-lg">
+          <button
+            type="button"
+            onClick={() => setActiveFormTab("geral")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeFormTab === "geral"
+                ? "bg-background text-primary shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span>1. Informações Gerais</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveFormTab("conteudo")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeFormTab === "conteudo"
+                ? "bg-background text-primary shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span>2. Conteúdo Bíblico</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveFormTab("programacao")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeFormTab === "programacao"
+                ? "bg-background text-primary shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span>3. Programação</span>
+          </button>
+        </div>
+
+        {/* Card do Formulário */}
+        <div className="rounded-3xl border bg-card p-6 md:p-8 shadow-card gradient-top">
+          <form
+            id="estudo-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSaveForm(false);
+            }}
+            className="space-y-6 max-w-4xl mx-auto"
+          >
+            {/* SEÇÃO 1: INFORMAÇÕES GERAIS */}
+            {activeFormTab === "geral" && (
+              <div className="space-y-4 animate-in fade-in-50 duration-200">
+                {/* Seletor de Destino do Estudo (para Administrador e Pastor) */}
+                {(isAdmin || isPastor) && (
+                  <div className="space-y-2 p-4 rounded-2xl border border-primary/20 bg-primary/5">
+                    <Label htmlFor="study-destination" className="text-xs font-bold flex items-center justify-between text-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Church className="size-4 text-primary" />
+                        Destinar Estudo Bíblico para:
+                      </span>
+                      <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-bold">
+                        Visão Ministerial
+                      </Badge>
+                    </Label>
+                    <Select value={formTargetCellId} onValueChange={setFormTargetCellId}>
+                      <SelectTrigger id="study-destination" className="h-11 rounded-xl text-sm bg-background">
+                        <SelectValue placeholder="Selecione o destino do estudo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todas">
+                          🌟 Todas as Células (Estudo Geral da Igreja / Pastoral)
+                        </SelectItem>
+                        {db.cells.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.nome} — Líder: {c.lider || "Sem líder"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11.5px] text-muted-foreground">
+                      {formTargetCellId === "todas"
+                        ? "Todos os líderes de célula terão acesso a este estudo em seus cadernos digitais para ministrar aos irmãos."
+                        : "Este estudo será direcionado especificamente para a célula selecionada."}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="study-title" className="text-xs font-bold">
+                    Título do Estudo <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="study-title"
+                    required
+                    placeholder="Ex: O Poder da Oração e Comunhão Fraternal"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    className="h-11 rounded-xl text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="study-theme" className="text-xs font-bold">
+                      Tema ou Categoria
+                    </Label>
+                    <Select value={formTheme} onValueChange={setFormTheme}>
+                      <SelectTrigger id="study-theme" className="h-11 rounded-xl text-sm">
+                        <SelectValue placeholder="Selecione o tema" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TEMAS_SUGERIDOS.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="study-biblical-ref" className="text-xs font-bold">
+                      Referência Bíblica Principal <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="study-biblical-ref"
+                      required
+                      placeholder="Ex: Atos 2:42-47 ou Filipenses 4:6-7"
+                      value={formBiblicalRef}
+                      onChange={(e) => setFormBiblicalRef(e.target.value)}
+                      className="h-11 rounded-xl text-sm font-semibold text-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="study-objective" className="text-xs font-bold">
+                    Objetivo do Estudo
+                  </Label>
+                  <Textarea
+                    id="study-objective"
+                    rows={3}
+                    placeholder="Qual a mensagem central que os irmãos devem levar para casa?"
+                    value={formObjective}
+                    onChange={(e) => setFormObjective(e.target.value)}
+                    className="rounded-xl text-xs sm:text-sm resize-none"
+                  />
+                </div>
+
+                <div className="pt-3 flex justify-end">
+                  <Button
+                    type="button"
+                    onClick={() => setActiveFormTab("conteudo")}
+                    className="rounded-xl text-xs font-bold gap-2"
+                  >
+                    <span>Avançar para Conteúdo Bíblico</span>
+                    &rarr;
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* SEÇÃO 2: CONTEÚDO BÍBLICO */}
+            {activeFormTab === "conteudo" && (
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                <div className="space-y-1.5">
+                  <Label htmlFor="study-intro" className="text-xs font-bold flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-primary" />
+                    1. Introdução / Quebra-Gelo
+                  </Label>
+                  <Textarea
+                    id="study-intro"
+                    rows={4}
+                    placeholder="Contextualize o assunto e prepare o coração dos participantes..."
+                    value={formIntro}
+                    onChange={(e) => setFormIntro(e.target.value)}
+                    className="rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="study-dev" className="text-xs font-bold flex items-center gap-1.5">
+                    <BookOpen className="size-3.5 text-primary" />
+                    2. Desenvolvimento Bíblico (Pontos Principais)
+                  </Label>
+                  <Textarea
+                    id="study-dev"
+                    rows={8}
+                    placeholder="Registre os tópicos centrais, explicações e versículos adicionais..."
+                    value={formDev}
+                    onChange={(e) => setFormDev(e.target.value)}
+                    className="rounded-xl text-xs sm:text-sm font-sans"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="study-questions" className="text-xs font-bold flex items-center gap-1.5">
+                    <MessageSquare className="size-3.5 text-primary" />
+                    3. Perguntas para Reflexão e Diálogo
+                  </Label>
+                  <Textarea
+                    id="study-questions"
+                    rows={4}
+                    placeholder="1. Como você pode aplicar essa palavra hoje?&#10;2. O que mais te chamou a atenção no texto?"
+                    value={formQuestions}
+                    onChange={(e) => setFormQuestions(e.target.value)}
+                    className="rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="study-conclusion" className="text-xs font-bold flex items-center gap-1.5">
+                    <HeartHandshake className="size-3.5 text-primary" />
+                    4. Conclusão & Motivos de Oração
+                  </Label>
+                  <Textarea
+                    id="study-conclusion"
+                    rows={4}
+                    placeholder="Mensagem final, aplicação prática e direção de oração mútua..."
+                    value={formConclusion}
+                    onChange={(e) => setFormConclusion(e.target.value)}
+                    className="rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div className="pt-3 flex items-center justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveFormTab("geral")}
+                    className="rounded-xl text-xs font-semibold"
+                  >
+                    &larr; Voltar para Informações Gerais
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setActiveFormTab("programacao")}
+                    className="rounded-xl text-xs font-bold gap-2"
+                  >
+                    <span>Avançar para Programação</span>
+                    &rarr;
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* SEÇÃO 3: PROGRAMAÇÃO & STATUS */}
+            {activeFormTab === "programacao" && (
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="study-date" className="text-xs font-bold">
+                      Data Prevista para Ministração
+                    </Label>
+                    <Input
+                      id="study-date"
+                      type="date"
+                      value={formDate}
+                      onChange={(e) => setFormDate(e.target.value)}
+                      className="h-11 rounded-xl text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="study-status" className="text-xs font-bold">
+                      Status do Estudo
+                    </Label>
+                    <Select
+                      value={formStatus}
+                      onValueChange={(v) => setFormStatus(v as StudyStatus)}
+                    >
+                      <SelectTrigger id="study-status" className="h-11 rounded-xl text-sm">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Rascunho">Rascunho (Em elaboração)</SelectItem>
+                        <SelectItem value="Agendado">Agendado (Pronto para ministrar)</SelectItem>
+                        <SelectItem value="Ministrado">Ministrado (Já ministrado na célula)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {formStatus === "Ministrado" && (
+                  <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 space-y-2 animate-in fade-in-50">
+                    <Label
+                      htmlFor="study-ministered-at"
+                      className="text-xs font-bold text-emerald-800 dark:text-emerald-300"
+                    >
+                      Data Efetiva da Ministração na Célula
+                    </Label>
+                    <Input
+                      id="study-ministered-at"
+                      type="date"
+                      value={formMinisteredAt || formDate}
+                      onChange={(e) => setFormMinisteredAt(e.target.value)}
+                      className="h-11 rounded-xl text-sm bg-background"
+                    />
+                  </div>
+                )}
+
+                <div className="rounded-2xl border bg-muted/40 p-4 space-y-1 text-xs">
+                  <div className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Home className="size-3.5 text-primary" />
+                    Destino & Autoria do Estudo
+                  </div>
+                  <p className="text-muted-foreground">
+                    {formTargetCellId === "todas" ? (
+                      <span>
+                        Destino: <strong className="text-violet-600 dark:text-violet-400">Todas as Células da Igreja (Estudo Geral Pastoral)</strong> &middot; Autor:{" "}
+                        <strong>{user?.name || "Gabinete Pastoral"}</strong>
+                      </span>
+                    ) : (
+                      <span>
+                        Célula: <strong>{db.cells.find((c) => c.id === formTargetCellId)?.nome || userCell?.nome || "Célula Betel"}</strong> &middot; Líder Responsável:{" "}
+                        <strong>{db.cells.find((c) => c.id === formTargetCellId)?.lider || user?.name || "Líder de Célula"}</strong>
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveFormTab("conteudo")}
+                    className="rounded-xl text-xs font-semibold"
+                  >
+                    &larr; Voltar para Conteúdo
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Ações Finais do Formulário */}
+            <div className="pt-6 border-t flex flex-wrap items-center justify-between gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsFormOpen(false)}
+                className="h-11 px-5 rounded-xl border-border/80 font-medium hover:bg-muted text-foreground cursor-pointer flex items-center gap-2"
+              >
+                <ArrowLeft className="size-4" />
+                <span>Voltar para Estudos</span>
+              </Button>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => handleSaveForm(true)}
+                  className="h-11 rounded-xl text-xs font-bold gap-1.5 cursor-pointer"
+                >
+                  <FileText className="size-4" />
+                  <span>Salvar como Rascunho</span>
+                </Button>
+
+                <Button
+                  type="submit"
+                  variant="premium"
+                  className="h-11 px-6 rounded-xl text-xs font-bold gap-2 shadow-md hover:shadow-lg cursor-pointer"
+                >
+                  <CheckCircle2 className="size-4" />
+                  <span>{formId ? "Atualizar Estudo" : "Salvar Estudo"}</span>
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-rise max-w-7xl mx-auto pb-12">
       {/* CABEÇALHO DO MÓDULO & IDENTIFICAÇÃO DA CÉLULA */}
@@ -940,386 +1365,6 @@ function AreaEstudosPage() {
           </div>
         )}
       </div>
-
-      {/* MODAL 1: FORMULÁRIO DE CADASTRO / EDIÇÃO DIVIDIDO EM 3 SEÇÕES */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 rounded-3xl">
-          <DialogHeader className="border-b pb-4">
-            <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-              <BookMarked className="size-4" />
-              <span>Caderno Digital de Estudos Bíblicos</span>
-            </div>
-            <DialogTitle className="text-xl sm:text-2xl font-bold font-display">
-              {formId ? "Editar Estudo Bíblico" : "Novo Estudo Bíblico"}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Preencha as seções abaixo para preparar o estudo da sua célula. A edição é
-              totalmente otimizada para celulares.
-            </DialogDescription>
-
-            {/* Abas de Navegação Entre as 3 Seções */}
-            <div className="mt-3 flex items-center gap-1.5 p-1 bg-muted/70 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setActiveFormTab("geral")}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  activeFormTab === "geral"
-                    ? "bg-background text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span>1. Geral</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFormTab("conteudo")}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  activeFormTab === "conteudo"
-                    ? "bg-background text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span>2. Conteúdo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFormTab("programacao")}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  activeFormTab === "programacao"
-                    ? "bg-background text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span>3. Programação</span>
-              </button>
-            </div>
-          </DialogHeader>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSaveForm(false);
-            }}
-            className="space-y-4 pt-2"
-          >
-            {/* SEÇÃO 1: INFORMAÇÕES GERAIS */}
-            {activeFormTab === "geral" && (
-              <div className="space-y-3.5 animate-in fade-in-50 duration-200">
-                {/* Seletor de Destino do Estudo (para Administrador e Pastor) */}
-                {(isAdmin || isPastor) && (
-                  <div className="space-y-1.5 p-3.5 rounded-2xl border border-primary/20 bg-primary/5">
-                    <Label htmlFor="study-destination" className="text-xs font-bold flex items-center justify-between text-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Church className="size-3.5 text-primary" />
-                        Destinar Estudo Bíblico para:
-                      </span>
-                      <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-bold">
-                        Visão Ministerial
-                      </Badge>
-                    </Label>
-                    <Select value={formTargetCellId} onValueChange={setFormTargetCellId}>
-                      <SelectTrigger id="study-destination" className="h-11 rounded-xl text-sm bg-background">
-                        <SelectValue placeholder="Selecione o destino do estudo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todas">
-                          🌟 Todas as Células (Estudo Geral da Igreja / Pastoral)
-                        </SelectItem>
-                        {db.cells.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nome} — Líder: {c.lider || "Sem líder"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[11px] text-muted-foreground">
-                      {formTargetCellId === "todas"
-                        ? "Todos os líderes de célula terão acesso a este estudo em seus cadernos digitais para ministrar aos irmãos."
-                        : "Este estudo será direcionado especificamente para a célula selecionada."}
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="study-title" className="text-xs font-bold">
-                    Título do Estudo <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="study-title"
-                    required
-                    placeholder="Ex: O Poder da Oração e Comunhão Fraternal"
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    className="h-11 rounded-xl text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="study-theme" className="text-xs font-bold">
-                      Tema ou Categoria
-                    </Label>
-                    <Select value={formTheme} onValueChange={setFormTheme}>
-                      <SelectTrigger id="study-theme" className="h-11 rounded-xl text-sm">
-                        <SelectValue placeholder="Selecione o tema" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TEMAS_SUGERIDOS.map((t) => (
-                          <SelectItem key={t} value={t}>
-                            {t}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="study-biblical-ref" className="text-xs font-bold">
-                      Referência Bíblica Principal <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="study-biblical-ref"
-                      required
-                      placeholder="Ex: Atos 2:42-47 ou Filipenses 4:6-7"
-                      value={formBiblicalRef}
-                      onChange={(e) => setFormBiblicalRef(e.target.value)}
-                      className="h-11 rounded-xl text-sm font-semibold text-primary"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="study-objective" className="text-xs font-bold">
-                    Objetivo do Estudo
-                  </Label>
-                  <Textarea
-                    id="study-objective"
-                    rows={2}
-                    placeholder="Qual a mensagem central que os irmãos devem levar para casa?"
-                    value={formObjective}
-                    onChange={(e) => setFormObjective(e.target.value)}
-                    className="rounded-xl text-xs sm:text-sm resize-none"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <Button
-                    type="button"
-                    onClick={() => setActiveFormTab("conteudo")}
-                    className="rounded-xl text-xs font-bold gap-1.5"
-                  >
-                    <span>Avançar para Conteúdo Bíblico</span>
-                    &rarr;
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* SEÇÃO 2: CONTEÚDO BÍBLICO (TEXTAREAS AMPLOS PARA CELULAR) */}
-            {activeFormTab === "conteudo" && (
-              <div className="space-y-4 animate-in fade-in-50 duration-200">
-                <div className="space-y-1.5">
-                  <Label htmlFor="study-intro" className="text-xs font-bold flex items-center gap-1.5">
-                    <Sparkles className="size-3.5 text-primary" />
-                    1. Introdução / Quebra-Gelo
-                  </Label>
-                  <Textarea
-                    id="study-intro"
-                    rows={3}
-                    placeholder="Contextualize o assunto e prepare o coração dos participantes..."
-                    value={formIntro}
-                    onChange={(e) => setFormIntro(e.target.value)}
-                    className="rounded-xl text-xs sm:text-sm"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="study-dev" className="text-xs font-bold flex items-center gap-1.5">
-                    <BookOpen className="size-3.5 text-primary" />
-                    2. Desenvolvimento Bíblico (Pontos Principais)
-                  </Label>
-                  <Textarea
-                    id="study-dev"
-                    rows={5}
-                    placeholder="Registre os tópicos centrais, explicações e versículos adicionais..."
-                    value={formDev}
-                    onChange={(e) => setFormDev(e.target.value)}
-                    className="rounded-xl text-xs sm:text-sm font-sans"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="study-questions" className="text-xs font-bold flex items-center gap-1.5">
-                    <MessageSquare className="size-3.5 text-primary" />
-                    3. Perguntas para Reflexão e Diálogo
-                  </Label>
-                  <Textarea
-                    id="study-questions"
-                    rows={3}
-                    placeholder="1. Como você pode aplicar essa palavra hoje?\n2. O que mais te chamou a atenção no texto?"
-                    value={formQuestions}
-                    onChange={(e) => setFormQuestions(e.target.value)}
-                    className="rounded-xl text-xs sm:text-sm"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="study-conclusion" className="text-xs font-bold flex items-center gap-1.5">
-                    <HeartHandshake className="size-3.5 text-primary" />
-                    4. Conclusão & Motivos de Oração
-                  </Label>
-                  <Textarea
-                    id="study-conclusion"
-                    rows={3}
-                    placeholder="Mensagem final, aplicação prática e direção de oração mútua..."
-                    value={formConclusion}
-                    onChange={(e) => setFormConclusion(e.target.value)}
-                    className="rounded-xl text-xs sm:text-sm"
-                  />
-                </div>
-
-                <div className="pt-2 flex items-center justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveFormTab("geral")}
-                    className="rounded-xl text-xs font-semibold"
-                  >
-                    &larr; Voltar
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setActiveFormTab("programacao")}
-                    className="rounded-xl text-xs font-bold gap-1.5"
-                  >
-                    <span>Avançar para Programação</span>
-                    &rarr;
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* SEÇÃO 3: PROGRAMAÇÃO & STATUS */}
-            {activeFormTab === "programacao" && (
-              <div className="space-y-4 animate-in fade-in-50 duration-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="study-date" className="text-xs font-bold">
-                      Data Prevista para Ministração
-                    </Label>
-                    <Input
-                      id="study-date"
-                      type="date"
-                      value={formDate}
-                      onChange={(e) => setFormDate(e.target.value)}
-                      className="h-11 rounded-xl text-sm"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="study-status" className="text-xs font-bold">
-                      Status do Estudo
-                    </Label>
-                    <Select
-                      value={formStatus}
-                      onValueChange={(v) => setFormStatus(v as StudyStatus)}
-                    >
-                      <SelectTrigger id="study-status" className="h-11 rounded-xl text-sm">
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Rascunho">Rascunho (Em elaboração)</SelectItem>
-                        <SelectItem value="Agendado">Agendado (Pronto para ministrar)</SelectItem>
-                        <SelectItem value="Ministrado">Ministrado (Já ministrado na célula)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {formStatus === "Ministrado" && (
-                  <div className="p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 space-y-2 animate-in fade-in-50">
-                    <Label
-                      htmlFor="study-ministered-at"
-                      className="text-xs font-bold text-emerald-800 dark:text-emerald-300"
-                    >
-                      Data Efetiva da Ministração na Célula
-                    </Label>
-                    <Input
-                      id="study-ministered-at"
-                      type="date"
-                      value={formMinisteredAt || formDate}
-                      onChange={(e) => setFormMinisteredAt(e.target.value)}
-                      className="h-10 rounded-xl text-sm bg-background"
-                    />
-                  </div>
-                )}
-
-                <div className="rounded-2xl border bg-muted/40 p-3.5 space-y-1 text-xs">
-                  <div className="font-semibold text-foreground flex items-center gap-1.5">
-                    <Home className="size-3.5 text-primary" />
-                    Destino & Autoria do Estudo
-                  </div>
-                  <p className="text-muted-foreground">
-                    {formTargetCellId === "todas" ? (
-                      <span>
-                        Destino: <strong className="text-violet-600 dark:text-violet-400">Todas as Células da Igreja (Estudo Geral Pastoral)</strong> &middot; Autor:{" "}
-                        <strong>{user?.name || "Gabinete Pastoral"}</strong>
-                      </span>
-                    ) : (
-                      <span>
-                        Célula: <strong>{db.cells.find((c) => c.id === formTargetCellId)?.nome || userCell?.nome || "Célula Betel"}</strong> &middot; Líder Responsável:{" "}
-                        <strong>{db.cells.find((c) => c.id === formTargetCellId)?.lider || user?.name || "Líder de Célula"}</strong>
-                      </span>
-                    )}
-                  </p>
-                </div>
-
-                <div className="pt-2 flex items-center justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveFormTab("conteudo")}
-                    className="rounded-xl text-xs font-semibold"
-                  >
-                    &larr; Voltar para Conteúdo
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* AÇÕES FINAIS DO MODAL */}
-            <DialogFooter className="pt-4 border-t gap-2 sm:gap-3 flex-col sm:flex-row">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsFormOpen(false)}
-                className="h-11 rounded-xl text-xs font-medium cursor-pointer"
-              >
-                Cancelar
-              </Button>
-
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => handleSaveForm(true)}
-                className="h-11 rounded-xl text-xs font-bold gap-1.5 cursor-pointer"
-              >
-                <FileText className="size-4" />
-                <span>Salvar como Rascunho</span>
-              </Button>
-
-              <Button
-                type="submit"
-                variant="premium"
-                className="h-11 px-6 rounded-xl text-xs font-bold gap-2 shadow-md hover:shadow-lg cursor-pointer"
-              >
-                <CheckCircle2 className="size-4" />
-                <span>{formId ? "Atualizar Estudo" : "Salvar Estudo"}</span>
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* MODAL 2: MODO LEITURA IMERSIVO / "CADERNO DIGITAL DO LÍDER" (OTIMIZADO PARA CELULAR) */}
       <Dialog open={isReaderOpen} onOpenChange={setIsReaderOpen}>
