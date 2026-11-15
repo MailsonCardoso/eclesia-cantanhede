@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState, useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   Baby,
@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { exportCSV, fmtDate, useStore, type Row } from "@/lib/store";
 import { downloadChartAsPng } from "@/lib/chart-download";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/relatorio-membros")({
   head: () => ({
@@ -135,6 +136,19 @@ function exportPDF({
 }
 
 function RelatorioMembros() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === "Tesoureiro") {
+      navigate({ to: "/analise-financeira" });
+    }
+  }, [user, navigate]);
+
+  if (user?.role === "Tesoureiro") {
+    return null;
+  }
+
   const { db } = useStore();
   const [tab, setTab] = useState<ActiveTab>("geral");
   const [congFilter, setCongFilter] = useState<string>("todas");

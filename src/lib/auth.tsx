@@ -95,15 +95,13 @@ export const ROLE_DEFINITIONS: Record<UserRole, RolePermissionInfo> = {
   Tesoureiro: {
     role: "Tesoureiro",
     label: "Tesouraria / Financeiro",
-    description: "Controle de receitas, despesas, dízimos, ofertas, relatórios e patrimônio/inventário.",
+    description: "Controle de receitas, despesas, dízimos, ofertas, inventário de bens e análise financeira.",
     badgeClass: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     modules: [
-      { name: "Painel Principal", path: "/" },
+      { name: "Análise Financeira (Tela Inicial)", path: "/analise-financeira" },
       { name: "Gestão Financeira", path: "/financeiro" },
       { name: "Dízimos e Ofertas", path: "/contribuicoes" },
-      { name: "Análise Financeira", path: "/analise-financeira" },
       { name: "Inventário de Bens", path: "/inventario" },
-      { name: "Relatórios de Membros", path: "/relatorio-membros" },
     ],
   },
   Líder: {
@@ -158,7 +156,7 @@ interface AuthContextType {
   users: UserAccount[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (identifier: string, passwordInput: string, remember?: boolean) => { success: boolean; error?: string };
+  login: (identifier: string, passwordInput: string, remember?: boolean) => { success: boolean; error?: string; user?: AuthUser };
   logout: () => void;
   hasRole: (roles: UserRole | UserRole[]) => boolean;
   addUser: (accountData: {
@@ -285,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
       }
       toast.success(`Bem-vindo, ${match.name}!`);
-      return { success: true };
+      return { success: true, user: authPayload };
     }
 
     return {

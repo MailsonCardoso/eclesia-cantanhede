@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { MetricCard } from "@/components/MetricCard";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Users, UserCheck, UserPlus, UserRound, HandCoins, Gift, TrendingDown, Landmark, CalendarDays, Cake, Download } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
 import { brl, fmtDate, useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { downloadChartAsPng } from "@/lib/chart-download";
 
@@ -28,6 +30,19 @@ function Stat({ icon, label, value, grad = 0 }: { icon: typeof Users; label: str
 }
 
 function Dashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === "Tesoureiro") {
+      navigate({ to: "/analise-financeira" });
+    }
+  }, [user, navigate]);
+
+  if (user?.role === "Tesoureiro") {
+    return null;
+  }
+
   const { db } = useStore();
   const now = new Date();
   const ym = now.toISOString().slice(0, 7);

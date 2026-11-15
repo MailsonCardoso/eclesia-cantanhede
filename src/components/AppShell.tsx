@@ -75,9 +75,9 @@ const groups = [
   {
     label: "Financeiro",
     items: [
+      { title: "Análise Financeira", url: "/analise-financeira", icon: LineChart },
       { title: "Financeiro", url: "/financeiro", icon: Wallet },
       { title: "Dízimos e Ofertas", url: "/contribuicoes", icon: HandCoins },
-      { title: "Análise Financeira", url: "/analise-financeira", icon: LineChart },
     ],
   },
   {
@@ -92,11 +92,10 @@ const groups = [
 function canAccessRoute(role: UserRole | undefined, url: string): boolean {
   if (!role || role === "Administrador") return true;
 
-  if (url === "/") return true;
-
   switch (role) {
     case "Pastor":
       return (
+        url === "/" ||
         url.startsWith("/pastor") ||
         url === "/agenda-pastoral" ||
         url === "/membros" ||
@@ -111,6 +110,7 @@ function canAccessRoute(role: UserRole | undefined, url: string): boolean {
 
     case "Secretaria":
       return (
+        url === "/" ||
         url === "/membros" ||
         url === "/congregacoes" ||
         url === "/departamentos" ||
@@ -122,15 +122,15 @@ function canAccessRoute(role: UserRole | undefined, url: string): boolean {
 
     case "Tesoureiro":
       return (
+        url === "/analise-financeira" ||
         url === "/financeiro" ||
         url === "/contribuicoes" ||
-        url === "/analise-financeira" ||
-        url === "/inventario" ||
-        url === "/relatorio-membros"
+        url === "/inventario"
       );
 
     case "Líder":
       return (
+        url === "/" ||
         url === "/celulas" ||
         url === "/membros" ||
         url === "/agenda-eventos"
@@ -163,6 +163,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [isLoading, isAuthenticated, path, navigate]);
 
+  // Redireciona caso o usuário autenticado tente acessar uma rota não autorizada
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !canAccessRoute(user?.role, path)) {
+      const target = user?.role === "Tesoureiro" ? "/analise-financeira" : "/";
+      navigate({ to: target });
+    }
+  }, [isLoading, isAuthenticated, user?.role, path, navigate]);
+
   // Se estiver na tela de login, renderiza em tela cheia sem sidebar nem header
   if (path === "/login") {
     return <div className="w-full min-h-screen bg-background text-foreground">{children}</div>;
@@ -184,6 +192,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Se não estiver logado, não renderiza as telas protegidas enquanto redireciona
   if (!isAuthenticated) {
+    return null;
+  }
+
+  // Se a rota não for autorizada para o perfil, não renderiza durante o redirecionamento
+  if (!canAccessRoute(user?.role, path)) {
     return null;
   }
 
@@ -211,7 +224,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Sidebar collapsible="icon" className="no-print border-r border-sidebar-border">
           {/* Topo do Sidebar com Logo Oficial */}
           <SidebarHeader className="px-3 py-5">
-            <div className="flex items-center gap-3">
+            <Link
+              to={user?.role === "Tesoureiro" ? "/analise-financeira" : "/"}
+              className="flex items-center gap-3 transition-opacity hover:opacity-90 cursor-pointer"
+            >
               <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-lg">
                 <Church className="size-5" />
               </div>
@@ -221,7 +237,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </div>
                 <div className="text-xs text-sidebar-foreground/70 mt-1">Gestão eclesiástica</div>
               </div>
-            </div>
+            </Link>
           </SidebarHeader>
 
           {/* Menus de Navegação */}

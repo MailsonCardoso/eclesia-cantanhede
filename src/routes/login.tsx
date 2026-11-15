@@ -58,7 +58,11 @@ function LoginPage() {
       setLoading(false);
 
       if (res.success) {
-        navigate({ to: "/" });
+        if (res.user?.role === "Tesoureiro") {
+          navigate({ to: "/analise-financeira" });
+        } else {
+          navigate({ to: "/" });
+        }
       } else {
         setErrorMessage(res.error || "Erro ao realizar login.");
         toast.error(res.error || "Credenciais inválidas.");
