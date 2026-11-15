@@ -12,6 +12,8 @@ export interface UserAccount {
   role: UserRole;
   cargo: string;
   avatar: string;
+  cellId?: string;
+  cellName?: string;
   status: "Ativo" | "Inativo";
   createdAt: string;
 }
@@ -25,6 +27,8 @@ export interface AuthUser {
   role: UserRole;
   cargo: string;
   avatar: string;
+  cellId?: string;
+  cellName?: string;
 }
 
 export interface RolePermissionInfo {
@@ -56,6 +60,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RolePermissionInfo> = {
       { name: "Análise Financeira", path: "/analise-financeira" },
       { name: "Relatórios de Membros", path: "/relatorio-membros" },
       { name: "Agenda de Eventos", path: "/agenda-eventos" },
+      { name: "Área de Estudos", path: "/area-estudos" },
     ],
   },
   Pastor: {
@@ -74,6 +79,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RolePermissionInfo> = {
       { name: "Dízimos e Ofertas", path: "/contribuicoes" },
       { name: "Relatórios de Membros", path: "/relatorio-membros" },
       { name: "Agenda de Eventos", path: "/agenda-eventos" },
+      { name: "Área de Estudos", path: "/area-estudos" },
     ],
   },
   Secretaria: {
@@ -106,14 +112,11 @@ export const ROLE_DEFINITIONS: Record<UserRole, RolePermissionInfo> = {
   },
   Líder: {
     role: "Líder",
-    label: "Líder de Célula / Discipulado",
-    description: "Gestão da célula, integração de membros e acompanhamento da agenda de eventos.",
+    label: "Líder de Célula",
+    description: "Acesso exclusivo à Área de Estudos Bíblicos da sua célula para preparação, organização e acompanhamento dos estudos.",
     badgeClass: "border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
     modules: [
-      { name: "Painel Principal", path: "/" },
-      { name: "Células", path: "/celulas" },
-      { name: "Membros", path: "/membros" },
-      { name: "Agenda de Eventos", path: "/agenda-eventos" },
+      { name: "Área de Estudos", path: "/area-estudos" },
     ],
   },
 };
@@ -166,6 +169,8 @@ interface AuthContextType {
     cpf: string;
     role: UserRole;
     cargo?: string;
+    cellId?: string;
+    cellName?: string;
     status?: "Ativo" | "Inativo";
   }) => { success: boolean; error?: string; user?: UserAccount };
   updateUser: (id: string, updates: Partial<UserAccount>) => { success: boolean; error?: string };
@@ -273,6 +278,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: match.role,
         cargo: match.cargo || ROLE_DEFINITIONS[match.role]?.label || match.role,
         avatar: match.avatar || getInitials(match.name),
+        cellId: match.cellId,
+        cellName: match.cellName,
       };
 
       setUser(authPayload);
@@ -315,6 +322,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     cpf: string;
     role: UserRole;
     cargo?: string;
+    cellId?: string;
+    cellName?: string;
     status?: "Ativo" | "Inativo";
   }) => {
     const cleanEmail = (data.email || "").trim().toLowerCase();
@@ -347,6 +356,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.role,
       cargo: data.cargo?.trim() || ROLE_DEFINITIONS[data.role]?.label || data.role,
       avatar: getInitials(data.name),
+      cellId: data.cellId,
+      cellName: data.cellName,
       status: data.status || "Ativo",
       createdAt: new Date().toISOString(),
     };

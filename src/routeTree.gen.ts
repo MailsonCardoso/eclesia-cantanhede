@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaEventosRouteImport } from './routes/agenda-eventos'
 import { Route as AgendaPastoralRouteImport } from './routes/agenda-pastoral'
 import { Route as AnaliseFinanceiraRouteImport } from './routes/analise-financeira'
+import { Route as AreaEstudosRouteImport } from './routes/area-estudos'
 import { Route as CelulasRouteImport } from './routes/celulas'
 import { Route as CongregacoesRouteImport } from './routes/congregacoes'
 import { Route as ContribuicoesRouteImport } from './routes/contribuicoes'
@@ -46,6 +47,11 @@ const AgendaPastoralRoute = AgendaPastoralRouteImport.update({
 const AnaliseFinanceiraRoute = AnaliseFinanceiraRouteImport.update({
   id: '/analise-financeira',
   path: '/analise-financeira',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaEstudosRoute = AreaEstudosRouteImport.update({
+  id: '/area-estudos',
+  path: '/area-estudos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CelulasRoute = CelulasRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/agenda-eventos': typeof AgendaEventosRoute
   '/agenda-pastoral': typeof AgendaPastoralRoute
   '/analise-financeira': typeof AnaliseFinanceiraRoute
+  '/area-estudos': typeof AreaEstudosRoute
   '/celulas': typeof CelulasRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/agenda-eventos': typeof AgendaEventosRoute
   '/agenda-pastoral': typeof AgendaPastoralRoute
   '/analise-financeira': typeof AnaliseFinanceiraRoute
+  '/area-estudos': typeof AreaEstudosRoute
   '/celulas': typeof CelulasRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/agenda-eventos': typeof AgendaEventosRoute
   '/agenda-pastoral': typeof AgendaPastoralRoute
   '/analise-financeira': typeof AnaliseFinanceiraRoute
+  '/area-estudos': typeof AreaEstudosRoute
   '/celulas': typeof CelulasRoute
   '/congregacoes': typeof CongregacoesRoute
   '/contribuicoes': typeof ContribuicoesRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/agenda-eventos'
     | '/agenda-pastoral'
     | '/analise-financeira'
+    | '/area-estudos'
     | '/celulas'
     | '/congregacoes'
     | '/contribuicoes'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/agenda-eventos'
     | '/agenda-pastoral'
     | '/analise-financeira'
+    | '/area-estudos'
     | '/celulas'
     | '/congregacoes'
     | '/contribuicoes'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/agenda-eventos'
     | '/agenda-pastoral'
     | '/analise-financeira'
+    | '/area-estudos'
     | '/celulas'
     | '/congregacoes'
     | '/contribuicoes'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   AgendaEventosRoute: typeof AgendaEventosRoute
   AgendaPastoralRoute: typeof AgendaPastoralRoute
   AnaliseFinanceiraRoute: typeof AnaliseFinanceiraRoute
+  AreaEstudosRoute: typeof AreaEstudosRoute
   CelulasRoute: typeof CelulasRoute
   CongregacoesRoute: typeof CongregacoesRoute
   ContribuicoesRoute: typeof ContribuicoesRoute
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/analise-financeira'
       fullPath: '/analise-financeira'
       preLoaderRoute: typeof AnaliseFinanceiraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area-estudos': {
+      id: '/area-estudos'
+      path: '/area-estudos'
+      fullPath: '/area-estudos'
+      preLoaderRoute: typeof AreaEstudosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/celulas': {
@@ -400,6 +420,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaEventosRoute: AgendaEventosRoute,
   AgendaPastoralRoute: AgendaPastoralRoute,
   AnaliseFinanceiraRoute: AnaliseFinanceiraRoute,
+  AreaEstudosRoute: AreaEstudosRoute,
   CelulasRoute: CelulasRoute,
   CongregacoesRoute: CongregacoesRoute,
   ContribuicoesRoute: ContribuicoesRoute,

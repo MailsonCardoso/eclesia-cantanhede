@@ -16,6 +16,7 @@ const routes = [
   '/inventario',
   '/membros',
   '/usuarios',
+  '/area-estudos',
   '/pastor',
   '/pastor/series',
   '/pastor/insights',

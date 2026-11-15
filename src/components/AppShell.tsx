@@ -22,6 +22,7 @@ import {
   Shield,
   ShieldCheck,
   ChevronDown,
+  BookMarked,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth, type UserRole } from "@/lib/auth";
@@ -81,6 +82,12 @@ const groups = [
     ],
   },
   {
+    label: "Célula",
+    items: [
+      { title: "Área de Estudos", url: "/area-estudos", icon: BookMarked },
+    ],
+  },
+  {
     label: "Relatórios & Agenda",
     items: [
       { title: "Relatórios de Membros", url: "/relatorio-membros", icon: BarChart3 },
@@ -105,7 +112,8 @@ function canAccessRoute(role: UserRole | undefined, url: string): boolean {
         url === "/contribuicoes" ||
         url === "/financeiro" ||
         url === "/relatorio-membros" ||
-        url === "/agenda-eventos"
+        url === "/agenda-eventos" ||
+        url === "/area-estudos"
       );
 
     case "Secretaria":
@@ -129,12 +137,7 @@ function canAccessRoute(role: UserRole | undefined, url: string): boolean {
       );
 
     case "Líder":
-      return (
-        url === "/" ||
-        url === "/celulas" ||
-        url === "/membros" ||
-        url === "/agenda-eventos"
-      );
+      return url === "/area-estudos";
 
     default:
       return true;
@@ -166,7 +169,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Redireciona caso o usuário autenticado tente acessar uma rota não autorizada
   useEffect(() => {
     if (!isLoading && isAuthenticated && !canAccessRoute(user?.role, path)) {
-      const target = user?.role === "Tesoureiro" ? "/analise-financeira" : "/";
+      const target =
+        user?.role === "Tesoureiro"
+          ? "/analise-financeira"
+          : user?.role === "Líder"
+          ? "/area-estudos"
+          : "/";
       navigate({ to: target });
     }
   }, [isLoading, isAuthenticated, user?.role, path, navigate]);
@@ -225,7 +233,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Topo do Sidebar com Logo Oficial */}
           <SidebarHeader className="px-3 py-5">
             <Link
-              to={user?.role === "Tesoureiro" ? "/analise-financeira" : "/"}
+              to={
+                user?.role === "Tesoureiro"
+                  ? "/analise-financeira"
+                  : user?.role === "Líder"
+                  ? "/area-estudos"
+                  : "/"
+              }
               className="flex items-center gap-3 transition-opacity hover:opacity-90 cursor-pointer"
             >
               <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-lg">

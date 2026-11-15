@@ -31,7 +31,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -41,12 +41,18 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Se já estiver logado, redireciona para o painel principal
+  // Se já estiver logado, redireciona para a página apropriada
   useEffect(() => {
     if (isAuthenticated) {
-      navigate({ to: "/" });
+      if (user?.role === "Tesoureiro") {
+        navigate({ to: "/analise-financeira" });
+      } else if (user?.role === "Líder") {
+        navigate({ to: "/area-estudos" });
+      } else {
+        navigate({ to: "/" });
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +66,8 @@ function LoginPage() {
       if (res.success) {
         if (res.user?.role === "Tesoureiro") {
           navigate({ to: "/analise-financeira" });
+        } else if (res.user?.role === "Líder") {
+          navigate({ to: "/area-estudos" });
         } else {
           navigate({ to: "/" });
         }

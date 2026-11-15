@@ -20,6 +20,7 @@ import {
   Church,
   X,
   Check,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +101,19 @@ function UsuariosPage() {
       return matchName || matchCpf || matchEmail;
     }).slice(0, 8);
   }, [db.members, memberSearch]);
+
+  // Identifica automaticamente se o membro/usuário é líder responsável em alguma célula
+  const linkedCell = useMemo(() => {
+    if (!name.trim()) return null;
+    const cleanName = name.trim().toLowerCase();
+    return (
+      db.cells.find((c) => {
+        const matchesName = (c.lider || "").toString().trim().toLowerCase() === cleanName;
+        const matchesMemberId = Boolean(selectedMemberId && c.lider_id && c.lider_id === selectedMemberId);
+        return matchesName || matchesMemberId;
+      }) || null
+    );
+  }, [db.cells, name, selectedMemberId]);
 
   // Filtered Users List
   const filteredUsers = useMemo(() => {
@@ -219,6 +233,13 @@ function UsuariosPage() {
       return;
     }
 
+    if (role === "Líder" && !linkedCell) {
+      toast.error(
+        "Atenção: O membro precisa estar cadastrado como líder responsável por uma célula na tela Células antes de receber o perfil Líder de Célula."
+      );
+      return;
+    }
+
     if (editingUser) {
       // Update
       const res = updateUser(editingUser.id, {
@@ -228,6 +249,8 @@ function UsuariosPage() {
         cpf: formatCPF(cpf),
         role,
         cargo: cargo.trim() || ROLE_DEFINITIONS[role].label,
+        cellId: role === "Líder" ? linkedCell?.id : undefined,
+        cellName: role === "Líder" ? linkedCell?.nome : undefined,
         status,
       });
 
@@ -245,6 +268,8 @@ function UsuariosPage() {
         cpf: formatCPF(cpf),
         role,
         cargo: cargo.trim() || ROLE_DEFINITIONS[role].label,
+        cellId: role === "Líder" ? linkedCell?.id : undefined,
+        cellName: role === "Líder" ? linkedCell?.nome : undefined,
         status,
       });
 
@@ -550,6 +575,20 @@ function UsuariosPage() {
                         )}
                       </div>
                     </div>
+
+                    {u.role === "Líder" && (
+                      <div className="flex items-center gap-1.5 text-[10.5px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-1 rounded-lg">
+                        <Home className="size-3 shrink-0" />
+                        <span className="truncate">
+                          Célula:{" "}
+                          {u.cellName ||
+                            db.cells.find(
+                              (c) => (c.lider || "").toString().toLowerCase() === u.name.toLowerCase()
+                            )?.nome ||
+                            "Célula Vinculada"}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -876,6 +915,38 @@ function UsuariosPage() {
                   );
                 })}
               </div>
+
+              {/* Verificação Automática do Vínculo de Célula para Líder */}
+              {role === "Líder" && (
+                <div className="pt-1 animate-in fade-in-50 duration-200">
+                  {linkedCell ? (
+                    <div className="p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs space-y-1.5 shadow-2xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          <span>Célula Vinculada: {linkedCell.nome}</span>
+                        </div>
+                        <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] shrink-0 font-mono">
+                          ID: {linkedCell.id}
+                        </Badge>
+                      </div>
+                      <p className="text-[11.5px] leading-relaxed text-emerald-700/90 dark:text-emerald-300/90">
+                        Vínculo verificado com sucesso no módulo Células. Este operador receberá acesso <strong>exclusivo</strong> à <strong>Área de Estudos</strong> da célula <strong>{linkedCell.nome}</strong>.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs space-y-1.5 shadow-2xs">
+                      <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400">
+                        <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <span>Atenção: Vínculo de Célula Não Encontrado</span>
+                      </div>
+                      <p className="text-[11.5px] leading-relaxed text-amber-700/90 dark:text-amber-300/90">
+                        Este membro ainda não está cadastrado como líder responsável em nenhuma célula na tela <strong>Células</strong>. Para liberar a Área de Estudos, vincule-o primeiro como líder de uma célula ativa.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Resumo Visual das Permissões do Perfil Selecionado */}

@@ -36,10 +36,12 @@ function Dashboard() {
   useEffect(() => {
     if (user?.role === "Tesoureiro") {
       navigate({ to: "/analise-financeira" });
+    } else if (user?.role === "Líder") {
+      navigate({ to: "/area-estudos" });
     }
   }, [user, navigate]);
 
-  if (user?.role === "Tesoureiro") {
+  if (user?.role === "Tesoureiro" || user?.role === "Líder") {
     return null;
   }
 
