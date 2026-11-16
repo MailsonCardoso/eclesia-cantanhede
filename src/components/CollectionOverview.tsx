@@ -8,13 +8,72 @@ export const collectionIcons: Record<Collection, LucideIcon> = {
   pastor_series: BookOpen, pastor_sermons: Mic, pastor_insights: Lightbulb, pastoral_requests: ClipboardList,
 };
 
-export function CollectionOverview({ collection }: { collection: Collection }) {
+const MONTHS_FULL = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+export function CollectionOverview({
+  collection,
+  filterYear,
+  filterMonth,
+}: {
+  collection: Collection;
+  filterYear?: number;
+  filterMonth?: number | "all";
+}) {
   const { db } = useStore();
   const rows = db[collection];
   const sum = (key: string) => rows.reduce((total, row) => total + Number(row[key] || 0), 0);
   const today = new Date().toISOString().slice(0, 10);
-  const income = rows.filter((r) => r.tipo === "Receita").reduce((a, r) => a + Number(r.valor || 0), 0);
-  const expenses = rows.filter((r) => r.tipo === "Despesa").reduce((a, r) => a + Number(r.valor || 0), 0);
+
+  // Filtro de período para coleções financeiras (transactions e contributions)
+  const isPeriodFiltered = Boolean(filterYear);
+  const periodFilteredRows = (() => {
+    if (!filterYear) return rows;
+    if (filterMonth && filterMonth !== "all") {
+      const prefix = `${filterYear}-${String(filterMonth).padStart(2, "0")}`;
+      return rows.filter((r) => String(r.data || "").startsWith(prefix));
+    }
+    return rows.filter((r) => String(r.data || "").startsWith(`${filterYear}-`));
+  })();
+
+  const periodLabel = (() => {
+    if (!filterYear) return "";
+    if (filterMonth && filterMonth !== "all") {
+      const mName = MONTHS_FULL[filterMonth - 1] || "";
+      return `em ${mName} de ${filterYear}`;
+    }
+    return `no ano de ${filterYear}`;
+  })();
+
+  // Métricas de Transações (Financeiro)
+  const txIncome = periodFilteredRows
+    .filter((r) => r.tipo === "Receita")
+    .reduce((a, r) => a + Number(r.valor || 0), 0);
+  const txExpenses = periodFilteredRows
+    .filter((r) => r.tipo === "Despesa")
+    .reduce((a, r) => a + Number(r.valor || 0), 0);
+  const txBalance = txIncome - txExpenses;
+
+  // Saldo geral acumulado no banco/caixa (de todos os tempos)
+  const allTimeIncome = rows
+    .filter((r) => r.tipo === "Receita")
+    .reduce((a, r) => a + Number(r.valor || 0), 0);
+  const allTimeExpenses = rows
+    .filter((r) => r.tipo === "Despesa")
+    .reduce((a, r) => a + Number(r.valor || 0), 0);
+  const allTimeBalance = allTimeIncome - allTimeExpenses;
+
+  // Métricas de Contribuições (Dízimos e Ofertas)
+  const contribTotal = periodFilteredRows.reduce((a, r) => a + Number(r.valor || 0), 0);
+  const contribDizimos = periodFilteredRows
+    .filter((r) => r.tipo === "Dízimo")
+    .reduce((a, r) => a + Number(r.valor || 0), 0);
+  const contribOfertas = periodFilteredRows
+    .filter((r) => r.tipo !== "Dízimo")
+    .reduce((a, r) => a + Number(r.valor || 0), 0);
+
   const metrics = ({
     members: [
       { label: "Membros cadastrados", value: rows.length, icon: Users },
@@ -46,14 +105,46 @@ export function CollectionOverview({ collection }: { collection: Collection }) {
       { label: "Dias de reunião", value: new Set(rows.map((r) => r["dia"]).filter(Boolean)).size, icon: Clock },
     ],
     contributions: [
-      { label: "Total de contribuições", value: brl(sum("valor")), icon: HandCoins },
-      { label: "Dízimos", value: brl(rows.filter((r) => r.tipo === "Dízimo").reduce((a, r) => a + Number(r.valor || 0), 0)), icon: Wallet },
-      { label: "Ofertas e campanhas", value: brl(rows.filter((r) => r.tipo !== "Dízimo").reduce((a, r) => a + Number(r.valor || 0), 0)), icon: Gift },
+      {
+        label: "Total de contribuições",
+        value: brl(contribTotal),
+        icon: HandCoins,
+        detail: isPeriodFiltered ? `Arrecadação ${periodLabel}` : undefined,
+      },
+      {
+        label: "Dízimos",
+        value: brl(contribDizimos),
+        icon: Wallet,
+        detail: isPeriodFiltered ? `Dízimos ${periodLabel}` : undefined,
+      },
+      {
+        label: "Ofertas e campanhas",
+        value: brl(contribOfertas),
+        icon: Gift,
+        detail: isPeriodFiltered ? `Ofertas ${periodLabel}` : undefined,
+      },
     ],
     transactions: [
-      { label: "Receitas", value: brl(income), icon: ArrowDownLeft },
-      { label: "Despesas", value: brl(expenses), icon: ArrowUpRight },
-      { label: "Saldo em caixa", value: brl(income - expenses), icon: Landmark },
+      {
+        label: "Receitas",
+        value: brl(txIncome),
+        icon: ArrowDownLeft,
+        detail: isPeriodFiltered ? `Entradas ${periodLabel}` : undefined,
+      },
+      {
+        label: "Despesas",
+        value: brl(txExpenses),
+        icon: ArrowUpRight,
+        detail: isPeriodFiltered ? `Saídas ${periodLabel}` : undefined,
+      },
+      {
+        label: "Saldo em caixa",
+        value: brl(txBalance),
+        icon: Landmark,
+        detail: isPeriodFiltered
+          ? `Saldo geral acumulado no banco: ${brl(allTimeBalance)}`
+          : undefined,
+      },
     ],
     events: [
       { label: "Eventos cadastrados", value: rows.length, icon: CalendarDays },
@@ -66,7 +157,7 @@ export function CollectionOverview({ collection }: { collection: Collection }) {
       { label: "Valor do patrimônio", value: brl(rows.reduce((a, r) => a + Number(r.valor || 0) * Number(r["quantidade"] || 0), 0)), icon: Landmark },
     ],
     appointments: [],
-  } as Partial<Record<Collection, { label: string; value: string | number; icon: LucideIcon }[]>>)[collection];
+  } as Partial<Record<Collection, { label: string; value: string | number; icon: LucideIcon; detail?: string }[]>>)[collection];
   const tones = ["blue", "green", "orange", "violet"] as const;
   if (!metrics?.length) return null;
   return <div className={`grid gap-3 sm:grid-cols-2 ${metrics.length === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>

@@ -392,6 +392,7 @@ function Contribuicoes() {
         subtitle="Acesso restrito à tesouraria. Contribuições anônimas são permitidas."
         collection="contributions"
         singular="Contribuição"
+        enablePeriodFilter={true}
         searchKeys={["membro"]}
         filterKeys={["tipo", "congregacao"]}
         extraAction={(r) => (

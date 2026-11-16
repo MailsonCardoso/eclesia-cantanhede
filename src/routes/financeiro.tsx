@@ -49,6 +49,7 @@ function Financeiro() {
         subtitle="Lançamentos de receitas e despesas."
         collection="transactions"
         singular="Lançamento"
+        enablePeriodFilter={true}
         searchKeys={["descricao", "categoria"]}
         filterKeys={["tipo", "categoria", "congregacao"]}
         fields={[

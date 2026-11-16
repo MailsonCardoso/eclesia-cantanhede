@@ -291,11 +291,27 @@ function ChildrenSearchInput({
   );
 }
 
+const MONTHS_LIST = [
+  { value: 1, label: "Janeiro" },
+  { value: 2, label: "Fevereiro" },
+  { value: 3, label: "Março" },
+  { value: 4, label: "Abril" },
+  { value: 5, label: "Maio" },
+  { value: 6, label: "Junho" },
+  { value: 7, label: "Julho" },
+  { value: 8, label: "Agosto" },
+  { value: 9, label: "Setembro" },
+  { value: 10, label: "Outubro" },
+  { value: 11, label: "Novembro" },
+  { value: 12, label: "Dezembro" },
+];
+
 export function CrudPage({
-  title, subtitle, collection, fields, searchKeys, filterKeys = [], singular, extraAction,
+  title, subtitle, collection, fields, searchKeys, filterKeys = [], singular, extraAction, enablePeriodFilter = false,
 }: {
   title: string; subtitle: string; collection: Collection; fields: Field[]; searchKeys: string[];
   filterKeys?: string[]; singular: string; extraAction?: (row: Row) => React.ReactNode;
+  enablePeriodFilter?: boolean;
 }) {
   const { db, create, update, remove } = useStore();
   const [q, setQ] = useState("");
@@ -305,6 +321,25 @@ export function CrudPage({
   const [confirmDel, setConfirmDel] = useState<Row | null>(null);
   // Valores controlados do formulário (para campos condicionais e seleção múltipla)
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+
+  // Controle de Mês e Ano para telas financeiras
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number | "all">(now.getMonth() + 1);
+
+  const availableYears = useMemo(() => {
+    const set = new Set<number>();
+    set.add(now.getFullYear());
+    set.add(now.getFullYear() - 1);
+    set.add(now.getFullYear() + 1);
+    db[collection].forEach((r) => {
+      if (r.data) {
+        const y = parseInt(String(r.data).slice(0, 4), 10);
+        if (!isNaN(y)) set.add(y);
+      }
+    });
+    return Array.from(set).sort((a, b) => b - a);
+  }, [db, collection, now]);
 
   const memberNames = useMemo(() => db.members.map((m) => String(m.nome)).sort((a, b) => a.localeCompare(b)), [db.members]);
   const cellNames = useMemo(() => db.cells.map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b)), [db.cells]);
@@ -320,9 +355,24 @@ export function CrudPage({
       .sort((a, b) => a.localeCompare(b));
   }, [db.members]);
 
-  const rows = useMemo(() => db[collection].filter((r) =>
-    (!q || searchKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase()))) &&
-    Object.entries(filters).every(([k, v]) => !v || v === "__all" || r[k] === v)), [db, collection, q, filters, searchKeys]);
+  const rows = useMemo(() => {
+    let list = db[collection];
+    if (enablePeriodFilter) {
+      list = list.filter((r) => {
+        if (!r.data) return false;
+        const strData = String(r.data);
+        if (selectedMonth === "all") {
+          return strData.startsWith(`${selectedYear}-`);
+        }
+        const targetPrefix = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
+        return strData.startsWith(targetPrefix);
+      });
+    }
+    return list.filter((r) =>
+      (!q || searchKeys.some((k) => String(r[k] ?? "").toLowerCase().includes(q.toLowerCase()))) &&
+      Object.entries(filters).every(([k, v]) => !v || v === "__all" || r[k] === v)
+    );
+  }, [db, collection, enablePeriodFilter, selectedYear, selectedMonth, q, filters, searchKeys]);
 
   const cols = fields.filter((f) => f.table);
   const Icon = collectionIcons[collection];
@@ -386,7 +436,13 @@ export function CrudPage({
       } else if (f.type === "congregation" || f.key === "congregacao") {
         initial[f.key] = String(row?.[f.key] || DEFAULT_CONGREGATION);
       } else if (f.type === "date" && f.key === "data") {
-        initial[f.key] = row?.[f.key] ? String(row[f.key]) : new Date().toISOString().slice(0, 10);
+        if (row?.[f.key]) {
+          initial[f.key] = String(row[f.key]);
+        } else if (enablePeriodFilter && selectedMonth !== "all" && (selectedMonth !== now.getMonth() + 1 || selectedYear !== now.getFullYear())) {
+          initial[f.key] = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`;
+        } else {
+          initial[f.key] = new Date().toISOString().slice(0, 10);
+        }
       } else {
         const opts = typeof f.options === "function" ? f.options({ ...row, ...initial }) : f.options;
         initial[f.key] = String(row?.[f.key] ?? (opts ? opts[0] : ""));
@@ -636,22 +692,89 @@ export function CrudPage({
 
   return (
     <div className="space-y-6 animate-rise">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid size-12 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary"><Icon className="size-6" /></div>
           <div className="min-w-0"><h1 className="text-2xl font-semibold text-foreground">{title}</h1>
           <p className="text-sm text-muted-foreground mt-1">{subtitle}</p></div>
         </div>
-        <div className="flex flex-wrap gap-2 no-print">
+        <div className="flex flex-wrap items-center gap-2 no-print">
+          {enablePeriodFilter && (
+            <div className="flex items-center gap-2 mr-1">
+              <Select
+                value={String(selectedMonth)}
+                onValueChange={(val) => setSelectedMonth(val === "all" ? "all" : Number(val))}
+              >
+                <SelectTrigger className="h-10 min-w-[140px] rounded-2xl text-xs font-semibold bg-background shadow-xs border-border/70 hover:border-primary/50 transition-colors">
+                  <SelectValue placeholder="Mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs font-bold text-primary">
+                    Ano Todo ({selectedYear})
+                  </SelectItem>
+                  {MONTHS_LIST.map((m) => (
+                    <SelectItem key={m.value} value={String(m.value)} className="text-xs font-medium">
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={String(selectedYear)}
+                onValueChange={(val) => setSelectedYear(Number(val))}
+              >
+                <SelectTrigger className="h-10 min-w-[95px] rounded-2xl text-xs font-semibold bg-background shadow-xs border-border/70 hover:border-primary/50 transition-colors">
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map((yr) => (
+                    <SelectItem key={yr} value={String(yr)} className="text-xs font-medium">
+                      {yr}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {(selectedMonth !== now.getMonth() + 1 || selectedYear !== now.getFullYear()) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedMonth(now.getMonth() + 1);
+                    setSelectedYear(now.getFullYear());
+                  }}
+                  className="h-10 px-3 text-xs font-semibold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 rounded-2xl transition-all"
+                  title="Voltar ao mês atual"
+                >
+                  Mês Atual
+                </Button>
+              )}
+            </div>
+          )}
+
           <Button variant="outline" onClick={() => exportCSV(collection, rows, fields)}><FileSpreadsheet className="size-4" />Excel</Button>
           <Button variant="outline" onClick={() => window.print()}><Printer className="size-4" />PDF</Button>
           <Button variant="premium" onClick={() => openForm(null)}><Plus className="size-4" />Novo</Button>
         </div>
       </div>
 
-      <CollectionOverview collection={collection} />
+      <CollectionOverview
+        collection={collection}
+        filterYear={enablePeriodFilter ? selectedYear : undefined}
+        filterMonth={enablePeriodFilter ? selectedMonth : undefined}
+      />
       <div className="overflow-hidden rounded-xl border bg-card shadow-card">
-        <div className="flex items-center justify-between gap-3 border-b px-4 py-4"><h2 className="flex items-center gap-2 text-sm font-semibold"><ListFilter className="size-4 text-muted-foreground" />Registros</h2><Badge variant="secondary">{rows.length} de {db[collection].length}</Badge></div>
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <ListFilter className="size-4 text-muted-foreground" />Registros
+          </h2>
+          <Badge variant="secondary">
+            {enablePeriodFilter
+              ? `${rows.length} no período (${db[collection].length} no total)`
+              : `${rows.length} de ${db[collection].length}`}
+          </Badge>
+        </div>
         <div className="flex flex-wrap gap-3 border-b p-4 no-print">
           <div className="relative flex-1 min-w-56">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
