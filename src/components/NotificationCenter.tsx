@@ -257,20 +257,26 @@ export function NotificationCenter() {
       }
     });
 
-    // Pedidos Pastorais Pendentes
-    const pendingRequests = db.pastoral_requests?.filter((p) => p.status === "Pendente" || !p.status) || [];
-    if (pendingRequests.length > 0) {
-      list.push({
-        id: "pastoral_requests_pending",
-        category: "global",
-        priority: "medium",
-        title: `${pendingRequests.length} Pedido(s) Pastoral(is) Pendente(s)`,
-        description: `Há membros aguardando atendimento pastoral, visitação ou oração.`,
-        iconName: "Sparkles",
-        tag: "Gabinete Pastoral",
-        route: "/pastor",
-        actionLabel: "Atender Pedidos",
-      });
+    const isPastoralStaff = user?.role === "Pastor" || user?.role === "Administrador";
+    const isFinancialStaff = user?.role === "Administrador" || user?.role === "Pastor" || user?.role === "Tesoureiro";
+    const isAdmin = user?.role === "Administrador";
+
+    // Pedidos Pastorais Pendentes (CONFIDENCIAL: Apenas Pastor e Administrador)
+    if (isPastoralStaff) {
+      const pendingRequests = db.pastoral_requests?.filter((p) => p.status === "Pendente" || !p.status) || [];
+      if (pendingRequests.length > 0) {
+        list.push({
+          id: "pastoral_requests_pending",
+          category: "global",
+          priority: "medium",
+          title: `${pendingRequests.length} Pedido(s) Pastoral(is) Pendente(s)`,
+          description: `Há membros aguardando atendimento pastoral, visitação ou oração reservada.`,
+          iconName: "Sparkles",
+          tag: "Gabinete Pastoral",
+          route: "/pastor",
+          actionLabel: "Atender Pedidos",
+        });
+      }
     }
 
     // ==========================================
@@ -330,19 +336,61 @@ export function NotificationCenter() {
         });
       }
 
-      const noLeader = db.cells.filter((c) => !c.lider || c.lider === "__none" || c.lider === "Nenhum");
-      if (noLeader.length > 0) {
+      // Membros sem célula (integração)
+      const membersWithoutCell = db.members.filter((m) => {
+        const c = String(m.celula || "").trim();
+        return !c || c === "Não participa de célula" || c === "__none" || c === "Nenhuma";
+      });
+      if (membersWithoutCell.length > 0) {
         list.push({
-          id: "cells_no_leader",
+          id: "cells_members_without_cell",
           category: "contextual",
-          priority: "high",
-          title: `${noLeader.length} célula(s) sem líder responsável`,
-          description: `Atribua um líder em Células para manter o discipulado ativo.`,
-          iconName: "AlertTriangle",
-          tag: "Liderança",
-          route: "/celulas",
-          actionLabel: "Atribuir Líder",
+          priority: "low",
+          title: `${membersWithoutCell.length} membro(s) sem célula`,
+          description: `Irmãos cadastrados na igreja que ainda não foram integrados a uma célula.`,
+          iconName: "Users",
+          tag: "Integração",
+          route: "/membros",
+          actionLabel: "Ver Membros",
         });
+      }
+
+      // Alerta administrativo para atribuir liderança (Pastor e Admin)
+      if (isPastoralStaff) {
+        const noLeader = db.cells.filter((c) => !c.lider || c.lider === "__none" || c.lider === "Nenhum");
+        if (noLeader.length > 0) {
+          list.push({
+            id: "cells_no_leader",
+            category: "contextual",
+            priority: "high",
+            title: `${noLeader.length} célula(s) sem líder responsável`,
+            description: `Atribua um líder em Células para manter o discipulado ativo.`,
+            iconName: "AlertTriangle",
+            tag: "Liderança",
+            route: "/celulas",
+            actionLabel: "Atribuir Líder",
+          });
+        }
+      }
+
+      // Estudo agendado para o líder da célula
+      if (user?.role === "Líder" && user.cellId) {
+        const scheduledStudy = db.studies.find(
+          (s) => s.cellId === user.cellId && s.status === "Agendado"
+        );
+        if (scheduledStudy) {
+          list.push({
+            id: `cell_scheduled_study_${scheduledStudy.id}`,
+            category: "contextual",
+            priority: "medium",
+            title: `Estudo da sua célula: ${scheduledStudy.titulo}`,
+            description: `Tema: "${scheduledStudy.tema || scheduledStudy.versiculo || "Palavra edificante"}". Pronto para o encontro.`,
+            iconName: "BookMarked",
+            tag: "Palavra da Semana",
+            route: "/area-estudos",
+            actionLabel: "Abrir Estudo",
+          });
+        }
       }
     }
 
@@ -383,8 +431,8 @@ export function NotificationCenter() {
       }
     }
 
-    // Tela: /financeiro ou /analise-financeira
-    if (pathname.startsWith("/financeiro") || pathname.startsWith("/analise-financeira")) {
+    // Tela: /financeiro ou /analise-financeira (Apenas Tesoureiro, Pastor e Admin)
+    if (isFinancialStaff && (pathname.startsWith("/financeiro") || pathname.startsWith("/analise-financeira"))) {
       const monthTxs = db.transactions.filter((t) => String(t.data).startsWith(currentYearMonth));
       const income = monthTxs.filter((t) => t.tipo === "Receita").reduce((a, t) => a + Number(t.valor || 0), 0);
       const expenses = monthTxs.filter((t) => t.tipo === "Despesa").reduce((a, t) => a + Number(t.valor || 0), 0);
@@ -417,8 +465,8 @@ export function NotificationCenter() {
       }
     }
 
-    // Tela: /contribuicoes
-    if (pathname.startsWith("/contribuicoes")) {
+    // Tela: /contribuicoes (Apenas Tesoureiro, Pastor e Admin)
+    if (isFinancialStaff && pathname.startsWith("/contribuicoes")) {
       const monthCt = db.contributions.filter((c) => String(c.data).startsWith(currentYearMonth));
       const totalCt = monthCt.reduce((a, c) => a + Number(c.valor || 0), 0);
       list.push({
@@ -473,8 +521,8 @@ export function NotificationCenter() {
       }
     }
 
-    // Tela: /pastor ou /agenda-pastoral
-    if (pathname.startsWith("/pastor") || pathname.startsWith("/agenda-pastoral")) {
+    // Tela: /pastor ou /agenda-pastoral (CONFIDENCIAL: Apenas Pastor e Administrador)
+    if (isPastoralStaff && (pathname.startsWith("/pastor") || pathname.startsWith("/agenda-pastoral"))) {
       const todayAppts = db.appointments.filter((a) => String(a.data).startsWith(todayYMD));
       if (todayAppts.length > 0) {
         list.push({
@@ -503,8 +551,8 @@ export function NotificationCenter() {
       });
     }
 
-    // Tela: /usuarios
-    if (pathname.startsWith("/usuarios")) {
+    // Tela: /usuarios (Apenas Administrador)
+    if (isAdmin && pathname.startsWith("/usuarios")) {
       const leadersWithoutCell = users.filter((u) => u.role === "Líder" && !u.cellId);
       if (leadersWithoutCell.length > 0) {
         list.push({
