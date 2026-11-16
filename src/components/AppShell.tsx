@@ -218,11 +218,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     return <div className="w-full min-h-screen bg-background text-foreground">{children}</div>;
   }
 
-  const pageTitle =
-    groups
-      .flatMap((g) => g.items as readonly { title: string; url: string }[])
-      .find((i) => i.url === path)?.title ?? "EclesiaPro";
-
   // Filtra os menus de acordo com as permissões do perfil autenticado
   const visibleGroups = groups
     .map((g) => ({
@@ -290,8 +285,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b bg-background/80 px-4 md:px-8 backdrop-blur no-print">
             <div className="flex items-center gap-3 min-w-0">
               <SidebarTrigger />
-              <div className="h-4 w-px bg-border" />
-              <div className="font-display text-lg font-semibold truncate text-foreground">{pageTitle}</div>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
