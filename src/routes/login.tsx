@@ -9,6 +9,8 @@ import {
   LogIn,
   ShieldCheck,
   ArrowRight,
+  BookOpen,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +78,31 @@ function LoginPage() {
         toast.error(res.error || "Credenciais inválidas.");
       }
     }, 300);
+  };
+
+  const handleQuickLogin = (quickEmail: string, quickPass: string) => {
+    setEmail(quickEmail);
+    setPassword(quickPass);
+    setErrorMessage("");
+    setLoading(true);
+
+    setTimeout(() => {
+      const res = login(quickEmail, quickPass, true);
+      setLoading(false);
+
+      if (res.success) {
+        if (res.user?.role === "Tesoureiro") {
+          navigate({ to: "/analise-financeira" });
+        } else if (res.user?.role === "Líder") {
+          navigate({ to: "/area-estudos" });
+        } else {
+          navigate({ to: "/" });
+        }
+      } else {
+        setErrorMessage(res.error || "Erro ao realizar login.");
+        toast.error(res.error || "Credenciais inválidas.");
+      }
+    }, 200);
   };
 
   return (
@@ -192,6 +219,69 @@ function LoginPage() {
                 </>
               )}
             </Button>
+
+            {/* Acesso Rápido para Demonstração / Teste no Celular */}
+            <div className="pt-4 border-t border-border/70 space-y-2.5">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium">
+                <span>Perfis de teste (toque para entrar direto):</span>
+                <span className="text-[10px] text-primary font-semibold">1 clique</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickLogin("admin@eclesiapro.com", "admin123")}
+                  className="text-xs h-9 justify-start gap-1.5 rounded-xl border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-600 dark:hover:text-purple-400 font-medium cursor-pointer"
+                >
+                  <ShieldCheck className="size-3.5 text-purple-500 shrink-0" />
+                  <span className="truncate">Administrador</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickLogin("lider@eclesiapro.com", "lider123")}
+                  className="text-xs h-9 justify-start gap-1.5 rounded-xl border-indigo-500/30 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer"
+                >
+                  <BookOpen className="size-3.5 text-indigo-500 shrink-0" />
+                  <span className="truncate">Líder de Célula</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickLogin("pastor@eclesiapro.com", "pastor123")}
+                  className="text-xs h-9 justify-start gap-1.5 rounded-xl border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 font-medium cursor-pointer"
+                >
+                  <Church className="size-3.5 text-blue-500 shrink-0" />
+                  <span className="truncate">Pastor</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickLogin("tesoureiro@eclesiapro.com", "tesouro123")}
+                  className="text-xs h-9 justify-start gap-1.5 rounded-xl border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium cursor-pointer"
+                >
+                  <Wallet className="size-3.5 text-emerald-500 shrink-0" />
+                  <span className="truncate">Tesoureiro</span>
+                </Button>
+              </div>
+
+              {/* Dica de Acesso Rápido */}
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-2.5 text-[11px] text-muted-foreground space-y-1">
+                <p className="font-semibold text-foreground flex items-center gap-1">
+                  <span>Credenciais válidas para digitação:</span>
+                </p>
+                <p className="leading-tight">
+                  &bull; <strong>Admin:</strong> <code className="text-foreground">admin@eclesiapro.com</code> (ou apenas <code className="text-foreground">admin</code>) &bull; Senha: <code className="text-foreground">admin123</code> (ou <code className="text-foreground">admin</code>)
+                </p>
+                <p className="leading-tight">
+                  &bull; <strong>Líder:</strong> <code className="text-foreground">lider@eclesiapro.com</code> (ou apenas <code className="text-foreground">lider</code>) &bull; Senha: <code className="text-foreground">lider123</code> (ou <code className="text-foreground">lider</code>)
+                </p>
+              </div>
+            </div>
           </form>
         </div>
 

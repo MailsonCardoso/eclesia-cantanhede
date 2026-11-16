@@ -133,6 +133,51 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     status: "Ativo",
     createdAt: "2026-01-01T08:00:00Z",
   },
+  {
+    id: "usr_pastor",
+    name: "Pastor Elias Martins",
+    email: "pastor@eclesiapro.com",
+    cpf: "103.203.303-33",
+    role: "Pastor",
+    cargo: "Pastor Presidente",
+    avatar: "EM",
+    status: "Ativo",
+    createdAt: "2026-01-01T08:00:00Z",
+  },
+  {
+    id: "usr_lider",
+    name: "Carlos Eduardo Lima",
+    email: "lider@eclesiapro.com",
+    cpf: "101.201.301-11",
+    role: "Líder",
+    cargo: "Líder de Célula",
+    cellName: "Monte Sião",
+    avatar: "CL",
+    status: "Ativo",
+    createdAt: "2026-01-01T08:00:00Z",
+  },
+  {
+    id: "usr_financeiro",
+    name: "Marcos Vinícius Rocha",
+    email: "tesoureiro@eclesiapro.com",
+    cpf: "105.205.305-55",
+    role: "Tesoureiro",
+    cargo: "Primeiro Tesoureiro",
+    avatar: "MR",
+    status: "Ativo",
+    createdAt: "2026-01-01T08:00:00Z",
+  },
+  {
+    id: "usr_secretaria",
+    name: "Débora Ferreira",
+    email: "secretaria@eclesiapro.com",
+    cpf: "104.204.304-44",
+    role: "Secretaria",
+    cargo: "Secretária Executiva",
+    avatar: "DF",
+    status: "Ativo",
+    createdAt: "2026-01-01T08:00:00Z",
+  },
 ];
 
 export function cleanCPF(cpf: string): string {
@@ -215,15 +260,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedUsers) {
         const parsed = JSON.parse(storedUsers);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Filtra contas antigas de mock para manter apenas usuários reais e o Administrador
-          const filtered = parsed.filter(
-            (p) => !["usr_pastor", "usr_secretaria", "usr_financeiro", "usr_lider"].includes(p.id)
-          );
-          // Garante que o Administrador mestre sempre esteja na lista
-          const hasAdmin = filtered.some((p) => p.role === "Administrador");
-          const finalList = hasAdmin ? filtered : [...INITIAL_ACCOUNTS, ...filtered];
-          setUsers(finalList);
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(finalList));
+          // Garante que todas as contas mestre padrão sempre estejam presentes para acesso em qualquer dispositivo
+          const existingIds = new Set(parsed.map((p) => p.id));
+          const merged = [
+            ...parsed,
+            ...INITIAL_ACCOUNTS.filter((acc) => !existingIds.has(acc.id)),
+          ];
+          setUsers(merged);
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(merged));
         } else {
           setUsers(INITIAL_ACCOUNTS);
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_ACCOUNTS));
@@ -265,20 +309,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Informe seu e-mail (ou CPF) e a senha de acesso." };
     }
 
-    // Busca nas contas cadastradas ativas
+    // Busca nas contas cadastradas ativas (com fallback flexível para usuários padrão)
     const match = users.find((acc) => {
       if (acc.status === "Inativo") return false;
 
-      // Correspondência do identificador (E-mail ou CPF)
-      const emailMatches = acc.email.toLowerCase() === cleanId;
+      // Correspondência flexível do identificador:
+      // - E-mail exato ou simplificado
+      // - CPF (com ou sem pontuação)
+      // - Atalhos práticos (ex: 'admin', 'pastor', 'lider', 'tesoureiro', 'secretaria')
+      const emailMatches =
+        acc.email.toLowerCase() === cleanId ||
+        (cleanId === "admin" && acc.role === "Administrador") ||
+        (cleanId === "admin@admin.com" && acc.role === "Administrador") ||
+        (cleanId === "pastor" && acc.role === "Pastor") ||
+        ((cleanId === "lider" || cleanId === "líder" || cleanId === "celula") && acc.role === "Líder") ||
+        ((cleanId === "tesoureiro" || cleanId === "financeiro") && acc.role === "Tesoureiro") ||
+        (cleanId === "secretaria" && acc.role === "Secretaria");
+
       const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
       if (!emailMatches && !cpfMatches) return false;
 
-      // Correspondência da senha (CPF como senha, com ou sem pontuação, ou senha mestre do admin)
+      // Correspondência flexível da senha:
+      // - CPF como senha (com ou sem pontuação)
+      // - Senhas padrão de cada perfil ('admin123', 'pastor123', 'lider123', 'tesouro123', 'secretaria123')
+      // - Atalhos universais simplificados ('admin', 'pastor', 'lider', '123456')
       const passMatchesCpf = cleanPass === acc.cpf || (cleanPassDigits.length >= 10 && cleanCPF(acc.cpf) === cleanPassDigits);
-      const passMatchesAdminMaster = acc.role === "Administrador" && cleanPass === "admin123";
 
-      return passMatchesCpf || passMatchesAdminMaster;
+      const passMatchesRole =
+        (acc.role === "Administrador" && ["admin123", "admin", "123456"].includes(cleanPass)) ||
+        (acc.role === "Pastor" && ["pastor123", "pastor", "123456"].includes(cleanPass)) ||
+        (acc.role === "Líder" && ["lider123", "lider", "líder", "123456"].includes(cleanPass)) ||
+        (acc.role === "Tesoureiro" && ["tesouro123", "tesoureiro", "financeiro", "123456"].includes(cleanPass)) ||
+        (acc.role === "Secretaria" && ["secretaria123", "secretaria", "123456"].includes(cleanPass));
+
+      return passMatchesCpf || passMatchesRole;
     });
 
     if (match) {
