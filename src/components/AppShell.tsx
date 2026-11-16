@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth, type UserRole } from "@/lib/auth";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import {
   Sidebar,
   SidebarContent,
@@ -294,19 +295,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Central de Notificações */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground size-9 rounded-xl"
-                  aria-label="Notificações"
-                  title="Notificações"
-                >
-                  <Bell className="size-4" />
-                </Button>
-                <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
-              </div>
+              {/* Central de Notificações Inteligente & Contextual */}
+              <NotificationCenter />
 
               {/* Botão de Alternar Modo Escuro / Claro */}
               <Button
