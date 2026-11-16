@@ -120,7 +120,7 @@ const ageYears = (years: number, month = 5, day = 15) => {
   return x.toISOString().slice(0, 10);
 };
 
-export const DEFAULT_CONGREGATION = "Batista Corpo e Família";
+export const DEFAULT_CONGREGATION = "Igreja Batista Cristo e Família";
 const congs = [DEFAULT_CONGREGATION];
 const cellNames = ["Célula Ágape", "Célula Betel", "Célula Canaã", "Célula Emanuel", "Célula Shalom"];
 

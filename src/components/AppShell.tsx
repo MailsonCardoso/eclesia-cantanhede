@@ -283,8 +283,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="flex flex-1 flex-col min-w-0">
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b bg-background/80 px-4 md:px-8 backdrop-blur no-print">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <SidebarTrigger />
+              <div className="h-4 w-px bg-border shrink-0" />
+              <span className="font-display font-bold text-xs sm:text-sm tracking-wider text-foreground uppercase truncate select-none">
+                IGREJA BATISTA CRISTO E FAMÍLIA
+              </span>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">

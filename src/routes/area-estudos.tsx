@@ -31,6 +31,7 @@ import {
   Maximize2,
   Minimize2,
   Type,
+  MoreVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -495,7 +502,7 @@ function AreaEstudosPage() {
       `--- *DESENVOLVIMENTO* ---\n${study.development || "Não informado"}\n\n` +
       `--- *PERGUNTAS PARA REFLEXÃO* ---\n${study.reflection_questions || "Não informadas"}\n\n` +
       `--- *CONCLUSÃO* ---\n${study.conclusion || "Não informada"}\n\n` +
-      `⛪ *${study.cell_name}* | Batista Corpo e Família`;
+      `⛪ *${study.cell_name}* | Igreja Batista Cristo e Família`;
 
     navigator.clipboard.writeText(text);
     toast.success("Texto completo do estudo copiado para a área de transferência!");
@@ -593,40 +600,40 @@ function AreaEstudosPage() {
           </div>
         </div>
 
-        {/* Abas de Navegação Entre as 3 Seções */}
-        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-muted/60 rounded-2xl max-w-lg">
+        {/* Abas de Navegação Entre as 3 Seções Responsivas */}
+        <div className="grid grid-cols-3 gap-1 p-1 bg-muted/60 rounded-2xl w-full max-w-lg">
           <button
             type="button"
             onClick={() => setActiveFormTab("geral")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
               activeFormTab === "geral"
                 ? "bg-background text-primary shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <span>1. Informações Gerais</span>
+            <span>1. Geral</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveFormTab("conteudo")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
               activeFormTab === "conteudo"
                 ? "bg-background text-primary shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <span>2. Conteúdo Bíblico</span>
+            <span>2. Conteúdo</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveFormTab("programacao")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
               activeFormTab === "programacao"
                 ? "bg-background text-primary shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <span>3. Programação</span>
+            <span>3. Agenda</span>
           </button>
         </div>
 
@@ -983,7 +990,7 @@ function AreaEstudosPage() {
                 className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold gap-1.5 py-1 px-3 rounded-full"
               >
                 <Church className="size-3.5" />
-                Batista Corpo e Família
+                Igreja Batista Cristo e Família
               </Badge>
             </div>
 
@@ -1119,7 +1126,7 @@ function AreaEstudosPage() {
           </div>
 
           {/* Filtros por Status */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-muted/60 p-1 rounded-xl">
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl overflow-x-auto no-scrollbar max-w-full">
             {[
               { id: "todos", label: "Todos" },
               { id: "Rascunho", label: "Rascunhos" },
@@ -1130,7 +1137,7 @@ function AreaEstudosPage() {
                 key={st.id}
                 type="button"
                 onClick={() => setStatusFilter(st.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   statusFilter === st.id
                     ? "bg-background text-foreground shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground"
@@ -1305,59 +1312,75 @@ function AreaEstudosPage() {
                     </div>
                   </div>
 
-                  {/* Barra de Ações (Visualizar, Editar, Duplicar, Compartilhar, Excluir) */}
-                  <div className="mt-4 pt-3 border-t flex flex-wrap items-center justify-between gap-1.5">
+                  {/* Barra de Ações Responsiva (Visualizar + WhatsApp + Menu Completo) */}
+                  <div className="mt-4 pt-3 border-t flex items-center justify-between gap-2">
                     <Button
                       variant="default"
                       size="sm"
                       onClick={() => handleOpenReader(study)}
-                      className="h-8 px-3 rounded-xl text-xs font-bold gap-1.5 shadow-2xs cursor-pointer flex-1"
+                      className="h-8.5 px-3 rounded-xl text-xs font-bold gap-1.5 shadow-2xs cursor-pointer flex-1 justify-center"
                     >
                       <Eye className="size-3.5" />
-                      <span>Visualizar</span>
+                      <span>Visualizar Estudo</span>
                     </Button>
 
                     <Button
                       variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenEditStudy(study)}
-                      className="h-8 px-2.5 rounded-xl text-xs gap-1 cursor-pointer text-foreground hover:border-primary hover:text-primary"
-                      title="Editar Estudo"
-                    >
-                      <Edit2 className="size-3.5" />
-                      <span className="hidden sm:inline">Editar</span>
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDuplicateStudy(study)}
-                      className="h-8 px-2.5 rounded-xl text-xs gap-1 cursor-pointer text-foreground hover:border-primary hover:text-primary"
-                      title="Duplicar como Rascunho"
-                    >
-                      <Copy className="size-3.5" />
-                      <span className="hidden sm:inline">Duplicar</span>
-                    </Button>
-
-                    <Button
-                      variant="ghost"
                       size="icon"
                       onClick={() => handleCopyStudyContent(study)}
-                      className="h-8 w-8 rounded-xl text-muted-foreground hover:text-primary cursor-pointer"
-                      title="Copiar texto para WhatsApp"
+                      className="h-8.5 w-8.5 rounded-xl text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/40 cursor-pointer shrink-0"
+                      title="Copiar texto completo para o WhatsApp"
                     >
                       <Share2 className="size-3.5" />
                     </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRequestDeleteStudy(study.id, study.title)}
-                      className="h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive cursor-pointer"
-                      title="Excluir Estudo"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8.5 w-8.5 rounded-xl text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                          title="Mais opções do estudo"
+                        >
+                          <MoreVertical className="size-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 p-1.5 rounded-2xl shadow-xl">
+                        <DropdownMenuItem
+                          onClick={() => handleOpenEditStudy(study)}
+                          className="cursor-pointer gap-2 py-2 px-2.5 text-xs font-medium rounded-xl"
+                        >
+                          <Edit2 className="size-3.5 text-primary" />
+                          <span>Editar Estudo</span>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={() => handleDuplicateStudy(study)}
+                          className="cursor-pointer gap-2 py-2 px-2.5 text-xs font-medium rounded-xl"
+                        >
+                          <Copy className="size-3.5 text-violet-500" />
+                          <span>Duplicar Rascunho</span>
+                        </DropdownMenuItem>
+
+                        {study.status !== "Ministrado" && (
+                          <DropdownMenuItem
+                            onClick={() => handleQuickMarkMinistered(study)}
+                            className="cursor-pointer gap-2 py-2 px-2.5 text-xs font-medium rounded-xl text-emerald-600 dark:text-emerald-400"
+                          >
+                            <CheckCircle2 className="size-3.5 text-emerald-500" />
+                            <span>Marcar como Ministrado</span>
+                          </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuItem
+                          onClick={() => handleRequestDeleteStudy(study.id, study.title)}
+                          className="cursor-pointer gap-2 py-2 px-2.5 text-xs font-medium text-destructive focus:text-destructive focus:bg-destructive/10 rounded-xl"
+                        >
+                          <Trash2 className="size-3.5" />
+                          <span>Excluir Estudo</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               );
@@ -1368,7 +1391,7 @@ function AreaEstudosPage() {
 
       {/* MODAL 2: MODO LEITURA IMERSIVO / "CADERNO DIGITAL DO LÍDER" (OTIMIZADO PARA CELULAR) */}
       <Dialog open={isReaderOpen} onOpenChange={setIsReaderOpen}>
-        <DialogContent className="max-w-3xl max-h-[94vh] overflow-y-auto p-4 sm:p-7 rounded-3xl">
+        <DialogContent className="w-[96vw] sm:max-w-3xl max-h-[96vh] sm:max-h-[92vh] overflow-y-auto p-3.5 sm:p-7 rounded-2xl sm:rounded-3xl">
           {selectedStudy && (
             <div className="space-y-5">
               {/* Barra de Ferramentas do Leitor */}
@@ -1523,17 +1546,17 @@ function AreaEstudosPage() {
                 )}
               </div>
 
-              {/* Rodapé do Leitor com Ações Rápidas */}
-              <div className="pt-4 border-t flex flex-wrap items-center justify-between gap-2 no-print">
-                <div className="flex items-center gap-2">
+              {/* Rodapé do Leitor com Ações Rápidas Responsivas */}
+              <div className="pt-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 no-print">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleCopyStudyContent(selectedStudy)}
-                    className="rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
+                    className="rounded-xl text-xs font-semibold gap-1.5 cursor-pointer flex-1 sm:flex-initial"
                   >
-                    <Share2 className="size-3.5" />
-                    <span>Copiar p/ WhatsApp</span>
+                    <Share2 className="size-3.5 text-emerald-600" />
+                    <span>Copiar WhatsApp</span>
                   </Button>
 
                   <Button
@@ -1550,13 +1573,13 @@ function AreaEstudosPage() {
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                   {selectedStudy.status !== "Ministrado" ? (
                     <Button
                       variant="premium"
                       size="sm"
                       onClick={() => handleQuickMarkMinistered(selectedStudy)}
-                      className="rounded-xl text-xs font-bold gap-1.5 cursor-pointer shadow-sm"
+                      className="rounded-xl text-xs font-bold gap-1.5 cursor-pointer shadow-sm w-full sm:w-auto justify-center"
                     >
                       <CheckCircle2 className="size-4" />
                       <span>Marcar como Ministrado</span>
@@ -1564,7 +1587,7 @@ function AreaEstudosPage() {
                   ) : (
                     <Badge
                       variant="outline"
-                      className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold py-1 px-3"
+                      className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold py-1 px-3 w-full sm:w-auto justify-center"
                     >
                       ✓ Ministrado em {fmtDate(selectedStudy.ministered_at)}
                     </Badge>
