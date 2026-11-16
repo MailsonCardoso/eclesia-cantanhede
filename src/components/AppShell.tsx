@@ -97,8 +97,11 @@ const groups = [
   },
 ] as const;
 
-function canAccessRoute(role: UserRole | undefined, url: string): boolean {
+function canAccessRoute(role: UserRole | undefined, path: string): boolean {
   if (!role || role === "Administrador") return true;
+
+  // Normaliza a rota removendo parâmetros e barras finais redundantes (ex: '/area-estudos/' -> '/area-estudos')
+  const url = (path.split("?")[0] || "/").replace(/\/+$/, "") || "/";
 
   switch (role) {
     case "Pastor":
@@ -146,7 +149,11 @@ function canAccessRoute(role: UserRole | undefined, url: string): boolean {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const path = useRouterState({ select: (r) => r.location.pathname });
+  const rawPath = useRouterState({ select: (r) => r.location.pathname });
+  // Normaliza o pathname removendo barras extras/finais: '/login/' vira '/login', '/celulas/' vira '/celulas'
+  const path = (rawPath || "/").replace(/\/+$/, "") || "/";
+  const isLoginPage = path === "/login" || rawPath === "/login" || rawPath.startsWith("/login/");
+
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
@@ -164,16 +171,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
 
-  // Redireciona para /login quando não estiver autenticado
+  // Redireciona para /login quando não estiver autenticado (evita redirecionamento em loop na própria tela de login)
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && path !== "/login") {
+    if (!isLoading && !isAuthenticated && !isLoginPage) {
       navigate({ to: "/login" });
     }
-  }, [isLoading, isAuthenticated, path, navigate]);
+  }, [isLoading, isAuthenticated, isLoginPage, navigate]);
 
   // Redireciona caso o usuário autenticado tente acessar uma rota não autorizada
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !canAccessRoute(user?.role, path)) {
+    if (!isLoading && isAuthenticated && !isLoginPage && !canAccessRoute(user?.role, path)) {
       const target =
         user?.role === "Tesoureiro"
           ? "/analise-financeira"
@@ -182,10 +189,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           : "/";
       navigate({ to: target });
     }
-  }, [isLoading, isAuthenticated, user?.role, path, navigate]);
+  }, [isLoading, isAuthenticated, isLoginPage, user?.role, path, navigate]);
 
   // Se estiver na tela de login, renderiza em tela cheia sem sidebar nem header
-  if (path === "/login") {
+  if (isLoginPage) {
     return <div className="w-full min-h-screen bg-background text-foreground">{children}</div>;
   }
 
@@ -204,7 +211,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   // Se não estiver logado, não renderiza as telas protegidas enquanto redireciona
-  if (mounted && !isAuthenticated) {
+  if (mounted && !isAuthenticated && !isLoginPage) {
     return null;
   }
 

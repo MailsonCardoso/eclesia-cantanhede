@@ -183,12 +183,28 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const AUTH_STORAGE_KEY = "eclesiapro_auth_session";
 const USERS_STORAGE_KEY = "eclesiapro_users_master_v1";
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [users, setUsers] = useState<UserAccount[]>(INITIAL_ACCOUNTS);
-  const [isLoading, setIsLoading] = useState(true);
+function getStoredSession(): AuthUser | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const storedSession = localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_STORAGE_KEY);
+    if (storedSession) {
+      const parsedSession = JSON.parse(storedSession);
+      if (parsedSession && (parsedSession.email || parsedSession.cpf)) {
+        return parsedSession;
+      }
+    }
+  } catch (e) {
+    console.error("Erro ao ler sessão salva:", e);
+  }
+  return null;
+}
 
-  // Carrega lista de usuários e sessão salva
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(getStoredSession);
+  const [users, setUsers] = useState<UserAccount[]>(INITIAL_ACCOUNTS);
+  const [isLoading, setIsLoading] = useState(() => (typeof window === "undefined" ? true : false));
+
+  // Carrega lista de usuários e sincroniza sessão salva
   useEffect(() => {
     try {
       // Remove listas antigas de demonstração para garantir somente o Administrador
@@ -217,13 +233,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_ACCOUNTS));
       }
 
-      // Restaura sessão ativa
-      const storedSession = localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_STORAGE_KEY);
-      if (storedSession) {
-        const parsedSession = JSON.parse(storedSession);
-        if (parsedSession && (parsedSession.email || parsedSession.cpf)) {
-          setUser(parsedSession);
-        }
+      // Re-valida sessão ativa persistida
+      const currentSession = getStoredSession();
+      if (currentSession) {
+        setUser(currentSession);
       }
     } catch (e) {
       console.error("Erro ao inicializar autenticação:", e);
@@ -284,11 +297,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(authPayload);
       const userPayloadStr = JSON.stringify(authPayload);
-      if (remember) {
-        localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-      } else {
-        sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-      }
+      // Salva em localStorage e sessionStorage para garantir persistência em recarregamentos no celular
+      localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
+      sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
       toast.success(`Bem-vindo, ${match.name}!`);
       return { success: true, user: authPayload };
     }
