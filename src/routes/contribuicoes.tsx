@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CrudPage } from "@/components/CrudPage";
 import {
@@ -12,15 +12,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { brl, DEFAULT_CONGREGATION, fmtDate, useStore, type Row } from "@/lib/store";
 import { maskPhone } from "@/lib/masks";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 export const Route = createFileRoute("/contribuicoes")({
   head: () => ({
@@ -36,13 +34,185 @@ export const Route = createFileRoute("/contribuicoes")({
   component: Contribuicoes,
 });
 
-async function generateReceiptCanvas(element: HTMLElement) {
-  return await html2canvas(element, {
-    scale: 3, // 300 DPI ultra-sharp
-    useCORS: true,
-    backgroundColor: "#0f1424",
-    logging: false,
+/**
+ * Desenha o comprovante diretamente no Canvas 2D em altíssima definição (300 DPI).
+ * 100% nativo no navegador, sem biblioteca externa de CSS (imune a erros de oklch) e ultra nítido.
+ */
+function drawReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  const width = 640;
+  const height = 860;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  const drawRoundRect = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    radius: number,
+    fillStyle?: string,
+    strokeStyle?: string,
+    lineWidth = 1
+  ) => {
+    ctx.beginPath();
+    if (typeof (ctx as any).roundRect === "function") {
+      (ctx as any).roundRect(x, y, w, h, radius);
+    } else {
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+    if (fillStyle) {
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+    }
+    if (strokeStyle) {
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+    }
+  };
+
+  // 1. Fundo do comprovante
+  drawRoundRect(0, 0, width, height, 28, "#0c101d", "#232d4b", 2);
+
+  // 2. Cabeçalho
+  drawRoundRect(32, 32, 50, 50, 14, "#2e1d52", "#7c3aed", 1.5);
+  ctx.fillStyle = "#c084fc";
+  ctx.font = "bold 24px system-ui, -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("✝", 32 + 25, 32 + 23);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#f8fafc";
+  ctx.font = "bold 20px system-ui, -apple-system, sans-serif";
+  ctx.fillText("Recibo de Contribuição", 96, 54);
+
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "13px system-ui, -apple-system, sans-serif";
+  const recNum = `#REC-${String(r.id || "1").slice(-6).toUpperCase()}`;
+  ctx.fillText(`${recNum} · Emissão ${new Date().toLocaleDateString("pt-BR")}`, 96, 74);
+
+  // Badge Oficial
+  drawRoundRect(width - 122, 38, 90, 28, 14, "rgba(16, 185, 129, 0.15)", "#10b981", 1);
+  ctx.fillStyle = "#34d399";
+  ctx.font = "bold 12px system-ui, -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("OFICIAL", width - 122 + 45, 57);
+
+  // Linha divisória
+  ctx.strokeStyle = "#1e2742";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(32, 100);
+  ctx.lineTo(width - 32, 100);
+  ctx.stroke();
+
+  // 3. Card com os Dados da Contribuição
+  const cardY = 118;
+  const cardH = 410;
+  drawRoundRect(32, cardY, width - 64, cardH, 18, "#141b30", "#1e2742", 1.5);
+
+  const rows = [
+    { label: "Contribuinte", val: String(r.membro || "Anônimo"), highlight: false, isBadge: false, isMono: false },
+    { label: "Tipo de Lançamento", val: String(r.tipo || "Dízimo"), highlight: false, isBadge: true, isMono: false },
+    { label: "Valor Contribuído", val: brl(Number(r.valor || 0)), highlight: true, isBadge: false, isMono: false },
+    { label: "Data do Lançamento", val: fmtDate(r.data), highlight: false, isBadge: false, isMono: false },
+    { label: "Forma de Pagamento", val: String(r.pagamento || "—"), highlight: false, isBadge: false, isMono: false },
+    { label: "Congregação", val: String(r.congregacao || "Igreja Batista Cristo e Família"), highlight: false, isBadge: false, isMono: false },
+    { label: "CNPJ da Igreja", val: cnpj, highlight: false, isBadge: false, isMono: true },
+  ];
+
+  let currentY = cardY + 40;
+  const rowSpacing = 55;
+
+  rows.forEach((row, idx) => {
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 14px system-ui, -apple-system, sans-serif";
+    ctx.fillText(row.label, 52, currentY);
+
+    ctx.textAlign = "right";
+    if (row.highlight) {
+      ctx.fillStyle = "#10b981";
+      ctx.font = "bold 24px system-ui, -apple-system, sans-serif";
+      ctx.fillText(row.val, width - 52, currentY + 2);
+    } else if (row.isBadge) {
+      const badgeW = 82;
+      const badgeH = 26;
+      drawRoundRect(width - 52 - badgeW, currentY - 18, badgeW, badgeH, 7, "#1e293b", "#334155", 1);
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "600 12.5px system-ui, -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(row.val, width - 52 - badgeW / 2, currentY);
+    } else {
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = row.isMono ? "600 14px monospace, system-ui" : "600 14.5px system-ui, -apple-system, sans-serif";
+      ctx.fillText(row.val, width - 52, currentY);
+    }
+
+    if (idx < rows.length - 1) {
+      ctx.strokeStyle = "rgba(30, 39, 66, 0.7)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(52, currentY + 14);
+      ctx.lineTo(width - 52, currentY + 14);
+      ctx.stroke();
+    }
+
+    currentY += rowSpacing;
   });
+
+  // 4. Caixa do Versículo Bíblico
+  const verseY = cardY + cardH + 20;
+  const verseH = 105;
+  drawRoundRect(32, verseY, width - 64, verseH, 16, "rgba(30, 23, 56, 0.75)", "#3b2d66", 1.5);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = "italic 13.5px system-ui, -apple-system, sans-serif";
+  ctx.fillText("“Cada um dê conforme determinou em seu coração, não com pesar", width / 2, verseY + 34);
+  ctx.fillText("ou por obrigação, pois Deus ama quem dá com alegria.”", width / 2, verseY + 56);
+
+  ctx.fillStyle = "#c084fc";
+  ctx.font = "bold 13px system-ui, -apple-system, sans-serif";
+  ctx.fillText("2 Coríntios 9:7", width / 2, verseY + 84);
+
+  // 5. Rodapé Institucional
+  const footY = verseY + verseH + 26;
+  ctx.strokeStyle = "#1e2742";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(70, footY);
+  ctx.lineTo(width - 70, footY);
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = "600 14px system-ui, -apple-system, sans-serif";
+  ctx.fillText("Tesouraria / Ministério Financeiro", width / 2, footY + 24);
+
+  ctx.fillStyle = "#64748b";
+  ctx.font = "12px system-ui, -apple-system, sans-serif";
+  ctx.fillText(`${r.congregacao || "Igreja Batista Cristo e Família"} · CNPJ ${cnpj}`, width / 2, footY + 44);
+
+  ctx.fillStyle = "#475569";
+  ctx.font = "10.5px system-ui, -apple-system, sans-serif";
+  ctx.fillText("Autenticação Eletrônica EclesiaPro · Documento Oficial", width / 2, footY + 66);
+
+  return canvas;
 }
 
 function printReceiptDirect(r: Row, cnpj: string) {
@@ -126,7 +296,6 @@ function ReceiptModal({
   members: Array<{ id: string; nome: string; telefone?: string }>;
   congregations: Array<Row>;
 }) {
-  const receiptRef = useRef<HTMLDivElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [phone, setPhone] = useState("");
 
@@ -157,34 +326,28 @@ function ReceiptModal({
 
   if (!row) return null;
 
-  const handleDownloadImage = async () => {
-    if (!receiptRef.current) return;
-    setIsProcessing(true);
+  const handleDownloadImage = () => {
     try {
-      const canvas = await generateReceiptCanvas(receiptRef.current);
+      const canvas = drawReceiptToCanvas(row, churchCnpj);
       const link = document.createElement("a");
       link.download = `comprovante-${row.id || "recibo"}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
-      toast.success("Imagem do comprovante baixada em alta resolução!");
+      toast.success("Imagem oficial baixada em alta resolução!");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao gerar imagem do comprovante.");
-    } finally {
-      setIsProcessing(false);
     }
   };
 
-  const handleDownloadPdf = async () => {
-    if (!receiptRef.current) return;
-    setIsProcessing(true);
+  const handleDownloadPdf = () => {
     try {
-      const canvas = await generateReceiptCanvas(receiptRef.current);
+      const canvas = drawReceiptToCanvas(row, churchCnpj);
       const imgData = canvas.toDataURL("image/png");
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
 
-      // Formato A5 retrato (148 x 210 mm)
+      // Formato A5 retrato oficial
       const doc = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -198,8 +361,8 @@ function ReceiptModal({
       const targetHeight = (imgHeight * targetWidth) / imgWidth;
       const posY = Math.max(margin, (pageHeight - targetHeight) / 2);
 
-      // Fundo escuro elegante para combinar com o comprovante oficial
-      doc.setFillColor(15, 20, 36);
+      // Fundo escuro luxo igual ao comprovante
+      doc.setFillColor(12, 16, 29);
       doc.rect(0, 0, pageWidth, pageHeight, "F");
 
       doc.addImage(imgData, "PNG", margin, posY, targetWidth, targetHeight, undefined, "FAST");
@@ -208,17 +371,14 @@ function ReceiptModal({
     } catch (err) {
       console.error(err);
       toast.error("Erro ao gerar PDF do comprovante.");
-    } finally {
-      setIsProcessing(false);
     }
   };
 
   const handleShareWhatsApp = async () => {
-    if (!receiptRef.current) return;
     setIsProcessing(true);
 
     try {
-      const canvas = await generateReceiptCanvas(receiptRef.current);
+      const canvas = drawReceiptToCanvas(row, churchCnpj);
 
       const cleanPhone = phone.replace(/\D/g, "");
       let targetPhone = cleanPhone;
@@ -292,8 +452,8 @@ function ReceiptModal({
 
       if (copiedToClipboard) {
         toast.success(
-          "Imagem do comprovante copiada! No WhatsApp Web, aperte Ctrl + V para colar a imagem no chat.",
-          { duration: 6000 }
+          "Imagem do comprovante copiada! No WhatsApp Web, basta apertar Ctrl + V para colar a imagem na conversa.",
+          { duration: 6500 }
         );
       } else {
         toast.info("WhatsApp aberto com os dados do comprovante!");
@@ -310,132 +470,106 @@ function ReceiptModal({
 
   return (
     <Dialog open={!!row} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[430px] p-0 overflow-hidden rounded-3xl border border-[#232d4b] bg-[#0c101c] text-[#f8fafc] shadow-2xl">
-        <DialogHeader className="sr-only">
-          <DialogTitle>Recibo de Contribuição</DialogTitle>
-          <DialogDescription>
-            Nº #REC-{String(row.id).slice(-6).toUpperCase()}
-          </DialogDescription>
+      <DialogContent className="max-w-[420px] p-4 sm:p-5 rounded-3xl border border-[#232d4b] bg-[#0c101d] text-[#f8fafc] shadow-2xl space-y-3.5 focus:outline-none max-h-[94vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#232d4b] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+        {/* Cabeçalho do Modal */}
+        <DialogHeader className="flex flex-row items-center gap-3 pr-6 space-y-0 text-left">
+          <div className="grid size-9 place-items-center rounded-xl bg-[#2e1d52] border border-[#7c3aed]/40 text-[#c084fc] shadow-sm shrink-0">
+            <Receipt className="size-5" />
+          </div>
+          <div>
+            <DialogTitle className="text-sm sm:text-base font-bold text-[#f8fafc] tracking-tight">
+              Recibo de Contribuição
+            </DialogTitle>
+            <DialogDescription className="text-[11px] text-[#94a3b8] mt-0.5">
+              Nº #REC-{String(row.id).slice(-6).toUpperCase()} &middot; Emissão {new Date().toLocaleDateString("pt-BR")}
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="p-4 sm:p-5 space-y-3.5 max-h-[85vh] overflow-y-auto">
-          {/* Card Capturável e Exportável */}
-          <div
-            ref={receiptRef}
-            className="rounded-2xl border border-[#232d4b] bg-[#0f1424] text-[#f8fafc] p-4 space-y-3 select-none shadow-xl"
-            style={{
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-            }}
-          >
-            {/* Topo do Recibo */}
-            <div className="flex items-center justify-between border-b border-[#1e2742] pb-2.5">
-              <div className="flex items-center gap-2.5">
-                <div className="grid size-9 place-items-center rounded-xl bg-[#2e1d52] border border-[#7c3aed]/40 text-[#c084fc] shadow-sm shrink-0">
-                  <Receipt className="size-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold tracking-tight text-[#f8fafc]">
-                    Recibo de Contribuição
-                  </div>
-                  <div className="text-[10.5px] text-[#94a3b8]">
-                    Nº #REC-{String(row.id).slice(-6).toUpperCase()} &middot; Emissão {new Date().toLocaleDateString("pt-BR")}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="inline-block rounded-full bg-[#10b981]/15 border border-[#10b981]/30 px-2 py-0.5 text-[10px] font-semibold text-[#34d399]">
-                  Oficial
-                </span>
-                <div className="text-[9.5px] text-[#64748b] mt-0.5">EclesiaPro</div>
-              </div>
-            </div>
-
-            {/* Linhas de Informações */}
-            <div className="rounded-xl border border-[#1e2742] bg-[#141b30] p-2.5 space-y-1 shadow-inner">
-              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
-                <span className="text-[#94a3b8] font-medium">Contribuinte</span>
-                <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[210px]">
-                  {row.membro || "Anônimo"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
-                <span className="text-[#94a3b8] font-medium">Tipo de Lançamento</span>
-                <span className="rounded-md border border-[#334155] bg-[#1e293b] px-2 py-0.5 text-[10.5px] font-semibold text-[#e2e8f0]">
-                  {row.tipo || "Dízimo"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
-                <span className="text-[#94a3b8] font-medium">Valor Contribuído</span>
-                <span className="text-base sm:text-lg font-extrabold text-[#10b981] tracking-tight">
-                  {brl(Number(row.valor || 0))}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
-                <span className="text-[#94a3b8] font-medium">Data</span>
-                <span className="font-semibold text-[#f8fafc]">{fmtDate(row.data)}</span>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
-                <span className="text-[#94a3b8] font-medium">Forma de Pagamento</span>
-                <span className="font-semibold text-[#f8fafc]">{row.pagamento || "—"}</span>
-              </div>
-
-              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
-                <span className="text-[#94a3b8] font-medium">Congregação</span>
-                <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[210px]">
-                  {row.congregacao || "Igreja Batista Cristo e Família"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-0.5 text-xs">
-                <span className="text-[#94a3b8] font-medium">CNPJ da Igreja</span>
-                <span className="font-mono text-[11px] font-semibold text-[#cbd5e1]">{churchCnpj}</span>
-              </div>
-            </div>
-
-            {/* Versículo */}
-            <div className="rounded-xl border border-[#2e2652] bg-[#1e1738]/60 p-2 text-center shadow-xs">
-              <p className="text-[10px] sm:text-[10.5px] italic text-[#cbd5e1] leading-relaxed">
-                &ldquo;Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria.&rdquo;
-              </p>
-              <span className="block text-[9.5px] font-bold text-[#c084fc] mt-0.5">2 Coríntios 9:7</span>
-            </div>
-
-            {/* Rodapé institucional */}
-            <div className="pt-0.5 text-center border-t border-[#1e2742]/60 space-y-0.5">
-              <div className="text-[10.5px] font-semibold text-[#cbd5e1]">Tesouraria / Ministério Financeiro</div>
-              <div className="text-[9px] text-[#64748b]">
-                {row.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ {churchCnpj}
-              </div>
-            </div>
+        {/* Card de Informações do Recibo */}
+        <div className="rounded-2xl border border-[#1e2742] bg-[#141b30] p-3 sm:p-3.5 space-y-1 shadow-inner">
+          <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+            <span className="text-[#94a3b8] font-medium">Contribuinte</span>
+            <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[210px]">
+              {row.membro || "Anônimo"}
+            </span>
           </div>
 
-          {/* Campo de Telefone para WhatsApp */}
-          <div className="space-y-1">
-            <Label htmlFor="whatsapp-phone" className="text-[11px] font-semibold flex items-center gap-1.5 text-[#cbd5e1]">
-              <Smartphone className="size-3 text-emerald-400" />
-              Telefone para envio via WhatsApp
-            </Label>
-            <Input
-              id="whatsapp-phone"
-              placeholder="(00) 00000-0000"
-              value={phone}
-              onChange={(e) => setPhone(maskPhone(e.target.value))}
-              className="h-9 rounded-xl border-[#232d4b] bg-[#12182a] text-[#f8fafc] placeholder:text-[#64748b] text-xs font-medium focus-visible:border-emerald-500"
-            />
-            {memberData?.telefone && (
-              <p className="text-[10.5px] text-[#94a3b8] flex items-center gap-1">
-                <CheckCircle className="size-3 text-emerald-400" /> Telefone carregado do cadastro do membro
-              </p>
-            )}
+          <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+            <span className="text-[#94a3b8] font-medium">Tipo de Lançamento</span>
+            <span className="rounded-md border border-[#334155] bg-[#1e293b] px-2 py-0.5 text-[10.5px] font-semibold text-[#e2e8f0]">
+              {row.tipo || "Dízimo"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+            <span className="text-[#94a3b8] font-medium">Valor Contribuído</span>
+            <span className="text-base sm:text-lg font-extrabold text-[#10b981] tracking-tight">
+              {brl(Number(row.valor || 0))}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+            <span className="text-[#94a3b8] font-medium">Data</span>
+            <span className="font-semibold text-[#f8fafc]">{fmtDate(row.data)}</span>
+          </div>
+
+          <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+            <span className="text-[#94a3b8] font-medium">Forma de Pagamento</span>
+            <span className="font-semibold text-[#f8fafc]">{row.pagamento || "—"}</span>
+          </div>
+
+          <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+            <span className="text-[#94a3b8] font-medium">Congregação</span>
+            <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[200px]">
+              {row.congregacao || "Igreja Batista Cristo e Família"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between py-0.5 text-xs">
+            <span className="text-[#94a3b8] font-medium">CNPJ da Igreja</span>
+            <span className="font-mono text-[11px] font-semibold text-[#cbd5e1]">{churchCnpj}</span>
           </div>
         </div>
 
-        <DialogFooter className="p-3.5 sm:p-4 bg-[#080b14] border-t border-[#1c2438] flex flex-col gap-2">
+        {/* Versículo Bíblico */}
+        <div className="rounded-xl border border-[#2e2652] bg-[#1e1738]/60 p-2 sm:p-2.5 text-center">
+          <p className="text-[10px] sm:text-[10.5px] italic text-[#cbd5e1] leading-relaxed">
+            &ldquo;Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria.&rdquo;
+          </p>
+          <span className="block text-[9.5px] font-bold text-[#c084fc] mt-0.5">2 Coríntios 9:7</span>
+        </div>
+
+        {/* Rodapé institucional */}
+        <div className="text-center space-y-0.5 border-t border-[#1e2742]/60 pt-2">
+          <div className="text-[10.5px] font-semibold text-[#cbd5e1]">Tesouraria / Ministério Financeiro</div>
+          <div className="text-[9px] text-[#64748b]">
+            {row.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ {churchCnpj}
+          </div>
+        </div>
+
+        {/* Telefone WhatsApp */}
+        <div className="space-y-1 pt-1">
+          <Label htmlFor="whatsapp-phone" className="text-[11px] font-semibold flex items-center gap-1.5 text-[#cbd5e1]">
+            <Smartphone className="size-3 text-emerald-400" />
+            Telefone para envio via WhatsApp (Android / iOS / Web)
+          </Label>
+          <Input
+            id="whatsapp-phone"
+            placeholder="(00) 00000-0000"
+            value={phone}
+            onChange={(e) => setPhone(maskPhone(e.target.value))}
+            className="h-9 rounded-xl border-[#232d4b] bg-[#12182a] text-[#f8fafc] placeholder:text-[#64748b] text-xs font-medium focus-visible:border-emerald-500"
+          />
+          {memberData?.telefone && (
+            <p className="text-[10.5px] text-[#94a3b8] flex items-center gap-1">
+              <CheckCircle className="size-3 text-emerald-400" /> Telefone carregado do cadastro do membro
+            </p>
+          )}
+        </div>
+
+        {/* Botões de Ação */}
+        <div className="space-y-2 pt-1">
           <div className="grid grid-cols-3 gap-2 w-full">
             <Button
               type="button"
@@ -457,7 +591,7 @@ function ReceiptModal({
               onClick={handleDownloadImage}
               className="h-9 rounded-xl text-xs border-[#26314d] bg-[#12182b] text-[#cbd5e1] hover:bg-[#1a233d] hover:text-[#f8fafc] gap-1 cursor-pointer font-medium"
             >
-              {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <ImageIcon className="size-3.5" />}
+              <ImageIcon className="size-3.5" />
               <span>Imagem</span>
             </Button>
 
@@ -469,22 +603,21 @@ function ReceiptModal({
               onClick={handleDownloadPdf}
               className="h-9 rounded-xl text-xs border-[#26314d] bg-[#12182b] text-[#cbd5e1] hover:bg-[#1a233d] hover:text-[#f8fafc] gap-1 cursor-pointer font-medium"
             >
-              {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-              <span>PDF</span>
+              <Download className="size-3.5" />
+              <span>Baixar PDF</span>
             </Button>
           </div>
 
           <Button
             type="button"
-            size="sm"
             disabled={isProcessing}
             onClick={handleShareWhatsApp}
             className="w-full h-10 rounded-xl text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-md font-semibold gap-2 cursor-pointer transition-all"
           >
             {isProcessing ? <Loader2 className="size-4 animate-spin" /> : <MessageSquare className="size-4" />}
-            <span>Enviar no WhatsApp</span>
+            <span>WhatsApp</span>
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
