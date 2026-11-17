@@ -1,7 +1,16 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CrudPage } from "@/components/CrudPage";
-import { Receipt, Printer, Download, MessageSquare, Smartphone, CheckCircle } from "lucide-react";
+import {
+  Receipt,
+  Printer,
+  Download,
+  MessageSquare,
+  Smartphone,
+  CheckCircle,
+  Image as ImageIcon,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -11,6 +20,7 @@ import { brl, DEFAULT_CONGREGATION, fmtDate, useStore, type Row } from "@/lib/st
 import { maskPhone } from "@/lib/masks";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export const Route = createFileRoute("/contribuicoes")({
   head: () => ({
@@ -26,105 +36,17 @@ export const Route = createFileRoute("/contribuicoes")({
   component: Contribuicoes,
 });
 
-function downloadPdfReceipt(r: Row, cnpj: string) {
-  try {
-    const doc = new jsPDF({
-      unit: "mm",
-      format: "a5",
-      orientation: "portrait",
-    });
-
-    // Card border
-    doc.setDrawColor(220, 226, 235);
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(8, 8, 132, 194, 4, 4, "FD");
-
-    // Header bar
-    doc.setFillColor(15, 23, 42);
-    doc.rect(8, 8, 132, 24, "F");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(255, 255, 255);
-    doc.text("ECLESIAPRO - GESTÃO ECLESIÁSTICA", 74, 18, { align: "center" });
-
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(203, 213, 225);
-    doc.text("RECIBO OFICIAL DE CONTRIBUIÇÃO", 74, 25, { align: "center" });
-
-    // Header info
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Recibo Nº: #REC-${String(r.id).slice(-6).toUpperCase()}`, 14, 40);
-    doc.text(`Emissão: ${new Date().toLocaleDateString("pt-BR")}`, 134, 40, { align: "right" });
-
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.5);
-    doc.line(14, 43, 134, 43);
-
-    // Fields
-    let y = 51;
-    const addField = (label: string, value: string, isHighlight = false) => {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(71, 85, 105);
-      doc.text(label, 14, y);
-
-      doc.setFont("helvetica", isHighlight ? "bold" : "normal");
-      doc.setFontSize(isHighlight ? 12 : 9.5);
-      if (isHighlight) {
-        doc.setTextColor(22, 163, 74);
-      } else {
-        doc.setTextColor(15, 23, 42);
-      }
-      doc.text(value, 134, y, { align: "right" });
-
-      doc.setDrawColor(241, 245, 249);
-      doc.line(14, y + 3, 134, y + 3);
-      y += 10;
-    };
-
-    addField("Contribuinte:", String(r.membro || "Anônimo"));
-    addField("Tipo de Contribuição:", String(r.tipo || "Dízimo"));
-    addField("Valor Contribuído:", brl(Number(r.valor || 0)), true);
-    addField("Data do Lançamento:", fmtDate(r.data));
-    addField("Forma de Pagamento:", String(r.pagamento || "Dinheiro"));
-    addField("Congregação:", String(r.congregacao || "Igreja Batista Cristo e Família"));
-    addField("CNPJ da Igreja:", cnpj);
-
-    // Biblical verse
-    y += 7;
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    const verse =
-      '"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Coríntios 9:7)';
-    const splitVerse = doc.splitTextToSize(verse, 118);
-    doc.text(splitVerse, 74, y, { align: "center" });
-
-    // Signature
-    y += 26;
-    doc.setDrawColor(148, 163, 184);
-    doc.line(34, y, 114, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(51, 65, 85);
-    doc.text("Tesouraria / Ministério Financeiro", 74, y + 5, { align: "center" });
-    doc.setFontSize(7.5);
-    doc.setTextColor(148, 163, 184);
-    doc.text(`${r.congregacao || "Igreja Local"} · CNPJ ${cnpj}`, 74, y + 10, { align: "center" });
-
-    doc.save(`recibo-${r.id}.pdf`);
-    toast.success("Recibo baixado em PDF com sucesso!");
-  } catch (err) {
-    console.error(err);
-    toast.error("Erro ao gerar PDF do recibo.");
-  }
+async function generateReceiptCanvas(element: HTMLElement) {
+  return await html2canvas(element, {
+    scale: 3, // 300 DPI ultra-sharp
+    useCORS: true,
+    backgroundColor: "#0f1424",
+    logging: false,
+  });
 }
 
 function printReceiptDirect(r: Row, cnpj: string) {
-  const printWindow = window.open("", "_blank", "width=600,height=750");
+  const printWindow = window.open("", "_blank", "width=600,height=800");
   if (!printWindow) {
     toast.error("Não foi possível abrir a janela de impressão.");
     return;
@@ -136,82 +58,61 @@ function printReceiptDirect(r: Row, cnpj: string) {
       <meta charset="utf-8" />
       <title>Recibo - #${r.id}</title>
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; background: #fff; color: #1e293b; max-width: 520px; margin: 0 auto; }
-        .receipt-card { border: 2px solid #e2e8f0; border-radius: 16px; padding: 28px; }
-        .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 20px; margin-bottom: 20px; }
-        .header h1 { font-size: 18px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .header p { font-size: 13px; color: #64748b; margin: 0; }
-        .num { font-size: 12px; color: #94a3b8; margin-top: 8px; }
-        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; background: #fff; color: #0f172a; max-width: 480px; margin: 0 auto; }
+        .receipt-card { border: 2px solid #0f172a; border-radius: 18px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 16px; margin-bottom: 16px; }
+        .header h1 { font-size: 16px; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; color: #0f172a; }
+        .header p { font-size: 11px; color: #64748b; margin: 3px 0 0 0; }
+        .num { font-size: 11px; color: #64748b; font-weight: 600; text-align: right; }
+        .badge { display: inline-block; background: #16a34a; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 9999px; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
         .row .label { color: #64748b; font-weight: 500; }
-        .row .val { font-weight: 600; color: #0f172a; }
-        .row.highlight .val { font-size: 18px; color: #16a34a; font-weight: bold; }
-        .verse { font-style: italic; font-size: 12px; color: #64748b; text-align: center; margin: 24px 0 32px; line-height: 1.4; }
-        .signature { text-align: center; margin-top: 40px; }
-        .line { width: 220px; height: 1px; background: #94a3b8; margin: 0 auto 8px; }
-        .footer { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 24px; }
+        .row .val { font-weight: 600; color: #0f172a; text-align: right; }
+        .row.highlight .val { font-size: 17px; color: #16a34a; font-weight: 800; }
+        .verse { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; font-style: italic; font-size: 11.5px; color: #475569; text-align: center; margin: 16px 0; line-height: 1.45; }
+        .verse span { display: block; font-style: normal; font-weight: bold; color: #7c3aed; font-size: 10.5px; margin-top: 4px; }
+        .signature { text-align: center; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+        .sig-title { font-size: 12px; font-weight: 700; color: #1e293b; }
+        .sig-sub { font-size: 10.5px; color: #64748b; margin-top: 2px; }
       </style>
     </head>
     <body>
       <div class="receipt-card">
         <div class="header">
-          <h1>EclesiaPro</h1>
-          <p>Recibo Oficial de Contribuição</p>
-          <div class="num">Nº #REC-${String(r.id).slice(-6).toUpperCase()} · CNPJ: ${cnpj} · Emissão: ${new Date().toLocaleDateString("pt-BR")}</div>
+          <div>
+            <h1>Recibo de Contribuição</h1>
+            <p>EclesiaPro &middot; Gestão Eclesiástica</p>
+          </div>
+          <div class="num">
+            <span class="badge">OFICIAL</span>
+            <div style="margin-top: 4px;">#REC-${String(r.id).slice(-6).toUpperCase()}</div>
+            <div style="font-size: 9.5px; font-weight: normal;">${new Date().toLocaleDateString("pt-BR")}</div>
+          </div>
         </div>
+
         <div class="row"><span class="label">Contribuinte:</span><span class="val">${r.membro || "Anônimo"}</span></div>
-        <div class="row"><span class="label">Tipo:</span><span class="val">${r.tipo || "Dízimo"}</span></div>
-        <div class="row highlight"><span class="label">Valor:</span><span class="val">${brl(Number(r.valor || 0))}</span></div>
-        <div class="row"><span class="label">Data:</span><span class="val">${fmtDate(r.data)}</span></div>
+        <div class="row"><span class="label">Tipo de Lançamento:</span><span class="val">${r.tipo || "Dízimo"}</span></div>
+        <div class="row highlight"><span class="label">Valor Contribuído:</span><span class="val">${brl(Number(r.valor || 0))}</span></div>
+        <div class="row"><span class="label">Data do Lançamento:</span><span class="val">${fmtDate(r.data)}</span></div>
         <div class="row"><span class="label">Forma de Pagamento:</span><span class="val">${r.pagamento || "—"}</span></div>
         <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Igreja Batista Cristo e Família"}</span></div>
         <div class="row"><span class="label">CNPJ da Igreja:</span><span class="val">${cnpj}</span></div>
-        <div class="verse">"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Co 9:7)</div>
-        <div class="signature">
-          <div class="line"></div>
-          <div style="font-size: 13px; font-weight: 600;">Tesouraria / Ministério Financeiro</div>
-          <div style="font-size: 11px; color: #64748b;">${r.congregacao || "Igreja Local"} · CNPJ ${cnpj}</div>
+
+        <div class="verse">
+          &ldquo;Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria.&rdquo;
+          <span>2 Coríntios 9:7</span>
         </div>
-        <div class="footer">Gerado pelo sistema de gestão eclesiástica EclesiaPro</div>
+
+        <div class="signature">
+          <div class="sig-title">Tesouraria / Ministério Financeiro</div>
+          <div class="sig-sub">${r.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ ${cnpj}</div>
+        </div>
       </div>
       <script>window.onload = function() { window.print(); window.close(); };</script>
     </body>
     </html>
   `);
   printWindow.document.close();
-}
-
-function sendToWhatsapp(r: Row, phone: string, cnpj: string) {
-  const cleanPhone = phone.replace(/\D/g, "");
-  let targetPhone = cleanPhone;
-  if (targetPhone.length >= 10 && !targetPhone.startsWith("55")) {
-    targetPhone = `55${targetPhone}`;
-  }
-
-  const message = [
-    `*RECIBO DE CONTRIBUIÇÃO - ECLESIAPRO*`,
-    `----------------------------------------`,
-    `📄 *Recibo Nº:* #REC-${String(r.id).slice(-6).toUpperCase()}`,
-    `🏢 *CNPJ:* ${cnpj}`,
-    `👤 *Contribuinte:* ${r.membro || "Anônimo"}`,
-    `🏷️ *Tipo:* ${r.tipo || "Dízimo"}`,
-    `💰 *Valor:* ${brl(Number(r.valor || 0))}`,
-    `📅 *Data:* ${fmtDate(r.data)}`,
-    `💳 *Forma de Pagamento:* ${r.pagamento || "—"}`,
-    `⛪ *Congregação:* ${r.congregacao || "Igreja Batista Cristo e Família"}`,
-    `----------------------------------------`,
-    `_"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Co 9:7)_`,
-    ``,
-    `Agradecemos a sua generosidade e fidelidade na obra do Senhor! 🙏`,
-  ].join("\n");
-
-  const encoded = encodeURIComponent(message);
-  const whatsappUrl = targetPhone
-    ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encoded}`
-    : `https://api.whatsapp.com/send?text=${encoded}`;
-
-  window.open(whatsappUrl, "_blank");
-  toast.success("Abrindo WhatsApp para compartilhamento...");
 }
 
 function ReceiptModal({
@@ -225,6 +126,10 @@ function ReceiptModal({
   members: Array<{ id: string; nome: string; telefone?: string }>;
   congregations: Array<Row>;
 }) {
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [phone, setPhone] = useState("");
+
   const memberData = useMemo(() => {
     if (!row?.membro) return null;
     return members.find(
@@ -233,16 +138,14 @@ function ReceiptModal({
   }, [members, row?.membro]);
 
   const churchCnpj = useMemo(() => {
-    if (!row) return "12.345.678/0001-90";
+    if (!row) return "50.264.838/0001-60";
     const matched = congregations.find(
       (c) => String(c.nome).trim().toLowerCase() === String(row.congregacao || "").trim().toLowerCase()
     );
     if (matched?.cnpj) return String(matched.cnpj);
     const sede = congregations.find((c) => Boolean(c.cnpj)) || congregations[0];
-    return String(sede?.cnpj || "12.345.678/0001-90");
+    return String(sede?.cnpj || "50.264.838/0001-60");
   }, [congregations, row]);
-
-  const [phone, setPhone] = useState("");
 
   useEffect(() => {
     if (memberData?.telefone) {
@@ -254,9 +157,160 @@ function ReceiptModal({
 
   if (!row) return null;
 
+  const handleDownloadImage = async () => {
+    if (!receiptRef.current) return;
+    setIsProcessing(true);
+    try {
+      const canvas = await generateReceiptCanvas(receiptRef.current);
+      const link = document.createElement("a");
+      link.download = `comprovante-${row.id || "recibo"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("Imagem do comprovante baixada em alta resolução!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar imagem do comprovante.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!receiptRef.current) return;
+    setIsProcessing(true);
+    try {
+      const canvas = await generateReceiptCanvas(receiptRef.current);
+      const imgData = canvas.toDataURL("image/png");
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+
+      // Formato A5 retrato (148 x 210 mm)
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a5",
+      });
+
+      const pageWidth = 148;
+      const pageHeight = 210;
+      const margin = 10;
+      const targetWidth = pageWidth - margin * 2;
+      const targetHeight = (imgHeight * targetWidth) / imgWidth;
+      const posY = Math.max(margin, (pageHeight - targetHeight) / 2);
+
+      // Fundo escuro elegante para combinar com o comprovante oficial
+      doc.setFillColor(15, 20, 36);
+      doc.rect(0, 0, pageWidth, pageHeight, "F");
+
+      doc.addImage(imgData, "PNG", margin, posY, targetWidth, targetHeight, undefined, "FAST");
+      doc.save(`recibo-${row.id || "contribuicao"}.pdf`);
+      toast.success("PDF oficial gerado e baixado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar PDF do comprovante.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    if (!receiptRef.current) return;
+    setIsProcessing(true);
+
+    try {
+      const canvas = await generateReceiptCanvas(receiptRef.current);
+
+      const cleanPhone = phone.replace(/\D/g, "");
+      let targetPhone = cleanPhone;
+      if (targetPhone.length >= 10 && !targetPhone.startsWith("55")) {
+        targetPhone = `55${targetPhone}`;
+      }
+
+      const messageText = [
+        `*RECIBO OFICIAL DE CONTRIBUIÇÃO - ECLESIAPRO*`,
+        `📄 *Nº:* #REC-${String(row.id).slice(-6).toUpperCase()}`,
+        `👤 *Contribuinte:* ${row.membro || "Anônimo"}`,
+        `🏷️ *Tipo:* ${row.tipo || "Dízimo"}`,
+        `💰 *Valor:* ${brl(Number(row.valor || 0))}`,
+        `📅 *Data:* ${fmtDate(row.data)}`,
+        `💳 *Forma de Pagamento:* ${row.pagamento || "—"}`,
+        `⛪ *Congregação:* ${row.congregacao || "Igreja Batista Cristo e Família"}`,
+        `🏢 *CNPJ:* ${churchCnpj}`,
+        ``,
+        `_"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Co 9:7)_`,
+        ``,
+        `Agradecemos a sua fidelidade e generosidade na obra do Senhor! 🙏`,
+      ].join("\n");
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png", 0.95)
+      );
+
+      if (!blob) throw new Error("Falha ao gerar arquivo de imagem.");
+
+      const fileName = `comprovante-${row.id || "recibo"}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      // 1. No Celular: Web Share API (Android e iOS) permite anexar a imagem direto no WhatsApp!
+      if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Recibo de Contribuição",
+            text: messageText,
+          });
+          toast.success("Comprovante compartilhado com sucesso!");
+          return;
+        } catch (shareErr: any) {
+          if (shareErr.name === "AbortError") {
+            return;
+          }
+          console.warn("Falha no navigator.share, usando fallback", shareErr);
+        }
+      }
+
+      // 2. No Computador (WhatsApp Web): Copia a imagem para a área de transferência
+      let copiedToClipboard = false;
+      try {
+        if (typeof navigator !== "undefined" && navigator.clipboard && (window as any).ClipboardItem) {
+          await navigator.clipboard.write([
+            new (window as any).ClipboardItem({ "image/png": blob }),
+          ]);
+          copiedToClipboard = true;
+        }
+      } catch (clipErr) {
+        console.warn("Não foi possível copiar para clipboard", clipErr);
+      }
+
+      // Abre o WhatsApp com o número e o texto oficial
+      const encoded = encodeURIComponent(messageText);
+      const whatsappUrl = targetPhone
+        ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encoded}`
+        : `https://api.whatsapp.com/send?text=${encoded}`;
+
+      window.open(whatsappUrl, "_blank");
+
+      if (copiedToClipboard) {
+        toast.success(
+          "Imagem do comprovante copiada! No WhatsApp Web, aperte Ctrl + V para colar a imagem no chat.",
+          { duration: 6000 }
+        );
+      } else {
+        toast.info("WhatsApp aberto com os dados do comprovante!");
+      }
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        console.error(err);
+        toast.error("Erro ao preparar envio para o WhatsApp.");
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <Dialog open={!!row} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[440px] p-0 overflow-hidden rounded-2xl border shadow-2xl">
+      <DialogContent className="max-w-[460px] p-0 overflow-hidden rounded-3xl border shadow-2xl">
         <DialogHeader className="px-5 py-3 bg-muted/40 border-b">
           <div className="flex items-center gap-2.5">
             <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
@@ -264,67 +318,115 @@ function ReceiptModal({
             </div>
             <div>
               <DialogTitle className="text-base font-bold text-foreground">
-                Recibo de Contribuição
+                Comprovante de Contribuição
               </DialogTitle>
               <DialogDescription className="text-[11px] text-muted-foreground">
-                Nº #REC-{String(row.id).slice(-6).toUpperCase()} · Emissão {new Date().toLocaleDateString("pt-BR")}
+                Visualização oficial, download em alta resolução e compartilhamento.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {/* Visual do Recibo */}
-        <div className="px-5 py-3 space-y-2.5 text-xs">
-          <div className="rounded-xl border bg-card px-3.5 py-2 space-y-1 shadow-sm">
-            <div className="flex items-center justify-between py-1 border-b">
-              <span className="text-[11px] text-muted-foreground font-medium">Contribuinte</span>
-              <span className="font-semibold text-foreground">{row.membro || "Anônimo"}</span>
+        <div className="p-4 sm:p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+          {/* Card Capturável e Exportável */}
+          <div
+            ref={receiptRef}
+            className="rounded-2xl border border-[#232d4b] bg-[#0f1424] text-[#f8fafc] p-4 sm:p-5 shadow-xl space-y-3.5 select-none"
+            style={{
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            }}
+          >
+            {/* Topo do Recibo */}
+            <div className="flex items-center justify-between border-b border-[#1e2742] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="grid size-9 place-items-center rounded-xl bg-[#2e1d52] border border-[#7c3aed]/40 text-[#c084fc] shadow-sm shrink-0">
+                  <Receipt className="size-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold tracking-tight text-[#f8fafc]">
+                    Recibo de Contribuição
+                  </div>
+                  <div className="text-[10.5px] text-[#94a3b8]">
+                    Nº #REC-{String(row.id).slice(-6).toUpperCase()} &middot; Emissão {new Date().toLocaleDateString("pt-BR")}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="inline-block rounded-full bg-[#10b981]/15 border border-[#10b981]/30 px-2 py-0.5 text-[10px] font-semibold text-[#34d399]">
+                  Oficial
+                </span>
+                <div className="text-[9.5px] text-[#64748b] mt-0.5">EclesiaPro</div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between py-1 border-b">
-              <span className="text-[11px] text-muted-foreground font-medium">Tipo de Lançamento</span>
-              <Badge variant="outline" className="text-[10px] py-0 px-2 font-semibold">{row.tipo}</Badge>
+            {/* Linhas de Informações */}
+            <div className="rounded-xl border border-[#1e2742] bg-[#141b30] p-3 space-y-1.5 shadow-inner">
+              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
+                <span className="text-[#94a3b8] font-medium">Contribuinte</span>
+                <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[210px]">
+                  {row.membro || "Anônimo"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
+                <span className="text-[#94a3b8] font-medium">Tipo de Lançamento</span>
+                <span className="rounded-md border border-[#334155] bg-[#1e293b] px-2 py-0.5 text-[10.5px] font-semibold text-[#e2e8f0]">
+                  {row.tipo || "Dízimo"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-1.5 border-b border-[#1e2742]/70 text-xs">
+                <span className="text-[#94a3b8] font-medium">Valor Contribuído</span>
+                <span className="text-base sm:text-lg font-extrabold text-[#10b981] tracking-tight">
+                  {brl(Number(row.valor || 0))}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
+                <span className="text-[#94a3b8] font-medium">Data</span>
+                <span className="font-semibold text-[#f8fafc]">{fmtDate(row.data)}</span>
+              </div>
+
+              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
+                <span className="text-[#94a3b8] font-medium">Forma de Pagamento</span>
+                <span className="font-semibold text-[#f8fafc]">{row.pagamento || "—"}</span>
+              </div>
+
+              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
+                <span className="text-[#94a3b8] font-medium">Congregação</span>
+                <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[210px]">
+                  {row.congregacao || "Igreja Batista Cristo e Família"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-0.5 text-xs">
+                <span className="text-[#94a3b8] font-medium">CNPJ da Igreja</span>
+                <span className="font-mono text-[11px] font-semibold text-[#cbd5e1]">{churchCnpj}</span>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between py-1 border-b">
-              <span className="text-[11px] text-muted-foreground font-medium">Valor Contribuído</span>
-              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
-                {brl(Number(row.valor || 0))}
-              </span>
+            {/* Versículo */}
+            <div className="rounded-xl border border-[#2e2652] bg-[#1e1738]/60 p-2.5 text-center shadow-xs">
+              <p className="text-[10.5px] italic text-[#cbd5e1] leading-relaxed">
+                &ldquo;Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria.&rdquo;
+              </p>
+              <span className="block text-[10px] font-bold text-[#c084fc] mt-1">2 Coríntios 9:7</span>
             </div>
 
-            <div className="flex items-center justify-between py-1 border-b">
-              <span className="text-[11px] text-muted-foreground font-medium">Data</span>
-              <span className="font-medium text-foreground">{fmtDate(row.data)}</span>
+            {/* Rodapé institucional */}
+            <div className="pt-1 text-center border-t border-[#1e2742]/60 space-y-0.5">
+              <div className="text-[11px] font-semibold text-[#cbd5e1]">Tesouraria / Ministério Financeiro</div>
+              <div className="text-[9.5px] text-[#64748b]">
+                {row.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ {churchCnpj}
+              </div>
             </div>
-
-            <div className="flex items-center justify-between py-1 border-b">
-              <span className="text-[11px] text-muted-foreground font-medium">Forma de Pagamento</span>
-              <span className="font-medium text-foreground">{row.pagamento || "—"}</span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b">
-              <span className="text-[11px] text-muted-foreground font-medium">Congregação</span>
-              <span className="font-medium text-foreground">{row.congregacao || "Igreja Batista Cristo e Família"}</span>
-            </div>
-
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-[11px] text-muted-foreground font-medium">CNPJ da Igreja</span>
-              <span className="font-mono text-[11px] font-semibold text-foreground">{churchCnpj}</span>
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-primary/5 px-3 py-1.5 text-center border border-primary/10">
-            <p className="text-[10.5px] italic text-muted-foreground leading-snug">
-              "Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria."
-              <span className="block text-[10px] font-semibold text-primary/80 mt-0.5">2 Coríntios 9:7</span>
-            </p>
           </div>
 
           {/* Campo de Telefone para WhatsApp */}
-          <div className="space-y-1 pt-0.5">
-            <Label htmlFor="whatsapp-phone" className="text-[11px] font-semibold flex items-center gap-1.5 text-foreground">
-              <Smartphone className="size-3 text-emerald-600" />
+          <div className="space-y-1.5 pt-1">
+            <Label htmlFor="whatsapp-phone" className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+              <Smartphone className="size-3.5 text-emerald-500" />
               Telefone para envio via WhatsApp (Android / iOS / Web)
             </Label>
             <Input
@@ -332,47 +434,66 @@ function ReceiptModal({
               placeholder="(00) 00000-0000"
               value={phone}
               onChange={(e) => setPhone(maskPhone(e.target.value))}
-              className="h-8 rounded-lg shadow-sm text-xs"
+              className="h-10 rounded-xl shadow-xs text-xs sm:text-sm font-medium"
             />
-            {memberData?.telefone && (
-              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                <CheckCircle className="size-2.5 text-emerald-500" /> Telefone carregado do cadastro do membro
+            {memberData?.telefone ? (
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <CheckCircle className="size-3 text-emerald-500" /> Telefone carregado do cadastro de {row.membro}
+              </p>
+            ) : (
+              <p className="text-[10.5px] text-muted-foreground">
+                Informe o número com DDD para abrir a conversa diretamente no WhatsApp.
               </p>
             )}
           </div>
         </div>
 
-        <DialogFooter className="px-5 py-2.5 bg-muted/30 border-t flex flex-col sm:flex-row gap-2">
+        <DialogFooter className="px-5 py-3 bg-muted/30 border-t grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
+            disabled={isProcessing}
             onClick={() => printReceiptDirect(row, churchCnpj)}
-            className="gap-1.5 rounded-lg text-xs flex-1 h-8"
+            className="gap-1.5 rounded-xl text-xs h-9 cursor-pointer"
           >
             <Printer className="size-3.5" />
-            Imprimir
+            <span>Imprimir</span>
           </Button>
 
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => downloadPdfReceipt(row, churchCnpj)}
-            className="gap-1.5 rounded-lg text-xs flex-1 h-8"
+            disabled={isProcessing}
+            onClick={handleDownloadImage}
+            className="gap-1.5 rounded-xl text-xs h-9 cursor-pointer"
           >
-            <Download className="size-3.5" />
-            Baixar PDF
+            {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <ImageIcon className="size-3.5" />}
+            <span>Baixar Imagem</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isProcessing}
+            onClick={handleDownloadPdf}
+            className="gap-1.5 rounded-xl text-xs h-9 cursor-pointer"
+          >
+            {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+            <span>Baixar PDF</span>
           </Button>
 
           <Button
             type="button"
             size="sm"
-            onClick={() => sendToWhatsapp(row, phone, churchCnpj)}
-            className="gap-1.5 rounded-lg text-xs flex-1 h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-medium"
+            disabled={isProcessing}
+            onClick={handleShareWhatsApp}
+            className="gap-1.5 rounded-xl text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold cursor-pointer"
           >
-            <MessageSquare className="size-3.5" />
-            WhatsApp
+            {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <MessageSquare className="size-3.5" />}
+            <span>WhatsApp</span>
           </Button>
         </DialogFooter>
       </DialogContent>
