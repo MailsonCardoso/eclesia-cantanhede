@@ -310,34 +310,25 @@ function ReceiptModal({
 
   return (
     <Dialog open={!!row} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[460px] p-0 overflow-hidden rounded-3xl border shadow-2xl">
-        <DialogHeader className="px-5 py-3 bg-muted/40 border-b">
-          <div className="flex items-center gap-2.5">
-            <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
-              <Receipt className="size-4" />
-            </div>
-            <div>
-              <DialogTitle className="text-base font-bold text-foreground">
-                Comprovante de Contribuição
-              </DialogTitle>
-              <DialogDescription className="text-[11px] text-muted-foreground">
-                Visualização oficial, download em alta resolução e compartilhamento.
-              </DialogDescription>
-            </div>
-          </div>
+      <DialogContent className="max-w-[430px] p-0 overflow-hidden rounded-3xl border border-[#232d4b] bg-[#0c101c] text-[#f8fafc] shadow-2xl">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Recibo de Contribuição</DialogTitle>
+          <DialogDescription>
+            Nº #REC-{String(row.id).slice(-6).toUpperCase()}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="p-4 sm:p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-3.5 max-h-[85vh] overflow-y-auto">
           {/* Card Capturável e Exportável */}
           <div
             ref={receiptRef}
-            className="rounded-2xl border border-[#232d4b] bg-[#0f1424] text-[#f8fafc] p-4 sm:p-5 shadow-xl space-y-3.5 select-none"
+            className="rounded-2xl border border-[#232d4b] bg-[#0f1424] text-[#f8fafc] p-4 space-y-3 select-none shadow-xl"
             style={{
               fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
             }}
           >
             {/* Topo do Recibo */}
-            <div className="flex items-center justify-between border-b border-[#1e2742] pb-3">
+            <div className="flex items-center justify-between border-b border-[#1e2742] pb-2.5">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-9 place-items-center rounded-xl bg-[#2e1d52] border border-[#7c3aed]/40 text-[#c084fc] shadow-sm shrink-0">
                   <Receipt className="size-5" />
@@ -361,7 +352,7 @@ function ReceiptModal({
             </div>
 
             {/* Linhas de Informações */}
-            <div className="rounded-xl border border-[#1e2742] bg-[#141b30] p-3 space-y-1.5 shadow-inner">
+            <div className="rounded-xl border border-[#1e2742] bg-[#141b30] p-2.5 space-y-1 shadow-inner">
               <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
                 <span className="text-[#94a3b8] font-medium">Contribuinte</span>
                 <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[210px]">
@@ -376,7 +367,7 @@ function ReceiptModal({
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-1.5 border-b border-[#1e2742]/70 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/70 text-xs">
                 <span className="text-[#94a3b8] font-medium">Valor Contribuído</span>
                 <span className="text-base sm:text-lg font-extrabold text-[#10b981] tracking-tight">
                   {brl(Number(row.valor || 0))}
@@ -407,93 +398,91 @@ function ReceiptModal({
             </div>
 
             {/* Versículo */}
-            <div className="rounded-xl border border-[#2e2652] bg-[#1e1738]/60 p-2.5 text-center shadow-xs">
-              <p className="text-[10.5px] italic text-[#cbd5e1] leading-relaxed">
+            <div className="rounded-xl border border-[#2e2652] bg-[#1e1738]/60 p-2 text-center shadow-xs">
+              <p className="text-[10px] sm:text-[10.5px] italic text-[#cbd5e1] leading-relaxed">
                 &ldquo;Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria.&rdquo;
               </p>
-              <span className="block text-[10px] font-bold text-[#c084fc] mt-1">2 Coríntios 9:7</span>
+              <span className="block text-[9.5px] font-bold text-[#c084fc] mt-0.5">2 Coríntios 9:7</span>
             </div>
 
             {/* Rodapé institucional */}
-            <div className="pt-1 text-center border-t border-[#1e2742]/60 space-y-0.5">
-              <div className="text-[11px] font-semibold text-[#cbd5e1]">Tesouraria / Ministério Financeiro</div>
-              <div className="text-[9.5px] text-[#64748b]">
+            <div className="pt-0.5 text-center border-t border-[#1e2742]/60 space-y-0.5">
+              <div className="text-[10.5px] font-semibold text-[#cbd5e1]">Tesouraria / Ministério Financeiro</div>
+              <div className="text-[9px] text-[#64748b]">
                 {row.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ {churchCnpj}
               </div>
             </div>
           </div>
 
           {/* Campo de Telefone para WhatsApp */}
-          <div className="space-y-1.5 pt-1">
-            <Label htmlFor="whatsapp-phone" className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
-              <Smartphone className="size-3.5 text-emerald-500" />
-              Telefone para envio via WhatsApp (Android / iOS / Web)
+          <div className="space-y-1">
+            <Label htmlFor="whatsapp-phone" className="text-[11px] font-semibold flex items-center gap-1.5 text-[#cbd5e1]">
+              <Smartphone className="size-3 text-emerald-400" />
+              Telefone para envio via WhatsApp
             </Label>
             <Input
               id="whatsapp-phone"
               placeholder="(00) 00000-0000"
               value={phone}
               onChange={(e) => setPhone(maskPhone(e.target.value))}
-              className="h-10 rounded-xl shadow-xs text-xs sm:text-sm font-medium"
+              className="h-9 rounded-xl border-[#232d4b] bg-[#12182a] text-[#f8fafc] placeholder:text-[#64748b] text-xs font-medium focus-visible:border-emerald-500"
             />
-            {memberData?.telefone ? (
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                <CheckCircle className="size-3 text-emerald-500" /> Telefone carregado do cadastro de {row.membro}
-              </p>
-            ) : (
-              <p className="text-[10.5px] text-muted-foreground">
-                Informe o número com DDD para abrir a conversa diretamente no WhatsApp.
+            {memberData?.telefone && (
+              <p className="text-[10.5px] text-[#94a3b8] flex items-center gap-1">
+                <CheckCircle className="size-3 text-emerald-400" /> Telefone carregado do cadastro do membro
               </p>
             )}
           </div>
         </div>
 
-        <DialogFooter className="px-5 py-3 bg-muted/30 border-t grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isProcessing}
-            onClick={() => printReceiptDirect(row, churchCnpj)}
-            className="gap-1.5 rounded-xl text-xs h-9 cursor-pointer"
-          >
-            <Printer className="size-3.5" />
-            <span>Imprimir</span>
-          </Button>
+        <DialogFooter className="p-3.5 sm:p-4 bg-[#080b14] border-t border-[#1c2438] flex flex-col gap-2">
+          <div className="grid grid-cols-3 gap-2 w-full">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isProcessing}
+              onClick={() => printReceiptDirect(row, churchCnpj)}
+              className="h-9 rounded-xl text-xs border-[#26314d] bg-[#12182b] text-[#cbd5e1] hover:bg-[#1a233d] hover:text-[#f8fafc] gap-1 cursor-pointer font-medium"
+            >
+              <Printer className="size-3.5" />
+              <span>Imprimir</span>
+            </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isProcessing}
-            onClick={handleDownloadImage}
-            className="gap-1.5 rounded-xl text-xs h-9 cursor-pointer"
-          >
-            {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <ImageIcon className="size-3.5" />}
-            <span>Baixar Imagem</span>
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isProcessing}
+              onClick={handleDownloadImage}
+              className="h-9 rounded-xl text-xs border-[#26314d] bg-[#12182b] text-[#cbd5e1] hover:bg-[#1a233d] hover:text-[#f8fafc] gap-1 cursor-pointer font-medium"
+            >
+              {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <ImageIcon className="size-3.5" />}
+              <span>Imagem</span>
+            </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isProcessing}
-            onClick={handleDownloadPdf}
-            className="gap-1.5 rounded-xl text-xs h-9 cursor-pointer"
-          >
-            {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-            <span>Baixar PDF</span>
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isProcessing}
+              onClick={handleDownloadPdf}
+              className="h-9 rounded-xl text-xs border-[#26314d] bg-[#12182b] text-[#cbd5e1] hover:bg-[#1a233d] hover:text-[#f8fafc] gap-1 cursor-pointer font-medium"
+            >
+              {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+              <span>PDF</span>
+            </Button>
+          </div>
 
           <Button
             type="button"
             size="sm"
             disabled={isProcessing}
             onClick={handleShareWhatsApp}
-            className="gap-1.5 rounded-xl text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold cursor-pointer"
+            className="w-full h-10 rounded-xl text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-md font-semibold gap-2 cursor-pointer transition-all"
           >
-            {isProcessing ? <Loader2 className="size-3.5 animate-spin" /> : <MessageSquare className="size-3.5" />}
-            <span>WhatsApp</span>
+            {isProcessing ? <Loader2 className="size-4 animate-spin" /> : <MessageSquare className="size-4" />}
+            <span>Enviar no WhatsApp</span>
           </Button>
         </DialogFooter>
       </DialogContent>
