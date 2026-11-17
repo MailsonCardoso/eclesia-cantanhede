@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { toast } from "sonner";
+import { api } from "./api";
 
 export type UserRole = "Administrador" | "Pastor" | "Secretaria" | "Tesoureiro" | "Líder";
 
@@ -204,7 +205,7 @@ interface AuthContextType {
   users: UserAccount[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (identifier: string, passwordInput: string, remember?: boolean) => { success: boolean; error?: string; user?: AuthUser };
+  login: (identifier: string, passwordInput: string, remember?: boolean) => Promise<{ success: boolean; error?: string; user?: AuthUser }>;
   logout: () => void;
   hasRole: (roles: UserRole | UserRole[]) => boolean;
   addUser: (accountData: {
@@ -299,8 +300,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = (identifier: string, passwordInput: string, remember = true) => {
-    const cleanId = (identifier || "").trim().toLowerCase();
+  const login = async (
+    identifier: string,
+    passwordInput: string,
+    remember = true
+  ): Promise<{ success: boolean; error?: string; user?: AuthUser }> => {
+    const cleanId = (identifier || "").trim();
+    const cleanIdLower = cleanId.toLowerCase();
     const cleanIdDigits = cleanCPF(cleanId);
     const cleanPass = (passwordInput || "").trim();
     const cleanPassDigits = cleanCPF(cleanPass);
@@ -309,30 +315,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Informe seu e-mail (ou CPF) e a senha de acesso." };
     }
 
-    // Busca nas contas cadastradas ativas (com fallback flexível para usuários padrão)
+    // 1. Tenta autenticar na API Laravel oficial em https://api.eclesiapro.com.br/api
+    try {
+      const apiEmail =
+        cleanIdLower === "admin" || cleanIdLower === "admin@admin.com"
+          ? "admin@eclesiapro.com"
+          : cleanIdLower === "pastor"
+          ? "pastor@eclesiapro.com"
+          : cleanIdLower === "lider" || cleanIdLower === "líder"
+          ? "lider@eclesiapro.com"
+          : cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro"
+          ? "tesoureiro@eclesiapro.com"
+          : cleanIdLower === "secretaria"
+          ? "secretaria@eclesiapro.com"
+          : cleanId;
+
+      const apiPassword =
+        (cleanIdLower === "admin" || cleanIdLower === "admin@eclesiapro.com") && cleanPass === "admin"
+          ? "admin123"
+          : cleanPass;
+
+      const res = await api.auth.login({ email: apiEmail, password: apiPassword });
+      const token = res?.token || (res as any)?.access_token;
+      if (res && token && res.user) {
+        localStorage.setItem("ecclesia_token", token);
+        sessionStorage.setItem("ecclesia_token", token);
+
+        const emailRole = res.user.email?.includes("pastor")
+          ? "Pastor"
+          : res.user.email?.includes("lider")
+          ? "Líder"
+          : res.user.email?.includes("tesour")
+          ? "Tesoureiro"
+          : res.user.email?.includes("secretaria")
+          ? "Secretaria"
+          : "Administrador";
+
+        const role = (res.user.role || emailRole) as UserRole;
+        const authPayload: AuthUser = {
+          id: String(res.user.id),
+          memberId: res.user.member_id ? String(res.user.member_id) : undefined,
+          name: res.user.name || "Administrador",
+          email: res.user.email || apiEmail,
+          cpf: res.user.cpf || "000.000.000-00",
+          role,
+          cargo: res.user.cargo || ROLE_DEFINITIONS[role]?.label || role,
+          avatar: getInitials(res.user.name || "AD"),
+          cellId: res.user.cell_id ? String(res.user.cell_id) : undefined,
+          cellName: res.user.cell_name,
+        };
+
+        setUser(authPayload);
+        const userPayloadStr = JSON.stringify(authPayload);
+        localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
+        sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("ecclesia:auth_synced"));
+        }
+        toast.success(`Bem-vindo, ${authPayload.name}!`);
+        return { success: true, user: authPayload };
+      }
+    } catch (e: any) {
+      console.warn("Autenticação via API remota falhou, verificando fallback:", e?.message);
+    }
+
+    // 2. Busca nas contas cadastradas locais como fallback (modo offline)
     const match = users.find((acc) => {
       if (acc.status === "Inativo") return false;
 
-      // Correspondência flexível do identificador:
-      // - E-mail exato ou simplificado
-      // - CPF (com ou sem pontuação)
-      // - Atalhos práticos (ex: 'admin', 'pastor', 'lider', 'tesoureiro', 'secretaria')
       const emailMatches =
-        acc.email.toLowerCase() === cleanId ||
-        (cleanId === "admin" && acc.role === "Administrador") ||
-        (cleanId === "admin@admin.com" && acc.role === "Administrador") ||
-        (cleanId === "pastor" && acc.role === "Pastor") ||
-        ((cleanId === "lider" || cleanId === "líder" || cleanId === "celula") && acc.role === "Líder") ||
-        ((cleanId === "tesoureiro" || cleanId === "financeiro") && acc.role === "Tesoureiro") ||
-        (cleanId === "secretaria" && acc.role === "Secretaria");
+        acc.email.toLowerCase() === cleanIdLower ||
+        (cleanIdLower === "admin" && acc.role === "Administrador") ||
+        (cleanIdLower === "admin@admin.com" && acc.role === "Administrador") ||
+        (cleanIdLower === "pastor" && acc.role === "Pastor") ||
+        ((cleanIdLower === "lider" || cleanIdLower === "líder" || cleanIdLower === "celula") && acc.role === "Líder") ||
+        ((cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro") && acc.role === "Tesoureiro") ||
+        (cleanIdLower === "secretaria" && acc.role === "Secretaria");
 
       const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
       if (!emailMatches && !cpfMatches) return false;
 
-      // Correspondência flexível da senha:
-      // - CPF como senha (com ou sem pontuação)
-      // - Senhas padrão de cada perfil ('admin123', 'pastor123', 'lider123', 'tesouro123', 'secretaria123')
-      // - Atalhos universais simplificados ('admin', 'pastor', 'lider', '123456')
       const passMatchesCpf = cleanPass === acc.cpf || (cleanPassDigits.length >= 10 && cleanCPF(acc.cpf) === cleanPassDigits);
 
       const passMatchesRole =
@@ -361,7 +423,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(authPayload);
       const userPayloadStr = JSON.stringify(authPayload);
-      // Salva em localStorage e sessionStorage para garantir persistência em recarregamentos no celular
       localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
       sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
       toast.success(`Bem-vindo, ${match.name}!`);
@@ -378,6 +439,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem("ecclesia_token");
+    localStorage.removeItem("eclesiapro_token");
+    sessionStorage.removeItem("ecclesia_token");
     toast.info("Sessão encerrada com sucesso.");
   };
 

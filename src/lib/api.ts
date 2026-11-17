@@ -1,9 +1,29 @@
 import type { Collection, Row } from "./store";
 
-const API_BASE = import.meta.env["VITE_API_URL"] || "http://localhost:8000/api";
+export const API_BASE =
+  import.meta.env["VITE_API_URL"] || "https://api.eclesiapro.com.br/api";
+
+const COLLECTION_ENDPOINTS: Partial<Record<Collection, string>> = {
+  members: "/members",
+  congregations: "/congregations",
+  departments: "/departments",
+  transactions: "/transactions",
+  contributions: "/contributions",
+  events: "/events",
+  appointments: "/appointments",
+  inventory: "/inventory",
+  pastor_series: "/pastoral/series",
+  pastor_sermons: "/pastoral/sermons",
+  pastor_insights: "/pastoral/insights",
+  pastoral_requests: "/pastoral/requests",
+};
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem("ecclesia_token");
+  const token =
+    localStorage.getItem("ecclesia_token") ||
+    localStorage.getItem("eclesiapro_token") ||
+    sessionStorage.getItem("ecclesia_token");
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -18,10 +38,27 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `Erro na requisição HTTP: ${response.status}`);
+    throw new Error(
+      errorData.message ||
+        (errorData.errors ? Object.values(errorData.errors).flat().join(" ") : "") ||
+        `Erro na requisição HTTP: ${response.status}`
+    );
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  if (!text || !text.trim()) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {} as T;
+  }
 }
 
 export const api = {
@@ -47,25 +84,34 @@ export const api = {
   // Recursos Genéricos (CRUD)
   collection: {
     list: (collection: Collection, params?: Record<string, string>) => {
+      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
       const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
-      return request<Row[]>(`/${collection}${qs}`);
+      return request<Row[]>(`${endpoint}${qs}`);
     },
-    get: (collection: Collection, id: string | number) =>
-      request<Row>(`/${collection}/${id}`),
-    create: (collection: Collection, data: Omit<Row, "id">) =>
-      request<Row>(`/${collection}`, {
+    get: (collection: Collection, id: string | number) => {
+      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
+      return request<Row>(`${endpoint}/${id}`);
+    },
+    create: (collection: Collection, data: Omit<Row, "id">) => {
+      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
+      return request<Row>(`${endpoint}`, {
         method: "POST",
         body: JSON.stringify(data),
-      }),
-    update: (collection: Collection, id: string | number, data: Partial<Row>) =>
-      request<Row>(`/${collection}/${id}`, {
+      });
+    },
+    update: (collection: Collection, id: string | number, data: Partial<Row>) => {
+      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
+      return request<Row>(`${endpoint}/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
-      }),
-    delete: (collection: Collection, id: string | number) =>
-      request<{ message: string }>(`/${collection}/${id}`, {
+      });
+    },
+    delete: (collection: Collection, id: string | number) => {
+      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
+      return request<{ message: string }>(`${endpoint}/${id}`, {
         method: "DELETE",
-      }),
+      });
+    },
   },
 
   // Painel & Relatórios

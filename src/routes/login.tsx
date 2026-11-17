@@ -54,13 +54,13 @@ function LoginPage() {
     }
   }, [isAuthenticated, user, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
     setLoading(true);
 
-    setTimeout(() => {
-      const res = login(email, password, remember);
+    try {
+      const res = await login(email, password, remember);
       setLoading(false);
 
       if (res.success) {
@@ -75,7 +75,11 @@ function LoginPage() {
         setErrorMessage(res.error || "Erro ao realizar login.");
         toast.error(res.error || "Credenciais inválidas.");
       }
-    }, 300);
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMessage("Erro ao conectar ao servidor.");
+      toast.error("Erro ao conectar ao servidor.");
+    }
   };
 
   return (
