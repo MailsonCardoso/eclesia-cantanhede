@@ -124,7 +124,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RolePermissionInfo> = {
 
 export const INITIAL_ACCOUNTS: UserAccount[] = [
   {
-    id: "usr_admin",
+    id: "2",
     name: "Administrador Geral",
     email: "admin@eclesiapro.com",
     cpf: "000.000.000-00",
@@ -133,19 +133,6 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     avatar: "AD",
     status: "Ativo",
     createdAt: "2026-01-01T08:00:00Z",
-  },
-  {
-    id: "usr_mailson",
-    memberId: "2",
-    name: "Mailson Costa Cardoso",
-    email: "mailsonccardoso@gmail.com",
-    cpf: "019.358.063-27",
-    role: "Líder",
-    cargo: "Líder de Célula",
-    cellName: "Célula Ágape",
-    avatar: "MC",
-    status: "Ativo",
-    createdAt: "2026-11-17T00:56:48Z",
   },
 ];
 
@@ -245,74 +232,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_ACCOUNTS);
   const [isLoading, setIsLoading] = useState(() => (typeof window === "undefined" ? true : false));
 
-  // Carrega lista de usuários e sincroniza sessão salva, expurgando usuários fictícios
+  const syncUsersFromApi = () => {
+    fetch("https://api.eclesiapro.com.br/api/users")
+      .then((res) => res.json())
+      .then((list) => {
+        if (Array.isArray(list) && list.length > 0) {
+          const mapped: UserAccount[] = list.map((u: any) => ({
+            id: String(u.id),
+            name: u.name,
+            email: u.email,
+            cpf: u.cpf || "000.000.000-00",
+            role: (u.role || (u.email === "admin@eclesiapro.com" ? "Administrador" : "Líder")) as UserRole,
+            cargo: u.cargo || (u.role ? ROLE_DEFINITIONS[u.role as UserRole]?.label : "Membro"),
+            avatar: getInitials(u.name),
+            cellName: u.cell_name || undefined,
+            status: "Ativo",
+            createdAt: u.created_at || new Date().toISOString(),
+          }));
+          setUsers(mapped);
+        }
+      })
+      .catch((err) => console.warn("Aviso ao buscar usuários do banco:", err?.message));
+  };
+
   useEffect(() => {
     try {
-      // Remove todas as listas antigas de demonstração
+      // Limpa dados legados de demonstração do localStorage
       localStorage.removeItem("eclesiapro_users");
       localStorage.removeItem("eclesiapro_users_list_v2");
       localStorage.removeItem("eclesiapro_users_master_v1");
       localStorage.removeItem("eclesiapro_users_master_v2");
+      localStorage.removeItem(USERS_STORAGE_KEY);
 
-      const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-      if (storedUsers) {
-        const parsed = JSON.parse(storedUsers);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Filtra completamente quaisquer usuários fictícios remanescentes
-          const cleanParsed = parsed.filter(
-            (p) =>
-              !FICTITIOUS_IDS.has(p.id) &&
-              !FICTITIOUS_NAMES.includes((p.name || "").trim().toLowerCase()) &&
-              !FICTITIOUS_EMAILS.includes((p.email || "").trim().toLowerCase())
-          );
-
-          const existingIds = new Set(cleanParsed.map((p) => p.id));
-          const existingEmails = new Set(cleanParsed.map((p) => (p.email || "").toLowerCase()));
-          const merged = [
-            ...cleanParsed,
-            ...INITIAL_ACCOUNTS.filter(
-              (acc) => !existingIds.has(acc.id) && !existingEmails.has(acc.email.toLowerCase())
-            ),
-          ];
-          setUsers(merged);
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(merged));
-        } else {
-          setUsers(INITIAL_ACCOUNTS);
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_ACCOUNTS));
-        }
-      } else {
-        setUsers(INITIAL_ACCOUNTS);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_ACCOUNTS));
-      }
-
-      // Re-valida sessão ativa persistida
       const currentSession = getStoredSession();
       if (currentSession) {
         setUser(currentSession);
       }
     } catch (e) {
       console.error("Erro ao inicializar autenticação:", e);
-      setUsers(INITIAL_ACCOUNTS);
     } finally {
       setIsLoading(false);
     }
-  }, []);
 
-  const persistUsers = (newUsers: UserAccount[]) => {
-    // Garante que nenhum usuário fictício seja persistido
-    const cleaned = newUsers.filter(
-      (p) =>
-        !FICTITIOUS_IDS.has(p.id) &&
-        !FICTITIOUS_NAMES.includes((p.name || "").trim().toLowerCase()) &&
-        !FICTITIOUS_EMAILS.includes((p.email || "").trim().toLowerCase())
-    );
-    setUsers(cleaned);
-    try {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(cleaned));
-    } catch (e) {
-      console.error("Erro ao salvar lista de usuários:", e);
-    }
-  };
+    syncUsersFromApi();
+  }, []);
 
   const login = async (
     identifier: string,
@@ -323,126 +286,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cleanIdLower = cleanId.toLowerCase();
     const cleanIdDigits = cleanCPF(cleanId);
     const cleanPass = (passwordInput || "").trim();
-    const cleanPassDigits = cleanCPF(cleanPass);
 
     if (!cleanId || !cleanPass) {
       return { success: false, error: "Informe seu e-mail (ou CPF) e a senha de acesso." };
     }
 
-    // Identifica se há uma conta correspondente no cadastro local ou contas padrão
-    const matchedAccount = users.find((acc) => {
-      if (acc.status === "Inativo") return false;
-
-      const emailMatches =
-        acc.email.toLowerCase() === cleanIdLower ||
-        (cleanIdLower === "admin" && acc.role === "Administrador") ||
-        (cleanIdLower === "admin@admin.com" && acc.role === "Administrador") ||
-        ((cleanIdLower === "mailson" || cleanIdLower === "lider" || cleanIdLower === "líder") &&
-          (acc.email === "mailsonccardoso@gmail.com" || acc.role === "Líder"));
-
-      const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
-      return emailMatches || cpfMatches;
-    });
-
-    // 1. Resolução inteligente de e-mail e senha para envio à API Laravel oficial
-    let apiEmail = matchedAccount ? matchedAccount.email : cleanId;
+    let apiEmail = cleanId;
     if (cleanIdLower === "admin" || cleanIdLower === "admin@admin.com") {
       apiEmail = "admin@eclesiapro.com";
-    } else if (
-      cleanIdLower === "mailson" ||
-      cleanIdLower === "lider" ||
-      cleanIdLower === "líder" ||
-      cleanIdDigits === "01935806327"
-    ) {
-      apiEmail = "mailsonccardoso@gmail.com";
+    } else {
+      const userByCpf = users.find((u) => cleanCPF(u.cpf) === cleanIdDigits);
+      if (userByCpf) {
+        apiEmail = userByCpf.email;
+      }
     }
 
     let apiPassword = cleanPass;
-    const resolvedRole =
-      matchedAccount?.role || (apiEmail === "mailsonccardoso@gmail.com" ? "Líder" : undefined);
-
-    const isCpfPass =
-      (matchedAccount &&
-        (cleanPass === matchedAccount.cpf ||
-          (cleanPassDigits.length >= 10 && cleanCPF(matchedAccount.cpf) === cleanPassDigits))) ||
-      cleanPassDigits === "01935806327" ||
-      cleanPass === "019.358.063-27";
-
-    if (apiEmail === "mailsonccardoso@gmail.com" || resolvedRole === "Líder") {
-      // Para o líder Mailson Costa Cardoso, aceita seu CPF ou atalhos
-      if (
-        isCpfPass ||
-        ["lider", "líder", "123456", "lider123", "password123", "mailson"].includes(cleanPass.toLowerCase())
-      ) {
-        apiPassword = "01935806327";
-      }
-    } else if (apiEmail === "admin@eclesiapro.com" || resolvedRole === "Administrador") {
-      if (["admin", "admin123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
-        apiPassword = "admin123";
-      }
+    if ((apiEmail === "admin@eclesiapro.com" || cleanIdLower === "admin") && (cleanPass === "admin123" || cleanPass === "admin")) {
+      apiPassword = "admin";
     }
 
-    // 2. Tenta autenticar na API Laravel oficial em https://api.eclesiapro.com.br/api
     try {
-      let res;
-      try {
-        res = await api.auth.login({ email: apiEmail, password: apiPassword });
-      } catch (loginErr: any) {
-        // Se a conta existe localmente e falhou por não existir no MySQL remoto, tenta registrar e autenticar
-        if (matchedAccount && (loginErr?.message?.includes("Credenciais") || loginErr?.message?.includes("invalid"))) {
-          try {
-            await api.auth.register({
-              name: matchedAccount.name,
-              email: matchedAccount.email,
-              password: apiPassword,
-            });
-            res = await api.auth.login({ email: apiEmail, password: apiPassword });
-          } catch {
-            throw loginErr;
-          }
-        } else {
-          throw loginErr;
-        }
-      }
-
+      const res = await api.auth.login({ email: apiEmail, password: apiPassword });
       const token = res?.token || (res as any)?.access_token;
       if (res && token && res.user) {
         localStorage.setItem("ecclesia_token", token);
         sessionStorage.setItem("ecclesia_token", token);
 
-        const isMailson =
-          res.user.email === "mailsonccardoso@gmail.com" ||
-          (res.user.name && res.user.name.toLowerCase().includes("mailson"));
-
-        const role = (isMailson
-          ? "Líder"
-          : matchedAccount?.role || res.user.role || (res.user.email?.includes("admin") ? "Administrador" : "Líder")) as UserRole;
-
-        const authPayload: AuthUser = isMailson
-          ? {
-              id: String(res.user.id),
-              memberId: "2",
-              name: "Mailson Costa Cardoso",
-              email: "mailsonccardoso@gmail.com",
-              cpf: "019.358.063-27",
-              role: "Líder",
-              cargo: "Líder de Célula",
-              avatar: "MC",
-              cellId: "cel_1",
-              cellName: "Célula Ágape",
-            }
-          : {
-              id: String(res.user.id),
-              memberId: res.user.member_id ? String(res.user.member_id) : matchedAccount?.memberId,
-              name: res.user.name || matchedAccount?.name || "Administrador",
-              email: res.user.email || apiEmail,
-              cpf: matchedAccount?.cpf || res.user.cpf || "000.000.000-00",
-              role,
-              cargo: matchedAccount?.cargo || res.user.cargo || ROLE_DEFINITIONS[role]?.label || role,
-              avatar: getInitials(res.user.name || matchedAccount?.name || "AD"),
-              cellId: res.user.cell_id ? String(res.user.cell_id) : matchedAccount?.cellId,
-              cellName: res.user.cell_name || matchedAccount?.cellName,
-            };
+        const authRole = (res.user.role || (res.user.email === "admin@eclesiapro.com" ? "Administrador" : "Líder")) as UserRole;
+        const authPayload: AuthUser = {
+          id: String(res.user.id),
+          name: res.user.name || "Administrador",
+          email: res.user.email || apiEmail,
+          cpf: res.user.cpf || "000.000.000-00",
+          role: authRole,
+          cargo: res.user.cargo || (authRole ? ROLE_DEFINITIONS[authRole]?.label : "Membro"),
+          avatar: getInitials(res.user.name || "AD"),
+          cellName: res.user.cell_name || undefined,
+        };
 
         setUser(authPayload);
         const userPayloadStr = JSON.stringify(authPayload);
@@ -451,70 +332,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("ecclesia:auth_synced"));
         }
+        syncUsersFromApi();
         toast.success(`Bem-vindo, ${authPayload.name}!`);
         return { success: true, user: authPayload };
       }
     } catch (e: any) {
-      console.warn("Autenticação via API remota falhou, verificando fallback offline:", e?.message);
-    }
-
-    // 3. Fallback offline local
-    if (matchedAccount) {
-      const isMailsonMatch =
-        matchedAccount.email === "mailsonccardoso@gmail.com" ||
-        cleanCPF(matchedAccount.cpf) === "01935806327";
-
-      const passMatchesMailson =
-        isMailsonMatch &&
-        (isCpfPass ||
-          ["lider", "líder", "123456", "lider123", "password123", "mailson"].includes(cleanPass.toLowerCase()));
-
-      const passMatchesAdmin =
-        (matchedAccount.role === "Administrador" || matchedAccount.email === "admin@eclesiapro.com") &&
-        ["admin123", "admin", "123456"].includes(cleanPass.toLowerCase());
-
-      const passMatchesCpf =
-        cleanPass === matchedAccount.cpf ||
-        (cleanPassDigits.length >= 10 && cleanCPF(matchedAccount.cpf) === cleanPassDigits);
-
-      if (passMatchesCpf || passMatchesMailson || passMatchesAdmin) {
-        const isMailson =
-          matchedAccount.email === "mailsonccardoso@gmail.com" ||
-          matchedAccount.name.toLowerCase().includes("mailson");
-
-        const authPayload: AuthUser = isMailson
-          ? {
-              id: matchedAccount.id,
-              memberId: "2",
-              name: "Mailson Costa Cardoso",
-              email: "mailsonccardoso@gmail.com",
-              cpf: "019.358.063-27",
-              role: "Líder",
-              cargo: "Líder de Célula",
-              avatar: "MC",
-              cellId: "cel_1",
-              cellName: "Célula Ágape",
-            }
-          : {
-              id: matchedAccount.id,
-              memberId: matchedAccount.memberId,
-              name: matchedAccount.name,
-              email: matchedAccount.email,
-              cpf: matchedAccount.cpf,
-              role: matchedAccount.role,
-              cargo: matchedAccount.cargo || ROLE_DEFINITIONS[matchedAccount.role]?.label || matchedAccount.role,
-              avatar: matchedAccount.avatar || getInitials(matchedAccount.name),
-              cellId: matchedAccount.cellId,
-              cellName: matchedAccount.cellName,
-            };
-
-        setUser(authPayload);
-        const userPayloadStr = JSON.stringify(authPayload);
-        localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-        sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-        toast.success(`Bem-vindo, ${authPayload.name}!`);
-        return { success: true, user: authPayload };
-      }
+      console.warn("Autenticação via API:", e?.message);
+      return {
+        success: false,
+        error: e?.message || "Credenciais inválidas. Verifique seu e-mail/CPF e sua senha de acesso.",
+      };
     }
 
     return {
@@ -590,14 +417,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const updated = [newAccount, ...users];
-    persistUsers(updated);
+    setUsers(updated);
 
-    // Registra na API remota para permitir login a partir de qualquer dispositivo (mobile/celular)
+    // Registra na API remota para persistir no banco de dados MySQL
     api.auth
       .register({
         name: data.name.trim(),
         email: cleanEmail,
         password: cleanDigits || "123456",
+        role: data.role,
+        cargo: data.cargo?.trim() || ROLE_DEFINITIONS[data.role]?.label || data.role,
+        cpf: formatCPF(cleanDigits),
+        cell_name: data.cellName,
+      })
+      .then((res: any) => {
+        if (res?.user?.id) {
+          const remoteId = String(res.user.id);
+          setUsers((prev) => prev.map((u) => (u.id === newAccount.id ? { ...u, id: remoteId } : u)));
+        }
       })
       .catch((err) => {
         console.warn("Aviso ao registrar usuário na API remota:", err?.message);
@@ -643,9 +480,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updatedList = [...users];
     updatedList[index] = updatedAccount;
-    persistUsers(updatedList);
+    setUsers(updatedList);
 
-    // Persiste atualização no backend REST para garantir sincronização entre celular e web
+    // Persiste atualização no banco de dados MySQL via API REST
     const token = localStorage.getItem("ecclesia_token") || sessionStorage.getItem("ecclesia_token");
     if (token) {
       const cleanId = id.replace(/^usr_/, "");
@@ -692,8 +529,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Não é permitido excluir o usuário conectado no momento." };
     }
 
-    const updated = users.filter((u) => u.id !== id);
-    persistUsers(updated);
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+
+    const token = localStorage.getItem("ecclesia_token") || sessionStorage.getItem("ecclesia_token");
+    if (token) {
+      const cleanId = id.replace(/^usr_/, "");
+      fetch(`https://api.eclesiapro.com.br/api/users/${cleanId}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }).catch((err) => console.warn("Aviso ao excluir usuário na API:", err?.message));
+    }
+
     toast.success("Usuário removido com sucesso.");
     return { success: true };
   };
@@ -713,7 +562,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return u;
     });
 
-    persistUsers(updated);
+    setUsers(updated);
   };
 
   return (

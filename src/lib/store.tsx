@@ -938,18 +938,7 @@ export function emptyDB(): DB {
   };
 }
 
-const KEY = "ecclesia-db-v7";
-
 export function mapMemberFromApi(m: any): Row {
-  const rawCell = m.celula || (m.cell?.nome ? String(m.cell.nome) : "");
-  const rawCellId = m.cell_id ? String(m.cell_id) : undefined;
-  const resolvedCelula =
-    rawCell && rawCell !== "__none" && !/^\d+$/.test(rawCell)
-      ? rawCell
-      : rawCellId === "1"
-      ? "Célula Ágape"
-      : rawCell || "";
-
   return {
     id: String(m.id),
     nome: m.nome ?? m.name ?? "",
@@ -975,8 +964,8 @@ export function mapMemberFromApi(m: any): Row {
     role: m.role ?? m.cargo ?? "Sem função / cargo",
     congregacao: m.congregacao || DEFAULT_CONGREGATION,
     departamento: m.departamento ?? "",
-    celula: resolvedCelula,
-    cell_id: rawCellId,
+    celula: m.celula ?? (m.cell?.nome ? String(m.cell.nome) : "") ?? "",
+    cell_id: m.cell_id ? String(m.cell_id) : undefined,
     situacao: m.situacao ?? (m.status === "membro" || m.status === "ativo" ? "Ativo" : "Ativo"),
     status: m.status ?? m.situacao ?? "Ativo",
     tipo: m.tipo ?? (m.category === "membro" ? "Membro" : "Membro"),
@@ -1019,7 +1008,7 @@ export function mapMemberToApi(row: Row): any {
     mae: row.mae || null,
     filhos: row.filhos || null,
     observacoes: row.observacoes || null,
-    cell_id: row.cell_id ? Number(row.cell_id) : (row.celula === "Célula Ágape" ? 1 : null),
+    cell_id: row.cell_id ? Number(row.cell_id) : null,
   };
 }
 
@@ -1170,29 +1159,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (remoteState && typeof remoteState === "object") {
         setDb((prev) => {
           const next = { ...prev };
-          const currentCells =
-            Array.isArray(remoteState.cells) && remoteState.cells.length > 0
-              ? remoteState.cells
-              : (prev.cells && prev.cells.length > 0
-                  ? prev.cells
-                  : [
-                      { id: "1", nome: "Célula Ágape", congregacao: DEFAULT_CONGREGATION, lider: "Mailson Costa Cardoso", situacao: "Ativa" },
-                    ]);
+          const currentCells = Array.isArray(remoteState.cells) ? remoteState.cells : [];
           next.cells = currentCells;
 
           if (Array.isArray(remoteState.members)) {
             next.members = remoteState.members.map((m: any) => {
               const mapped = mapMemberFromApi(m);
-              if ((!mapped.celula || mapped.celula === "__none" || mapped.celula === "Não participa de célula" || /^\d+$/.test(mapped.celula)) && mapped.cell_id) {
+              if (!mapped.celula && mapped.cell_id && currentCells.length > 0) {
                 const foundCell = currentCells.find((c: any) => String(c.id) === String(mapped.cell_id));
                 if (foundCell) {
                   mapped.celula = String(foundCell.nome);
-                } else if (String(mapped.cell_id) === "1") {
-                  mapped.celula = "Célula Ágape";
                 }
               }
               if (mapped.celula && !mapped.cell_id && currentCells.length > 0) {
-                const foundCell = currentCells.find((c: any) => String(c.nome).trim().toLowerCase() === String(mapped.celula).trim().toLowerCase());
+                const foundCell = currentCells.find(
+                  (c: any) => String(c.nome).trim().toLowerCase() === String(mapped.celula).trim().toLowerCase()
+                );
                 if (foundCell) {
                   mapped.cell_id = String(foundCell.id);
                 }
@@ -1200,42 +1182,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               return mapped;
             });
           }
-          if (Array.isArray(remoteState.congregations) && remoteState.congregations.length > 0) {
+          if (Array.isArray(remoteState.congregations)) {
             next.congregations = remoteState.congregations;
           }
-          if (Array.isArray(remoteState.departments) && remoteState.departments.length > 0) {
+          if (Array.isArray(remoteState.departments)) {
             next.departments = remoteState.departments;
           }
-          if (Array.isArray(remoteState.transactions) && remoteState.transactions.length > 0) {
+          if (Array.isArray(remoteState.transactions)) {
             next.transactions = remoteState.transactions.map(mapTransactionFromApi);
           }
-          if (Array.isArray(remoteState.contributions) && remoteState.contributions.length > 0) {
+          if (Array.isArray(remoteState.contributions)) {
             next.contributions = remoteState.contributions;
           }
-          if (Array.isArray(remoteState.events) && remoteState.events.length > 0) {
+          if (Array.isArray(remoteState.events)) {
             next.events = remoteState.events.map(mapEventFromApi);
           }
-          if (Array.isArray(remoteState.appointments) && remoteState.appointments.length > 0) {
+          if (Array.isArray(remoteState.appointments)) {
             next.appointments = remoteState.appointments;
           }
-          if (Array.isArray(remoteState.inventory) && remoteState.inventory.length > 0) {
+          if (Array.isArray(remoteState.inventory)) {
             next.inventory = remoteState.inventory.map(mapInventoryFromApi);
           }
-          if (Array.isArray(remoteState.pastor_series) && remoteState.pastor_series.length > 0) {
+          if (Array.isArray(remoteState.pastor_series)) {
             next.pastor_series = remoteState.pastor_series;
           }
-          if (Array.isArray(remoteState.pastor_sermons) && remoteState.pastor_sermons.length > 0) {
+          if (Array.isArray(remoteState.pastor_sermons)) {
             next.pastor_sermons = remoteState.pastor_sermons;
           }
-          if (Array.isArray(remoteState.pastor_insights) && remoteState.pastor_insights.length > 0) {
+          if (Array.isArray(remoteState.pastor_insights)) {
             next.pastor_insights = remoteState.pastor_insights;
           }
-          if (Array.isArray(remoteState.pastoral_requests) && remoteState.pastoral_requests.length > 0) {
+          if (Array.isArray(remoteState.pastoral_requests)) {
             next.pastoral_requests = remoteState.pastoral_requests;
           }
-          try {
-            localStorage.setItem(KEY, JSON.stringify(next));
-          } catch {}
           return next;
         });
       }
@@ -1245,8 +1224,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Limpa versões anteriores de cache com mock para garantir teste limpo
+    // Limpa versões anteriores de cache local para garantir teste 100% vindo do banco de dados
     try {
+      localStorage.removeItem("ecclesia-db-v7");
       localStorage.removeItem("ecclesia-db-v6");
       localStorage.removeItem("ecclesia-db-v5");
       localStorage.removeItem("ecclesia-db-v4");
@@ -1257,88 +1237,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
 
-    const sanitizeCongregations = (data: DB): DB => {
-      const isOldMock = (name?: string) =>
-        !name ||
-        !String(name).trim() ||
-        name === "Sede Central" ||
-        name === "Sede Geral" ||
-        name === "Sede" ||
-        name === "Sede/Geral" ||
-        name === "Nenhuma / Sede" ||
-        name === "__none" ||
-        name === "Congregação Vila Nova" ||
-        name === "Congregação Jardim Esperança";
-
-      let congsList = (data.congregations || []).filter((c) => !isOldMock(c.nome));
-      if (!congsList.some((c) => c.nome === DEFAULT_CONGREGATION)) {
-        congsList = [SEDE_CONGREGATION, ...congsList];
-      }
-
-      if (congsList.length === 0) {
-        congsList = [SEDE_CONGREGATION];
-      }
-
-      const members = (data.members || []).map((m) =>
-        isOldMock(m.congregacao) ? { ...m, congregacao: DEFAULT_CONGREGATION } : m
-      );
-
-      const cells = (data.cells || []).map((c) =>
-        isOldMock(c.congregacao) ? { ...c, congregacao: DEFAULT_CONGREGATION } : c
-      );
-
-      const transactions = (data.transactions || []).map((t) =>
-        isOldMock(t.congregacao) ? { ...t, congregacao: DEFAULT_CONGREGATION } : t
-      );
-
-      const contributions = (data.contributions || []).map((c) =>
-        isOldMock(c.congregacao) ? { ...c, congregacao: DEFAULT_CONGREGATION } : c
-      );
-
-      const events = (data.events || []).map((e) =>
-        isOldMock(e.local) ? { ...e, local: DEFAULT_CONGREGATION } : e
-      );
-
-      const inventory = (data.inventory || []).map((i) =>
-        isOldMock(i.local) ? { ...i, local: DEFAULT_CONGREGATION } : i
-      );
-
-      return {
-        ...data,
-        congregations: congsList,
-        members,
-        cells,
-        transactions,
-        contributions,
-        events,
-        inventory,
-      };
-    };
-
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        const initial = emptyDB();
-        const merged = { ...initial, ...parsed };
-        if (merged.studies) {
-          merged.studies = merged.studies.filter((s: Row) => s.id !== "std_1" && s.id !== "std_2");
-        } else {
-          merged.studies = [];
-        }
-        const sanitized = sanitizeCongregations(merged);
-        setDb(sanitized);
-        localStorage.setItem(KEY, JSON.stringify(sanitized));
-      } catch {
-        const clean = emptyDB();
-        setDb(clean);
-        localStorage.setItem(KEY, JSON.stringify(clean));
-      }
-    } else {
-      const clean = emptyDB();
-      setDb(clean);
-      localStorage.setItem(KEY, JSON.stringify(clean));
-    }
+    setDb(emptyDB());
     setReady(true);
   }, []);
 
@@ -1360,10 +1259,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       };
     }
   }, [ready]);
-
-  useEffect(() => {
-    if (ready) localStorage.setItem(KEY, JSON.stringify(db));
-  }, [db, ready]);
 
   const log = (c: Collection, action: AuditEntry["action"], row: Row): AuditEntry => ({
     id: uid(),
@@ -1450,22 +1345,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })();
     },
     clearAll: () => {
-      const clean = emptyDB();
-      setDb(clean);
-      try {
-        localStorage.setItem(KEY, JSON.stringify(clean));
-      } catch {
-        /* ignore */
-      }
+      setDb(emptyDB());
     },
     loadDemoData: () => {
-      const demo = seed();
-      setDb(demo);
-      try {
-        localStorage.setItem(KEY, JSON.stringify(demo));
-      } catch {
-        /* ignore */
-      }
+      toast.info("Ambiente de produção conectado ao MySQL. Cadastre novos dados diretamente no sistema.");
     },
     refreshFromApi: syncWithApi,
   };

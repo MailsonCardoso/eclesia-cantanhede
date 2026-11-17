@@ -16,12 +16,20 @@ class AuthController extends BaseApiController
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:6'],
+            'role' => ['nullable', 'string', 'max:50'],
+            'cargo' => ['nullable', 'string', 'max:100'],
+            'cpf' => ['nullable', 'string', 'max:50'],
+            'cell_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'role' => $validated['role'] ?? 'Membro',
+            'cargo' => $validated['cargo'] ?? null,
+            'cpf' => $validated['cpf'] ?? null,
+            'cell_name' => $validated['cell_name'] ?? null,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;

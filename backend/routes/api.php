@@ -98,6 +98,14 @@ Route::put('users/{id}', function (Request $request, $id) {
     $user->update($data);
     return response()->json($user);
 });
+Route::delete('users/{id}', function ($id) {
+    $user = \App\Models\User::find($id);
+    if (!$user) {
+        return response()->json(['message' => 'Usuário não encontrado.'], 404);
+    }
+    $user->delete();
+    return response()->json(['message' => 'Usuário excluído com sucesso.']);
+});
 Route::get('audit-logs', [AuditLogController::class, 'index']);
 
 // Gabinete & Conteúdo Pastoral
