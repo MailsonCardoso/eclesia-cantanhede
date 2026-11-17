@@ -302,9 +302,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let apiPassword = cleanPass;
-    if ((apiEmail === "admin@eclesiapro.com" || cleanIdLower === "admin") && (cleanPass === "admin123" || cleanPass === "admin")) {
-      apiPassword = "admin";
-    }
 
     try {
       const res = await api.auth.login({ email: apiEmail, password: apiPassword });
