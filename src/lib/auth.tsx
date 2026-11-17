@@ -315,27 +315,102 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Informe seu e-mail (ou CPF) e a senha de acesso." };
     }
 
-    // 1. Tenta autenticar na API Laravel oficial em https://api.eclesiapro.com.br/api
+    // Identifica se há uma conta correspondente no cadastro local ou contas padrão
+    const matchedAccount = users.find((acc) => {
+      if (acc.status === "Inativo") return false;
+
+      const emailMatches =
+        acc.email.toLowerCase() === cleanIdLower ||
+        (cleanIdLower === "admin" && acc.role === "Administrador") ||
+        (cleanIdLower === "admin@admin.com" && acc.role === "Administrador") ||
+        (cleanIdLower === "pastor" && acc.role === "Pastor") ||
+        ((cleanIdLower === "lider" || cleanIdLower === "líder" || cleanIdLower === "celula") && acc.role === "Líder") ||
+        ((cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro") && acc.role === "Tesoureiro") ||
+        (cleanIdLower === "secretaria" && acc.role === "Secretaria");
+
+      const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
+      return emailMatches || cpfMatches;
+    });
+
+    // 1. Resolução inteligente de e-mail e senha para envio à API Laravel
+    let apiEmail = matchedAccount ? matchedAccount.email : cleanId;
+    if (cleanIdLower === "admin" || cleanIdLower === "admin@admin.com") {
+      apiEmail = "admin@eclesiapro.com";
+    } else if (cleanIdLower === "pastor") {
+      apiEmail = "pastor@eclesiapro.com";
+    } else if (cleanIdLower === "lider" || cleanIdLower === "líder" || cleanIdLower === "celula") {
+      apiEmail = "lider@eclesiapro.com";
+    } else if (cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro") {
+      apiEmail = "tesoureiro@eclesiapro.com";
+    } else if (cleanIdLower === "secretaria") {
+      apiEmail = "secretaria@eclesiapro.com";
+    }
+
+    let apiPassword = cleanPass;
+    const resolvedRole = matchedAccount?.role || (
+      apiEmail.includes("pastor")
+        ? "Pastor"
+        : apiEmail.includes("lider")
+        ? "Líder"
+        : apiEmail.includes("tesour")
+        ? "Tesoureiro"
+        : apiEmail.includes("secretaria")
+        ? "Secretaria"
+        : apiEmail.includes("admin")
+        ? "Administrador"
+        : undefined
+    );
+
+    const isCpfPass = matchedAccount && (
+      cleanPass === matchedAccount.cpf ||
+      (cleanPassDigits.length >= 10 && cleanCPF(matchedAccount.cpf) === cleanPassDigits)
+    );
+
+    if (resolvedRole === "Líder") {
+      if (["lider", "líder", "123456", "lider123"].includes(cleanPass.toLowerCase()) || isCpfPass) {
+        apiPassword = "lider123";
+      }
+    } else if (resolvedRole === "Administrador") {
+      if (["admin", "admin123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
+        apiPassword = "admin123";
+      }
+    } else if (resolvedRole === "Pastor") {
+      if (["pastor", "pastor123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
+        apiPassword = "pastor123";
+      }
+    } else if (resolvedRole === "Tesoureiro") {
+      if (["tesoureiro", "financeiro", "tesouro123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
+        apiPassword = "tesouro123";
+      }
+    } else if (resolvedRole === "Secretaria") {
+      if (["secretaria", "secretaria123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
+        apiPassword = "secretaria123";
+      }
+    }
+
+    // 2. Tenta autenticar na API Laravel oficial em https://api.eclesiapro.com.br/api
     try {
-      const apiEmail =
-        cleanIdLower === "admin" || cleanIdLower === "admin@admin.com"
-          ? "admin@eclesiapro.com"
-          : cleanIdLower === "pastor"
-          ? "pastor@eclesiapro.com"
-          : cleanIdLower === "lider" || cleanIdLower === "líder"
-          ? "lider@eclesiapro.com"
-          : cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro"
-          ? "tesoureiro@eclesiapro.com"
-          : cleanIdLower === "secretaria"
-          ? "secretaria@eclesiapro.com"
-          : cleanId;
+      let res;
+      try {
+        res = await api.auth.login({ email: apiEmail, password: apiPassword });
+      } catch (loginErr: any) {
+        // Se a conta existe localmente e falhou por não existir no MySQL remoto, tenta registrar e autenticar
+        if (matchedAccount && (loginErr?.message?.includes("Credenciais") || loginErr?.message?.includes("invalid"))) {
+          try {
+            await api.auth.register({
+              name: matchedAccount.name,
+              email: matchedAccount.email,
+              password: apiPassword,
+            });
+            res = await api.auth.login({ email: apiEmail, password: apiPassword });
+          } catch {
+            throw loginErr;
+          }
+        } else {
+          throw loginErr;
+        }
+      }
 
-      const apiPassword =
-        (cleanIdLower === "admin" || cleanIdLower === "admin@eclesiapro.com") && cleanPass === "admin"
-          ? "admin123"
-          : cleanPass;
-
-      const res = await api.auth.login({ email: apiEmail, password: apiPassword });
       const token = res?.token || (res as any)?.access_token;
       if (res && token && res.user) {
         localStorage.setItem("ecclesia_token", token);
@@ -351,18 +426,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? "Secretaria"
           : "Administrador";
 
-        const role = (res.user.role || emailRole) as UserRole;
+        const role = (matchedAccount?.role || res.user.role || emailRole) as UserRole;
         const authPayload: AuthUser = {
           id: String(res.user.id),
-          memberId: res.user.member_id ? String(res.user.member_id) : undefined,
-          name: res.user.name || "Administrador",
+          memberId: res.user.member_id ? String(res.user.member_id) : matchedAccount?.memberId,
+          name: res.user.name || matchedAccount?.name || "Carlos Eduardo Lima",
           email: res.user.email || apiEmail,
-          cpf: res.user.cpf || "000.000.000-00",
+          cpf: matchedAccount?.cpf || res.user.cpf || "000.000.000-00",
           role,
-          cargo: res.user.cargo || ROLE_DEFINITIONS[role]?.label || role,
-          avatar: getInitials(res.user.name || "AD"),
-          cellId: res.user.cell_id ? String(res.user.cell_id) : undefined,
-          cellName: res.user.cell_name,
+          cargo: matchedAccount?.cargo || res.user.cargo || ROLE_DEFINITIONS[role]?.label || role,
+          avatar: getInitials(res.user.name || matchedAccount?.name || "CL"),
+          cellId: res.user.cell_id ? String(res.user.cell_id) : (role === "Líder" ? (matchedAccount?.cellId || "cel_1") : undefined),
+          cellName: res.user.cell_name || matchedAccount?.cellName || (role === "Líder" ? (matchedAccount?.cellName || "Monte Sião") : undefined),
         };
 
         setUser(authPayload);
@@ -376,57 +451,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true, user: authPayload };
       }
     } catch (e: any) {
-      console.warn("Autenticação via API remota falhou, verificando fallback:", e?.message);
+      console.warn("Autenticação via API remota falhou, verificando fallback offline:", e?.message);
     }
 
-    // 2. Busca nas contas cadastradas locais como fallback (modo offline)
-    const match = users.find((acc) => {
-      if (acc.status === "Inativo") return false;
-
-      const emailMatches =
-        acc.email.toLowerCase() === cleanIdLower ||
-        (cleanIdLower === "admin" && acc.role === "Administrador") ||
-        (cleanIdLower === "admin@admin.com" && acc.role === "Administrador") ||
-        (cleanIdLower === "pastor" && acc.role === "Pastor") ||
-        ((cleanIdLower === "lider" || cleanIdLower === "líder" || cleanIdLower === "celula") && acc.role === "Líder") ||
-        ((cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro") && acc.role === "Tesoureiro") ||
-        (cleanIdLower === "secretaria" && acc.role === "Secretaria");
-
-      const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
-      if (!emailMatches && !cpfMatches) return false;
-
-      const passMatchesCpf = cleanPass === acc.cpf || (cleanPassDigits.length >= 10 && cleanCPF(acc.cpf) === cleanPassDigits);
+    // 3. Fallback offline local
+    if (matchedAccount) {
+      const passMatchesCpf =
+        cleanPass === matchedAccount.cpf ||
+        (cleanPassDigits.length >= 10 && cleanCPF(matchedAccount.cpf) === cleanPassDigits);
 
       const passMatchesRole =
-        (acc.role === "Administrador" && ["admin123", "admin", "123456"].includes(cleanPass)) ||
-        (acc.role === "Pastor" && ["pastor123", "pastor", "123456"].includes(cleanPass)) ||
-        (acc.role === "Líder" && ["lider123", "lider", "líder", "123456"].includes(cleanPass)) ||
-        (acc.role === "Tesoureiro" && ["tesouro123", "tesoureiro", "financeiro", "123456"].includes(cleanPass)) ||
-        (acc.role === "Secretaria" && ["secretaria123", "secretaria", "123456"].includes(cleanPass));
+        (matchedAccount.role === "Administrador" && ["admin123", "admin", "123456"].includes(cleanPass.toLowerCase())) ||
+        (matchedAccount.role === "Pastor" && ["pastor123", "pastor", "123456"].includes(cleanPass.toLowerCase())) ||
+        (matchedAccount.role === "Líder" && ["lider123", "lider", "líder", "123456"].includes(cleanPass.toLowerCase())) ||
+        (matchedAccount.role === "Tesoureiro" && ["tesouro123", "tesoureiro", "financeiro", "123456"].includes(cleanPass.toLowerCase())) ||
+        (matchedAccount.role === "Secretaria" && ["secretaria123", "secretaria", "123456"].includes(cleanPass.toLowerCase()));
 
-      return passMatchesCpf || passMatchesRole;
-    });
+      if (passMatchesCpf || passMatchesRole) {
+        const authPayload: AuthUser = {
+          id: matchedAccount.id,
+          memberId: matchedAccount.memberId,
+          name: matchedAccount.name,
+          email: matchedAccount.email,
+          cpf: matchedAccount.cpf,
+          role: matchedAccount.role,
+          cargo: matchedAccount.cargo || ROLE_DEFINITIONS[matchedAccount.role]?.label || matchedAccount.role,
+          avatar: matchedAccount.avatar || getInitials(matchedAccount.name),
+          cellId: matchedAccount.cellId || (matchedAccount.role === "Líder" ? "cel_1" : undefined),
+          cellName: matchedAccount.cellName || (matchedAccount.role === "Líder" ? "Monte Sião" : undefined),
+        };
 
-    if (match) {
-      const authPayload: AuthUser = {
-        id: match.id,
-        memberId: match.memberId,
-        name: match.name,
-        email: match.email,
-        cpf: match.cpf,
-        role: match.role,
-        cargo: match.cargo || ROLE_DEFINITIONS[match.role]?.label || match.role,
-        avatar: match.avatar || getInitials(match.name),
-        cellId: match.cellId,
-        cellName: match.cellName,
-      };
-
-      setUser(authPayload);
-      const userPayloadStr = JSON.stringify(authPayload);
-      localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-      sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-      toast.success(`Bem-vindo, ${match.name}!`);
-      return { success: true, user: authPayload };
+        setUser(authPayload);
+        const userPayloadStr = JSON.stringify(authPayload);
+        localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
+        sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
+        toast.success(`Bem-vindo, ${matchedAccount.name}!`);
+        return { success: true, user: authPayload };
+      }
     }
 
     return {
@@ -503,6 +564,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updated = [newAccount, ...users];
     persistUsers(updated);
+
+    // Registra na API remota para permitir login a partir de qualquer dispositivo (mobile/celular)
+    api.auth
+      .register({
+        name: data.name.trim(),
+        email: cleanEmail,
+        password: cleanDigits || "123456",
+      })
+      .catch((err) => {
+        console.warn("Aviso ao registrar usuário na API remota:", err?.message);
+      });
+
     toast.success(`Usuário ${newAccount.name} criado com sucesso!`);
     return { success: true, user: newAccount };
   };

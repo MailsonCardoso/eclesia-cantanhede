@@ -131,19 +131,32 @@ function AreaEstudosPage() {
       const found = db.cells.find((c) => c.id === user.cellId);
       if (found) return found;
     }
-    // 2. Procura pelo nome do líder na lista de células
+    // 2. Procura pelo cellName explícito se existir
+    if (user.cellName) {
+      const cleanCellName = user.cellName.trim().toLowerCase();
+      const foundByCellName = db.cells.find(
+        (c) => (c.nome || "").toString().trim().toLowerCase() === cleanCellName
+      );
+      if (foundByCellName) return foundByCellName;
+    }
+    // 3. Procura pelo nome do líder na lista de células
     const cleanUserName = (user.name || "").trim().toLowerCase();
     const foundByName = db.cells.find(
       (c) => (c.lider || "").toString().trim().toLowerCase() === cleanUserName
     );
     if (foundByName) return foundByName;
 
-    // 3. Se for admin ou pastor e não houver célula própria, pega a primeira ativa como padrão para visualização
+    // 4. Se for líder e houver células, usa a primeira como célula padrão
+    if (isLeader && db.cells.length > 0) {
+      return db.cells[0];
+    }
+
+    // 5. Se for admin ou pastor e não houver célula própria, pega a primeira ativa como padrão para visualização
     if ((isAdmin || isPastor) && db.cells.length > 0) {
       return db.cells[0];
     }
     return null;
-  }, [user, db.cells, isAdmin, isPastor]);
+  }, [user, db.cells, isLeader, isAdmin, isPastor]);
 
   // Filtro de célula (para Administrador e Pastor poderem alternar entre células)
   const [selectedCellFilter, setSelectedCellFilter] = useState<string>("todas");
@@ -197,7 +210,15 @@ function AreaEstudosPage() {
   // Se for admin ou pastor, tem visão global e pode filtrar por célula ou ver gerais
   const cellFilteredStudies = useMemo(() => {
     if (isLeader) {
-      if (!userCell) return [];
+      if (!userCell) {
+        return allStudies.filter(
+          (s) =>
+            s.cell_id === "todas" ||
+            (s.leader_name &&
+              user?.name &&
+              s.leader_name.toLowerCase() === user.name.toLowerCase())
+        );
+      }
       return allStudies.filter(
         (s) =>
           s.cell_id === "todas" ||
