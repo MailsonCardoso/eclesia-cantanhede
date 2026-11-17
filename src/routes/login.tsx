@@ -83,17 +83,17 @@ function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-background overflow-hidden selection:bg-primary/20">
+    <div className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-background overflow-x-hidden selection:bg-primary/20">
       {/* Elementos Decorativos de Fundo */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] pointer-events-none" />
-      <div className="absolute top-1/4 -left-28 size-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-28 size-96 rounded-full bg-chart-2/10 blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.18),rgba(255,255,255,0))] pointer-events-none" />
+      <div className="absolute top-1/4 -left-28 size-80 sm:size-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-28 size-80 sm:size-96 rounded-full bg-chart-2/10 blur-3xl pointer-events-none" />
 
-      <div className="relative w-full max-w-md space-y-6 z-10 animate-rise">
-        {/* Logotipo e Cabeçalho */}
-        <div className="text-center space-y-2">
-          <div className="inline-grid size-14 place-items-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-xl ring-8 ring-primary/10 mb-2">
-            <Church className="size-7" />
+      <div className="relative w-full max-w-sm sm:max-w-md my-auto space-y-4 sm:space-y-6 z-10 animate-rise">
+        {/* Logotipo e Cabeçalho Compacto e Elegante */}
+        <div className="text-center space-y-1 sm:space-y-2">
+          <div className="inline-grid size-12 sm:size-14 place-items-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-xl ring-4 ring-primary/15 mb-1 sm:mb-2">
+            <Church className="size-6 sm:size-7" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-display">
             EclesiaPro
@@ -103,16 +103,16 @@ function LoginPage() {
           </p>
         </div>
 
-        {/* Card do Formulário de Login */}
-        <div className="rounded-3xl border bg-card p-6 sm:p-8 shadow-card gradient-top relative backdrop-blur-sm">
-          <div className="space-y-1 mb-6 text-center sm:text-left">
-            <h2 className="text-lg font-bold text-foreground">Acesso ao Painel</h2>
+        {/* Card do Formulário de Login no Estilo App */}
+        <div className="rounded-3xl border border-border/80 bg-card/95 sm:bg-card p-5 sm:p-7 shadow-2xl gradient-top relative backdrop-blur-md">
+          <div className="space-y-1 mb-4 sm:mb-5 text-center">
+            <h2 className="text-base sm:text-lg font-bold text-foreground">Acesso ao Painel</h2>
             <p className="text-xs text-muted-foreground">
-              Insira seu e-mail e senha cadastrados para entrar no sistema.
+              Insira suas credenciais para entrar no sistema
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
             {errorMessage && (
               <div className="p-3 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs font-medium animate-in fade-in-50">
                 {errorMessage}
@@ -129,10 +129,10 @@ function LoginPage() {
                   id="email"
                   type="text"
                   required
-                  placeholder="seu.email@eclesiapro.com ou 000.000.000-00"
+                  placeholder="Digite seu e-mail ou CPF"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 rounded-xl shadow-sm h-11 text-sm"
+                  className="pl-10 rounded-xl shadow-sm h-11 text-sm bg-background/50 focus:bg-background transition-colors"
                   autoComplete="username"
                   autoFocus
                 />
@@ -142,7 +142,7 @@ function LoginPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-xs font-semibold">
-                  Senha de Acesso (CPF)
+                  Senha de Acesso
                 </Label>
               </div>
               <div className="relative">
@@ -151,10 +151,10 @@ function LoginPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder="Digite seu CPF cadastrado"
+                  placeholder="Digite sua senha de acesso"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 rounded-xl shadow-sm h-11 text-sm"
+                  className="pl-10 pr-10 rounded-xl shadow-sm h-11 text-sm bg-background/50 focus:bg-background transition-colors"
                   autoComplete="current-password"
                 />
                 <button
@@ -168,7 +168,7 @@ function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs pt-1">
+            <div className="flex items-center justify-between text-xs pt-0.5">
               <label className="flex items-center gap-2 cursor-pointer select-none text-muted-foreground hover:text-foreground">
                 <input
                   type="checkbox"
@@ -184,7 +184,7 @@ function LoginPage() {
               type="submit"
               variant="premium"
               disabled={loading}
-              className="w-full h-11 rounded-xl text-sm font-semibold gap-2 mt-2 shadow-md hover:shadow-lg transition-all"
+              className="w-full h-11 sm:h-12 rounded-xl text-sm font-semibold gap-2 mt-2 shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
             >
               {loading ? (
                 <span>Validando acesso...</span>
@@ -200,7 +200,7 @@ function LoginPage() {
         </div>
 
         {/* Rodapé Seguro de Produção */}
-        <div className="text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+        <div className="text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 pb-2">
           <ShieldCheck className="size-3.5 text-muted-foreground/80" />
           <span>Ambiente institucional protegido &bull; EclesiaPro &copy; {new Date().getFullYear()}</span>
         </div>

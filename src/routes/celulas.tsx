@@ -639,13 +639,12 @@ function Celulas() {
                   {/* Barra de Progresso da Meta */}
                   <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        cell.taxaMeta >= 100
+                      className={`h-full rounded-full transition-all duration-500 ${cell.taxaMeta >= 100
                           ? "bg-emerald-500"
                           : cell.taxaMeta >= 60
-                          ? "bg-primary"
-                          : "bg-amber-500"
-                      }`}
+                            ? "bg-primary"
+                            : "bg-amber-500"
+                        }`}
                       style={{ width: `${Math.min(cell.taxaMeta, 100)}%` }}
                     />
                   </div>
