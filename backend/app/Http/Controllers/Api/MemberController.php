@@ -62,6 +62,7 @@ class MemberController extends BaseApiController
             'situacao' => ['nullable', 'string', 'max:50'],
             'congregacao' => ['nullable', 'string', 'max:255'],
             'departamento' => ['nullable', 'string', 'max:255'],
+            'celula' => ['nullable', 'string', 'max:255'],
             'cargo' => ['nullable', 'string', 'max:255'],
             'conjuge' => ['nullable', 'string', 'max:255'],
             'pai' => ['nullable', 'string', 'max:255'],
@@ -87,6 +88,17 @@ class MemberController extends BaseApiController
 
         if (isset($validated['estadoCivil']) && !isset($validated['estado_civil'])) {
             $validated['estado_civil'] = $validated['estadoCivil'];
+        }
+
+        if (!empty($validated['celula']) && empty($validated['cell_id'])) {
+            $foundCell = \Illuminate\Support\Facades\DB::table('cells')->where('nome', $validated['celula'])->first();
+            if ($foundCell) {
+                $validated['cell_id'] = $foundCell->id;
+            }
+        }
+        if (isset($validated['celula']) && ($validated['celula'] === 'Não participa de célula' || $validated['celula'] === '__none')) {
+            $validated['celula'] = null;
+            $validated['cell_id'] = null;
         }
 
         $member = Member::create($validated);
@@ -121,6 +133,7 @@ class MemberController extends BaseApiController
             'situacao' => ['nullable', 'string', 'max:50'],
             'congregacao' => ['nullable', 'string', 'max:255'],
             'departamento' => ['nullable', 'string', 'max:255'],
+            'celula' => ['nullable', 'string', 'max:255'],
             'cargo' => ['nullable', 'string', 'max:255'],
             'conjuge' => ['nullable', 'string', 'max:255'],
             'pai' => ['nullable', 'string', 'max:255'],
@@ -146,6 +159,17 @@ class MemberController extends BaseApiController
 
         if (isset($validated['estadoCivil']) && !isset($validated['estado_civil'])) {
             $validated['estado_civil'] = $validated['estadoCivil'];
+        }
+
+        if (!empty($validated['celula']) && empty($validated['cell_id'])) {
+            $foundCell = \Illuminate\Support\Facades\DB::table('cells')->where('nome', $validated['celula'])->first();
+            if ($foundCell) {
+                $validated['cell_id'] = $foundCell->id;
+            }
+        }
+        if (isset($validated['celula']) && ($validated['celula'] === 'Não participa de célula' || $validated['celula'] === '__none')) {
+            $validated['celula'] = null;
+            $validated['cell_id'] = null;
         }
 
         $member->update($validated);

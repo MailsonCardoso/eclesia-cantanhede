@@ -444,6 +444,7 @@ function Membros() {
     congregacao: "Batista Corpo e Família",
     departamento: "",
     celula: "",
+    cell_id: undefined as string | undefined,
     cargo: "Sem função / cargo",
     conjuge: "",
     pai: "",
@@ -571,6 +572,7 @@ function Membros() {
       congregacao: String(member.congregacao || ""),
       departamento: String(member.departamento || ""),
       celula: String(member.celula || ""),
+      cell_id: member.cell_id ? String(member.cell_id) : undefined,
       cargo: String(member.cargo || "Sem função / cargo"),
       conjuge: String(member.conjuge || ""),
       pai: String(member.pai || ""),
@@ -1029,7 +1031,15 @@ function Membros() {
                   </Label>
                   <Select
                     value={form.celula || "__none"}
-                    onValueChange={(v) => setForm((s) => ({ ...s, celula: v === "__none" ? "" : v }))}
+                    onValueChange={(v) => {
+                      const celName = v === "__none" ? "" : v;
+                      const matched = (db.cells || []).find((c) => String(c.nome) === celName);
+                      setForm((s) => ({
+                        ...s,
+                        celula: celName,
+                        cell_id: matched ? String(matched.id) : undefined,
+                      }));
+                    }}
                   >
                     <SelectTrigger id="celula" className="rounded-xl">
                       <SelectValue placeholder="Selecione a célula" />

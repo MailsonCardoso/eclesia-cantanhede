@@ -30,6 +30,7 @@ class Member extends Model
         'situacao',
         'congregacao',
         'departamento',
+        'celula',
         'cargo',
         'conjuge',
         'pai',

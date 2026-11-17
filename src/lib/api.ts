@@ -7,6 +7,7 @@ const COLLECTION_ENDPOINTS: Partial<Record<Collection, string>> = {
   members: "/members",
   congregations: "/congregations",
   departments: "/departments",
+  cells: "/cells",
   transactions: "/transactions",
   contributions: "/contributions",
   events: "/events",

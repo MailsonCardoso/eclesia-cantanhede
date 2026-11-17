@@ -941,6 +941,15 @@ export function emptyDB(): DB {
 const KEY = "ecclesia-db-v7";
 
 export function mapMemberFromApi(m: any): Row {
+  const rawCell = m.celula || (m.cell?.nome ? String(m.cell.nome) : "");
+  const rawCellId = m.cell_id ? String(m.cell_id) : undefined;
+  const resolvedCelula =
+    rawCell && rawCell !== "__none" && !/^\d+$/.test(rawCell)
+      ? rawCell
+      : rawCellId === "1"
+      ? "Célula Ágape"
+      : rawCell || "";
+
   return {
     id: String(m.id),
     nome: m.nome ?? m.name ?? "",
@@ -966,8 +975,8 @@ export function mapMemberFromApi(m: any): Row {
     role: m.role ?? m.cargo ?? "Sem função / cargo",
     congregacao: m.congregacao || DEFAULT_CONGREGATION,
     departamento: m.departamento ?? "",
-    celula: m.celula ?? (m.cell_id ? String(m.cell_id) : ""),
-    cell_id: m.cell_id ? String(m.cell_id) : undefined,
+    celula: resolvedCelula,
+    cell_id: rawCellId,
     situacao: m.situacao ?? (m.status === "membro" || m.status === "ativo" ? "Ativo" : "Ativo"),
     status: m.status ?? m.situacao ?? "Ativo",
     tipo: m.tipo ?? (m.category === "membro" ? "Membro" : "Membro"),
@@ -1003,13 +1012,14 @@ export function mapMemberToApi(row: Row): any {
     situacao: row.situacao || "Ativo",
     congregacao: row.congregacao || DEFAULT_CONGREGATION,
     departamento: row.departamento || null,
+    celula: row.celula && row.celula !== "Não participa de célula" && row.celula !== "__none" ? row.celula : null,
     cargo: row.cargo || row.role || "Sem função / cargo",
     conjuge: row.conjuge || null,
     pai: row.pai || null,
     mae: row.mae || null,
     filhos: row.filhos || null,
     observacoes: row.observacoes || null,
-    cell_id: row.cell_id ? Number(row.cell_id) : null,
+    cell_id: row.cell_id ? Number(row.cell_id) : (row.celula === "Célula Ágape" ? 1 : null),
   };
 }
 
@@ -1160,8 +1170,35 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (remoteState && typeof remoteState === "object") {
         setDb((prev) => {
           const next = { ...prev };
+          const currentCells =
+            Array.isArray(remoteState.cells) && remoteState.cells.length > 0
+              ? remoteState.cells
+              : (prev.cells && prev.cells.length > 0
+                  ? prev.cells
+                  : [
+                      { id: "1", nome: "Célula Ágape", congregacao: DEFAULT_CONGREGATION, lider: "Mailson Costa Cardoso", situacao: "Ativa" },
+                    ]);
+          next.cells = currentCells;
+
           if (Array.isArray(remoteState.members)) {
-            next.members = remoteState.members.map(mapMemberFromApi);
+            next.members = remoteState.members.map((m: any) => {
+              const mapped = mapMemberFromApi(m);
+              if ((!mapped.celula || mapped.celula === "__none" || mapped.celula === "Não participa de célula" || /^\d+$/.test(mapped.celula)) && mapped.cell_id) {
+                const foundCell = currentCells.find((c: any) => String(c.id) === String(mapped.cell_id));
+                if (foundCell) {
+                  mapped.celula = String(foundCell.nome);
+                } else if (String(mapped.cell_id) === "1") {
+                  mapped.celula = "Célula Ágape";
+                }
+              }
+              if (mapped.celula && !mapped.cell_id && currentCells.length > 0) {
+                const foundCell = currentCells.find((c: any) => String(c.nome).trim().toLowerCase() === String(mapped.celula).trim().toLowerCase());
+                if (foundCell) {
+                  mapped.cell_id = String(foundCell.id);
+                }
+              }
+              return mapped;
+            });
           }
           if (Array.isArray(remoteState.congregations) && remoteState.congregations.length > 0) {
             next.congregations = remoteState.congregations;

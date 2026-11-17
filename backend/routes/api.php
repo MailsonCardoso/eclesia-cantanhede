@@ -61,11 +61,43 @@ Route::get('/inventory-summary', [InventoryController::class, 'summary']);
 Route::apiResource('members', MemberController::class);
 Route::apiResource('congregations', CongregationController::class);
 Route::apiResource('departments', DepartmentController::class);
+Route::get('cells', function () {
+    return response()->json(\Illuminate\Support\Facades\DB::table('cells')->orderBy('nome')->get());
+});
+Route::post('cells', function (Request $request) {
+    $data = $request->only(['nome', 'lider', 'anfitriao', 'endereco', 'dia', 'hora', 'congregacao', 'participantes', 'situacao', 'observacoes']);
+    $data['created_at'] = now();
+    $data['updated_at'] = now();
+    $id = \Illuminate\Support\Facades\DB::table('cells')->insertGetId($data);
+    return response()->json(array_merge(['id' => $id], $data), 201);
+});
+Route::put('cells/{id}', function (Request $request, $id) {
+    $data = $request->only(['nome', 'lider', 'anfitriao', 'endereco', 'dia', 'hora', 'congregacao', 'participantes', 'situacao', 'observacoes']);
+    $data['updated_at'] = now();
+    \Illuminate\Support\Facades\DB::table('cells')->where('id', $id)->update($data);
+    return response()->json(\Illuminate\Support\Facades\DB::table('cells')->where('id', $id)->first());
+});
+Route::delete('cells/{id}', function ($id) {
+    \Illuminate\Support\Facades\DB::table('cells')->where('id', $id)->delete();
+    return response()->json(['message' => 'Célula removida com sucesso.']);
+});
 Route::apiResource('transactions', TransactionController::class);
 Route::apiResource('contributions', ContributionController::class);
 Route::apiResource('events', EventController::class);
 Route::apiResource('appointments', AppointmentController::class);
 Route::apiResource('inventory', InventoryController::class);
+Route::get('users', function () {
+    return response()->json(\App\Models\User::orderBy('name')->get());
+});
+Route::put('users/{id}', function (Request $request, $id) {
+    $user = \App\Models\User::find($id);
+    if (!$user) {
+        return response()->json(['message' => 'Usuário não encontrado.'], 404);
+    }
+    $data = $request->only(['name', 'email', 'role', 'cargo', 'cpf', 'cell_name']);
+    $user->update($data);
+    return response()->json($user);
+});
 Route::get('audit-logs', [AuditLogController::class, 'index']);
 
 // Gabinete & Conteúdo Pastoral
@@ -98,6 +130,7 @@ Route::get('/db-state', function () {
         'members' => Member::with(['father', 'mother', 'spouse'])->orderBy('nome')->get(),
         'congregations' => Congregation::orderBy('nome')->get(),
         'departments' => Department::orderBy('nome')->get(),
+        'cells' => \Illuminate\Support\Facades\DB::table('cells')->orderBy('nome')->get(),
         'transactions' => Transaction::orderBy('data', 'desc')->get(),
         'contributions' => Contribution::orderBy('data', 'desc')->get(),
         'events' => Event::orderBy('data', 'desc')->get(),

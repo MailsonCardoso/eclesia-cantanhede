@@ -645,6 +645,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updatedList[index] = updatedAccount;
     persistUsers(updatedList);
 
+    // Persiste atualização no backend REST para garantir sincronização entre celular e web
+    const token = localStorage.getItem("ecclesia_token") || sessionStorage.getItem("ecclesia_token");
+    if (token) {
+      const cleanId = id.replace(/^usr_/, "");
+      fetch(`https://api.eclesiapro.com.br/api/users/${cleanId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: updatedAccount.name,
+          email: updatedAccount.email,
+          role: updatedAccount.role,
+          cargo: updatedAccount.cargo,
+          cpf: updatedAccount.cpf,
+          cell_name: updatedAccount.cellName,
+        }),
+      }).catch((err) => console.warn("Aviso ao sincronizar usuário na API:", err?.message));
+    }
+
     // Se o usuário atualizou os próprios dados, sincroniza a sessão ativa
     if (user && user.id === id) {
       const refreshedAuth: AuthUser = {
