@@ -35,6 +35,35 @@ export const Route = createFileRoute("/contribuicoes")({
 });
 
 /**
+ * Formata o número do recibo de forma profissional.
+ * Ex: ID 1 -> "0001", ID 15 -> "0015", IDs alfanuméricos -> últimos 6 caracteres maiúsculos.
+ */
+function formatReceiptNumber(id: string | number | undefined): string {
+  if (!id) return "0001";
+  const str = String(id).trim();
+  if (/^\d+$/.test(str)) {
+    return str.padStart(4, "0");
+  }
+  return str.slice(-6).toUpperCase();
+}
+
+/**
+ * Gera um nome de arquivo limpo e padronizado com o nome do contribuinte e número do recibo.
+ * Ex: "Recibo-Mailson-Costa-Cardoso-0001.pdf"
+ */
+function getReceiptFileName(row: Row, ext: "png" | "pdf"): string {
+  const rawName = String(row.membro || "Anonimo").trim();
+  const safeName = rawName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]/g, " ")
+    .trim()
+    .replace(/\s+/g, "-");
+  const num = formatReceiptNumber(row.id);
+  return `Recibo-${safeName || "Contribuinte"}-${num}.${ext}`;
+}
+
+/**
  * Desenha o comprovante diretamente no Canvas 2D em altíssima definição (300 DPI).
  * 100% nativo no navegador, sem biblioteca externa de CSS (imune a erros de oklch) e ultra nítido.
  */
@@ -102,7 +131,7 @@ function drawReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = "13px system-ui, -apple-system, sans-serif";
-  const recNum = `#REC-${String(r.id || "1").slice(-6).toUpperCase()}`;
+  const recNum = `#REC-${formatReceiptNumber(r.id)}`;
   ctx.fillText(`${recNum} · Emissão ${new Date().toLocaleDateString("pt-BR")}`, 96, 74);
 
   // Badge Oficial
@@ -221,12 +250,13 @@ function printReceiptDirect(r: Row, cnpj: string) {
     toast.error("Não foi possível abrir a janela de impressão.");
     return;
   }
+  const recNum = `#REC-${formatReceiptNumber(r.id)}`;
   printWindow.document.write(`
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
       <meta charset="utf-8" />
-      <title>Recibo - #${r.id}</title>
+      <title>Recibo - ${recNum}</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; background: #fff; color: #0f172a; max-width: 480px; margin: 0 auto; }
         .receipt-card { border: 2px solid #0f172a; border-radius: 18px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
@@ -255,7 +285,7 @@ function printReceiptDirect(r: Row, cnpj: string) {
           </div>
           <div class="num">
             <span class="badge">OFICIAL</span>
-            <div style="margin-top: 4px;">#REC-${String(r.id).slice(-6).toUpperCase()}</div>
+            <div style="margin-top: 4px;">${recNum}</div>
             <div style="font-size: 9.5px; font-weight: normal;">${new Date().toLocaleDateString("pt-BR")}</div>
           </div>
         </div>
@@ -329,11 +359,12 @@ function ReceiptModal({
   const handleDownloadImage = () => {
     try {
       const canvas = drawReceiptToCanvas(row, churchCnpj);
+      const fileName = getReceiptFileName(row, "png");
       const link = document.createElement("a");
-      link.download = `comprovante-${row.id || "recibo"}.png`;
+      link.download = fileName;
       link.href = canvas.toDataURL("image/png");
       link.click();
-      toast.success("Imagem oficial baixada em alta resolução!");
+      toast.success(`Imagem oficial (${fileName}) baixada em alta resolução!`);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao gerar imagem do comprovante.");
@@ -366,8 +397,9 @@ function ReceiptModal({
       doc.rect(0, 0, pageWidth, pageHeight, "F");
 
       doc.addImage(imgData, "PNG", margin, posY, targetWidth, targetHeight, undefined, "FAST");
-      doc.save(`recibo-${row.id || "contribuicao"}.pdf`);
-      toast.success("PDF oficial gerado e baixado com sucesso!");
+      const fileName = getReceiptFileName(row, "pdf");
+      doc.save(fileName);
+      toast.success(`PDF oficial (${fileName}) gerado com sucesso!`);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao gerar PDF do comprovante.");
@@ -386,9 +418,10 @@ function ReceiptModal({
         targetPhone = `55${targetPhone}`;
       }
 
+      const recNum = `#REC-${formatReceiptNumber(row.id)}`;
       const messageText = [
         `*RECIBO OFICIAL DE CONTRIBUIÇÃO - ECLESIAPRO*`,
-        `📄 *Nº:* #REC-${String(row.id).slice(-6).toUpperCase()}`,
+        `📄 *Nº:* ${recNum}`,
         `👤 *Contribuinte:* ${row.membro || "Anônimo"}`,
         `🏷️ *Tipo:* ${row.tipo || "Dízimo"}`,
         `💰 *Valor:* ${brl(Number(row.valor || 0))}`,
@@ -408,7 +441,7 @@ function ReceiptModal({
 
       if (!blob) throw new Error("Falha ao gerar arquivo de imagem.");
 
-      const fileName = `comprovante-${row.id || "recibo"}.png`;
+      const fileName = getReceiptFileName(row, "png");
       const file = new File([blob], fileName, { type: "image/png" });
 
       // 1. No Celular: Web Share API (Android e iOS) permite anexar a imagem direto no WhatsApp!
@@ -481,7 +514,7 @@ function ReceiptModal({
               Recibo de Contribuição
             </DialogTitle>
             <DialogDescription className="text-[11px] text-[#94a3b8] mt-0.5">
-              Nº #REC-{String(row.id).slice(-6).toUpperCase()} &middot; Emissão {new Date().toLocaleDateString("pt-BR")}
+              Nº #REC-{formatReceiptNumber(row.id)} &middot; Emissão {new Date().toLocaleDateString("pt-BR")}
             </DialogDescription>
           </div>
         </DialogHeader>
