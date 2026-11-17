@@ -938,7 +938,7 @@ export function emptyDB(): DB {
   };
 }
 
-const KEY = "ecclesia-db-v6";
+const KEY = "ecclesia-db-v7";
 
 export function mapMemberFromApi(m: any): Row {
   return {
@@ -1210,6 +1210,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Limpa versões anteriores de cache com mock para garantir teste limpo
     try {
+      localStorage.removeItem("ecclesia-db-v6");
       localStorage.removeItem("ecclesia-db-v5");
       localStorage.removeItem("ecclesia-db-v4");
       localStorage.removeItem("ecclesia-db-v3");

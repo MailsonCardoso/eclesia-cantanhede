@@ -135,49 +135,17 @@ export const INITIAL_ACCOUNTS: UserAccount[] = [
     createdAt: "2026-01-01T08:00:00Z",
   },
   {
-    id: "usr_pastor",
-    name: "Pastor Elias Martins",
-    email: "pastor@eclesiapro.com",
-    cpf: "103.203.303-33",
-    role: "Pastor",
-    cargo: "Pastor Presidente",
-    avatar: "EM",
-    status: "Ativo",
-    createdAt: "2026-01-01T08:00:00Z",
-  },
-  {
-    id: "usr_lider",
-    name: "Carlos Eduardo Lima",
-    email: "lider@eclesiapro.com",
-    cpf: "101.201.301-11",
+    id: "usr_mailson",
+    memberId: "2",
+    name: "Mailson Costa Cardoso",
+    email: "mailsonccardoso@gmail.com",
+    cpf: "019.358.063-27",
     role: "Líder",
     cargo: "Líder de Célula",
-    cellName: "Monte Sião",
-    avatar: "CL",
+    cellName: "Célula Ágape",
+    avatar: "MC",
     status: "Ativo",
-    createdAt: "2026-01-01T08:00:00Z",
-  },
-  {
-    id: "usr_financeiro",
-    name: "Marcos Vinícius Rocha",
-    email: "tesoureiro@eclesiapro.com",
-    cpf: "105.205.305-55",
-    role: "Tesoureiro",
-    cargo: "Primeiro Tesoureiro",
-    avatar: "MR",
-    status: "Ativo",
-    createdAt: "2026-01-01T08:00:00Z",
-  },
-  {
-    id: "usr_secretaria",
-    name: "Débora Ferreira",
-    email: "secretaria@eclesiapro.com",
-    cpf: "104.204.304-44",
-    role: "Secretaria",
-    cargo: "Secretária Executiva",
-    avatar: "DF",
-    status: "Ativo",
-    createdAt: "2026-01-01T08:00:00Z",
+    createdAt: "2026-11-17T00:56:48Z",
   },
 ];
 
@@ -227,7 +195,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const AUTH_STORAGE_KEY = "eclesiapro_auth_session";
-const USERS_STORAGE_KEY = "eclesiapro_users_master_v1";
+const USERS_STORAGE_KEY = "eclesiapro_users_master_v3";
+
+const FICTITIOUS_NAMES = [
+  "carlos eduardo lima",
+  "pastor elias martins",
+  "elias martins",
+  "marcos vinícius rocha",
+  "marcos vinicius rocha",
+  "débora ferreira",
+  "debora ferreira",
+];
+
+const FICTITIOUS_EMAILS = [
+  "pastor@eclesiapro.com",
+  "lider@eclesiapro.com",
+  "tesoureiro@eclesiapro.com",
+  "secretaria@eclesiapro.com",
+];
+
+const FICTITIOUS_IDS = new Set(["usr_pastor", "usr_lider", "usr_financeiro", "usr_secretaria"]);
 
 function getStoredSession(): AuthUser | null {
   if (typeof window === "undefined") return null;
@@ -236,6 +223,14 @@ function getStoredSession(): AuthUser | null {
     if (storedSession) {
       const parsedSession = JSON.parse(storedSession);
       if (parsedSession && (parsedSession.email || parsedSession.cpf)) {
+        // Se a sessão salva for de algum usuário fictício antigo, descarta
+        const nameLower = (parsedSession.name || "").trim().toLowerCase();
+        const emailLower = (parsedSession.email || "").trim().toLowerCase();
+        if (FICTITIOUS_NAMES.includes(nameLower) || FICTITIOUS_EMAILS.includes(emailLower)) {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          sessionStorage.removeItem(AUTH_STORAGE_KEY);
+          return null;
+        }
         return parsedSession;
       }
     }
@@ -250,22 +245,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_ACCOUNTS);
   const [isLoading, setIsLoading] = useState(() => (typeof window === "undefined" ? true : false));
 
-  // Carrega lista de usuários e sincroniza sessão salva
+  // Carrega lista de usuários e sincroniza sessão salva, expurgando usuários fictícios
   useEffect(() => {
     try {
-      // Remove listas antigas de demonstração para garantir somente o Administrador
+      // Remove todas as listas antigas de demonstração
       localStorage.removeItem("eclesiapro_users");
       localStorage.removeItem("eclesiapro_users_list_v2");
+      localStorage.removeItem("eclesiapro_users_master_v1");
+      localStorage.removeItem("eclesiapro_users_master_v2");
 
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
       if (storedUsers) {
         const parsed = JSON.parse(storedUsers);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Garante que todas as contas mestre padrão sempre estejam presentes para acesso em qualquer dispositivo
-          const existingIds = new Set(parsed.map((p) => p.id));
+          // Filtra completamente quaisquer usuários fictícios remanescentes
+          const cleanParsed = parsed.filter(
+            (p) =>
+              !FICTITIOUS_IDS.has(p.id) &&
+              !FICTITIOUS_NAMES.includes((p.name || "").trim().toLowerCase()) &&
+              !FICTITIOUS_EMAILS.includes((p.email || "").trim().toLowerCase())
+          );
+
+          const existingIds = new Set(cleanParsed.map((p) => p.id));
+          const existingEmails = new Set(cleanParsed.map((p) => (p.email || "").toLowerCase()));
           const merged = [
-            ...parsed,
-            ...INITIAL_ACCOUNTS.filter((acc) => !existingIds.has(acc.id)),
+            ...cleanParsed,
+            ...INITIAL_ACCOUNTS.filter(
+              (acc) => !existingIds.has(acc.id) && !existingEmails.has(acc.email.toLowerCase())
+            ),
           ];
           setUsers(merged);
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(merged));
@@ -292,9 +299,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const persistUsers = (newUsers: UserAccount[]) => {
-    setUsers(newUsers);
+    // Garante que nenhum usuário fictício seja persistido
+    const cleaned = newUsers.filter(
+      (p) =>
+        !FICTITIOUS_IDS.has(p.id) &&
+        !FICTITIOUS_NAMES.includes((p.name || "").trim().toLowerCase()) &&
+        !FICTITIOUS_EMAILS.includes((p.email || "").trim().toLowerCase())
+    );
+    setUsers(cleaned);
     try {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(newUsers));
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(cleaned));
     } catch (e) {
       console.error("Erro ao salvar lista de usuários:", e);
     }
@@ -323,68 +337,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         acc.email.toLowerCase() === cleanIdLower ||
         (cleanIdLower === "admin" && acc.role === "Administrador") ||
         (cleanIdLower === "admin@admin.com" && acc.role === "Administrador") ||
-        (cleanIdLower === "pastor" && acc.role === "Pastor") ||
-        ((cleanIdLower === "lider" || cleanIdLower === "líder" || cleanIdLower === "celula") && acc.role === "Líder") ||
-        ((cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro") && acc.role === "Tesoureiro") ||
-        (cleanIdLower === "secretaria" && acc.role === "Secretaria");
+        ((cleanIdLower === "mailson" || cleanIdLower === "lider" || cleanIdLower === "líder") &&
+          (acc.email === "mailsonccardoso@gmail.com" || acc.role === "Líder"));
 
       const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
       return emailMatches || cpfMatches;
     });
 
-    // 1. Resolução inteligente de e-mail e senha para envio à API Laravel
+    // 1. Resolução inteligente de e-mail e senha para envio à API Laravel oficial
     let apiEmail = matchedAccount ? matchedAccount.email : cleanId;
     if (cleanIdLower === "admin" || cleanIdLower === "admin@admin.com") {
       apiEmail = "admin@eclesiapro.com";
-    } else if (cleanIdLower === "pastor") {
-      apiEmail = "pastor@eclesiapro.com";
-    } else if (cleanIdLower === "lider" || cleanIdLower === "líder" || cleanIdLower === "celula") {
-      apiEmail = "lider@eclesiapro.com";
-    } else if (cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro") {
-      apiEmail = "tesoureiro@eclesiapro.com";
-    } else if (cleanIdLower === "secretaria") {
-      apiEmail = "secretaria@eclesiapro.com";
+    } else if (
+      cleanIdLower === "mailson" ||
+      cleanIdLower === "lider" ||
+      cleanIdLower === "líder" ||
+      cleanIdDigits === "01935806327"
+    ) {
+      apiEmail = "mailsonccardoso@gmail.com";
     }
 
     let apiPassword = cleanPass;
-    const resolvedRole = matchedAccount?.role || (
-      apiEmail.includes("pastor")
-        ? "Pastor"
-        : apiEmail.includes("lider")
-        ? "Líder"
-        : apiEmail.includes("tesour")
-        ? "Tesoureiro"
-        : apiEmail.includes("secretaria")
-        ? "Secretaria"
-        : apiEmail.includes("admin")
-        ? "Administrador"
-        : undefined
-    );
+    const resolvedRole =
+      matchedAccount?.role || (apiEmail === "mailsonccardoso@gmail.com" ? "Líder" : undefined);
 
-    const isCpfPass = matchedAccount && (
-      cleanPass === matchedAccount.cpf ||
-      (cleanPassDigits.length >= 10 && cleanCPF(matchedAccount.cpf) === cleanPassDigits)
-    );
+    const isCpfPass =
+      (matchedAccount &&
+        (cleanPass === matchedAccount.cpf ||
+          (cleanPassDigits.length >= 10 && cleanCPF(matchedAccount.cpf) === cleanPassDigits))) ||
+      cleanPassDigits === "01935806327" ||
+      cleanPass === "019.358.063-27";
 
-    if (resolvedRole === "Líder") {
-      if (["lider", "líder", "123456", "lider123"].includes(cleanPass.toLowerCase()) || isCpfPass) {
-        apiPassword = "lider123";
+    if (apiEmail === "mailsonccardoso@gmail.com" || resolvedRole === "Líder") {
+      // Para o líder Mailson Costa Cardoso, aceita seu CPF ou atalhos
+      if (
+        isCpfPass ||
+        ["lider", "líder", "123456", "lider123", "password123", "mailson"].includes(cleanPass.toLowerCase())
+      ) {
+        apiPassword = "01935806327";
       }
-    } else if (resolvedRole === "Administrador") {
+    } else if (apiEmail === "admin@eclesiapro.com" || resolvedRole === "Administrador") {
       if (["admin", "admin123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
         apiPassword = "admin123";
-      }
-    } else if (resolvedRole === "Pastor") {
-      if (["pastor", "pastor123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
-        apiPassword = "pastor123";
-      }
-    } else if (resolvedRole === "Tesoureiro") {
-      if (["tesoureiro", "financeiro", "tesouro123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
-        apiPassword = "tesouro123";
-      }
-    } else if (resolvedRole === "Secretaria") {
-      if (["secretaria", "secretaria123", "123456"].includes(cleanPass.toLowerCase()) || isCpfPass) {
-        apiPassword = "secretaria123";
       }
     }
 
@@ -416,29 +410,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("ecclesia_token", token);
         sessionStorage.setItem("ecclesia_token", token);
 
-        const emailRole = res.user.email?.includes("pastor")
-          ? "Pastor"
-          : res.user.email?.includes("lider")
-          ? "Líder"
-          : res.user.email?.includes("tesour")
-          ? "Tesoureiro"
-          : res.user.email?.includes("secretaria")
-          ? "Secretaria"
-          : "Administrador";
+        const isMailson =
+          res.user.email === "mailsonccardoso@gmail.com" ||
+          (res.user.name && res.user.name.toLowerCase().includes("mailson"));
 
-        const role = (matchedAccount?.role || res.user.role || emailRole) as UserRole;
-        const authPayload: AuthUser = {
-          id: String(res.user.id),
-          memberId: res.user.member_id ? String(res.user.member_id) : matchedAccount?.memberId,
-          name: res.user.name || matchedAccount?.name || "Carlos Eduardo Lima",
-          email: res.user.email || apiEmail,
-          cpf: matchedAccount?.cpf || res.user.cpf || "000.000.000-00",
-          role,
-          cargo: matchedAccount?.cargo || res.user.cargo || ROLE_DEFINITIONS[role]?.label || role,
-          avatar: getInitials(res.user.name || matchedAccount?.name || "CL"),
-          cellId: res.user.cell_id ? String(res.user.cell_id) : (role === "Líder" ? (matchedAccount?.cellId || "cel_1") : undefined),
-          cellName: res.user.cell_name || matchedAccount?.cellName || (role === "Líder" ? (matchedAccount?.cellName || "Monte Sião") : undefined),
-        };
+        const role = (isMailson
+          ? "Líder"
+          : matchedAccount?.role || res.user.role || (res.user.email?.includes("admin") ? "Administrador" : "Líder")) as UserRole;
+
+        const authPayload: AuthUser = isMailson
+          ? {
+              id: String(res.user.id),
+              memberId: "2",
+              name: "Mailson Costa Cardoso",
+              email: "mailsonccardoso@gmail.com",
+              cpf: "019.358.063-27",
+              role: "Líder",
+              cargo: "Líder de Célula",
+              avatar: "MC",
+              cellId: "cel_1",
+              cellName: "Célula Ágape",
+            }
+          : {
+              id: String(res.user.id),
+              memberId: res.user.member_id ? String(res.user.member_id) : matchedAccount?.memberId,
+              name: res.user.name || matchedAccount?.name || "Administrador",
+              email: res.user.email || apiEmail,
+              cpf: matchedAccount?.cpf || res.user.cpf || "000.000.000-00",
+              role,
+              cargo: matchedAccount?.cargo || res.user.cargo || ROLE_DEFINITIONS[role]?.label || role,
+              avatar: getInitials(res.user.name || matchedAccount?.name || "AD"),
+              cellId: res.user.cell_id ? String(res.user.cell_id) : matchedAccount?.cellId,
+              cellName: res.user.cell_name || matchedAccount?.cellName,
+            };
 
         setUser(authPayload);
         const userPayloadStr = JSON.stringify(authPayload);
@@ -456,36 +460,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 3. Fallback offline local
     if (matchedAccount) {
+      const isMailsonMatch =
+        matchedAccount.email === "mailsonccardoso@gmail.com" ||
+        cleanCPF(matchedAccount.cpf) === "01935806327";
+
+      const passMatchesMailson =
+        isMailsonMatch &&
+        (isCpfPass ||
+          ["lider", "líder", "123456", "lider123", "password123", "mailson"].includes(cleanPass.toLowerCase()));
+
+      const passMatchesAdmin =
+        (matchedAccount.role === "Administrador" || matchedAccount.email === "admin@eclesiapro.com") &&
+        ["admin123", "admin", "123456"].includes(cleanPass.toLowerCase());
+
       const passMatchesCpf =
         cleanPass === matchedAccount.cpf ||
         (cleanPassDigits.length >= 10 && cleanCPF(matchedAccount.cpf) === cleanPassDigits);
 
-      const passMatchesRole =
-        (matchedAccount.role === "Administrador" && ["admin123", "admin", "123456"].includes(cleanPass.toLowerCase())) ||
-        (matchedAccount.role === "Pastor" && ["pastor123", "pastor", "123456"].includes(cleanPass.toLowerCase())) ||
-        (matchedAccount.role === "Líder" && ["lider123", "lider", "líder", "123456"].includes(cleanPass.toLowerCase())) ||
-        (matchedAccount.role === "Tesoureiro" && ["tesouro123", "tesoureiro", "financeiro", "123456"].includes(cleanPass.toLowerCase())) ||
-        (matchedAccount.role === "Secretaria" && ["secretaria123", "secretaria", "123456"].includes(cleanPass.toLowerCase()));
+      if (passMatchesCpf || passMatchesMailson || passMatchesAdmin) {
+        const isMailson =
+          matchedAccount.email === "mailsonccardoso@gmail.com" ||
+          matchedAccount.name.toLowerCase().includes("mailson");
 
-      if (passMatchesCpf || passMatchesRole) {
-        const authPayload: AuthUser = {
-          id: matchedAccount.id,
-          memberId: matchedAccount.memberId,
-          name: matchedAccount.name,
-          email: matchedAccount.email,
-          cpf: matchedAccount.cpf,
-          role: matchedAccount.role,
-          cargo: matchedAccount.cargo || ROLE_DEFINITIONS[matchedAccount.role]?.label || matchedAccount.role,
-          avatar: matchedAccount.avatar || getInitials(matchedAccount.name),
-          cellId: matchedAccount.cellId || (matchedAccount.role === "Líder" ? "cel_1" : undefined),
-          cellName: matchedAccount.cellName || (matchedAccount.role === "Líder" ? "Monte Sião" : undefined),
-        };
+        const authPayload: AuthUser = isMailson
+          ? {
+              id: matchedAccount.id,
+              memberId: "2",
+              name: "Mailson Costa Cardoso",
+              email: "mailsonccardoso@gmail.com",
+              cpf: "019.358.063-27",
+              role: "Líder",
+              cargo: "Líder de Célula",
+              avatar: "MC",
+              cellId: "cel_1",
+              cellName: "Célula Ágape",
+            }
+          : {
+              id: matchedAccount.id,
+              memberId: matchedAccount.memberId,
+              name: matchedAccount.name,
+              email: matchedAccount.email,
+              cpf: matchedAccount.cpf,
+              role: matchedAccount.role,
+              cargo: matchedAccount.cargo || ROLE_DEFINITIONS[matchedAccount.role]?.label || matchedAccount.role,
+              avatar: matchedAccount.avatar || getInitials(matchedAccount.name),
+              cellId: matchedAccount.cellId,
+              cellName: matchedAccount.cellName,
+            };
 
         setUser(authPayload);
         const userPayloadStr = JSON.stringify(authPayload);
         localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
         sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-        toast.success(`Bem-vindo, ${matchedAccount.name}!`);
+        toast.success(`Bem-vindo, ${authPayload.name}!`);
         return { success: true, user: authPayload };
       }
     }
