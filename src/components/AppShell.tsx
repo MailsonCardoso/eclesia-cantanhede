@@ -288,9 +288,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SidebarContent>
         </Sidebar>
 
-        <div className="flex flex-1 flex-col min-w-0">
-          <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b bg-background/80 px-4 md:px-8 backdrop-blur no-print">
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="flex flex-1 flex-col min-w-0 w-full overflow-x-hidden">
+          <header className="sticky top-0 z-20 flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 border-b bg-background/80 px-3 sm:px-6 md:px-8 backdrop-blur no-print max-w-full">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <SidebarTrigger />
               <div className="h-4 w-px bg-border shrink-0" />
               <span className="font-display font-bold text-xs sm:text-sm tracking-wider text-foreground uppercase truncate select-none">
@@ -298,7 +298,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               {/* Central de Notificações Inteligente & Contextual */}
               <NotificationCenter />
 
@@ -307,23 +307,23 @@ export function AppShell({ children }: { children: ReactNode }) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setDark((v) => !v)}
-                className="text-muted-foreground hover:text-foreground size-9 rounded-xl"
+                className="text-muted-foreground hover:text-foreground size-8 sm:size-9 rounded-xl"
                 aria-label="Alternar tema"
                 title={dark ? "Mudar para modo claro" : "Mudar para modo escuro"}
               >
                 {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </Button>
 
-              <div className="h-5 w-px bg-border my-auto mx-1" />
+              <div className="h-4 sm:h-5 w-px bg-border my-auto mx-0.5 sm:mx-1" />
 
               {/* Perfil no Canto Direito com Dropdown para Sair / Logoff */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-muted/70 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/20 text-left border border-transparent hover:border-border cursor-pointer select-none"
+                    className="flex items-center gap-1.5 sm:gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-muted/70 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/20 text-left border border-transparent hover:border-border cursor-pointer select-none shrink-0"
                     title="Menu do Usuário"
                   >
-                    <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20 shrink-0">
+                    <div className="grid size-7 sm:size-8 place-items-center rounded-lg bg-primary text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20 shrink-0">
                       {user?.avatar || "US"}
                     </div>
                     <div className="hidden sm:block min-w-0">
@@ -374,7 +374,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 p-4 md:p-8 min-w-0">{children}</main>
+          <main className="flex-1 p-3.5 sm:p-6 md:p-8 min-w-0 max-w-full overflow-x-hidden">{children}</main>
         </div>
       </div>
     </SidebarProvider>

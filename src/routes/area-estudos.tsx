@@ -993,40 +993,40 @@ function AreaEstudosPage() {
   }
 
   return (
-    <div className="space-y-6 animate-rise max-w-7xl mx-auto pb-12">
+    <div className="space-y-4 sm:space-y-6 animate-rise max-w-7xl mx-auto pb-12 w-full min-w-0">
       {/* CABEÇALHO DO MÓDULO & IDENTIFICAÇÃO DA CÉLULA */}
-      <div className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-card via-card to-primary/5 p-5 md:p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
+      <div className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <Badge
                 variant="outline"
-                className="border-primary/30 bg-primary/10 text-primary text-xs font-bold gap-1.5 py-1 px-3 rounded-full"
+                className="border-primary/30 bg-primary/10 text-primary text-[11px] sm:text-xs font-bold gap-1.5 py-1 px-2.5 sm:px-3 rounded-full"
               >
                 <BookMarked className="size-3.5" />
                 Área de Estudos Bíblicos
               </Badge>
               <Badge
                 variant="outline"
-                className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold gap-1.5 py-1 px-3 rounded-full"
+                className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] sm:text-xs font-semibold gap-1.5 py-1 px-2.5 sm:px-3 rounded-full"
               >
                 <Church className="size-3.5" />
                 Igreja Batista Cristo e Família
               </Badge>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-display">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground font-display">
               Meus Estudos Bíblicos
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl">
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl leading-relaxed">
               Prepare, organize e acompanhe os estudos bíblicos que serão ministrados aos
               irmãos durante os encontros da sua célula.
             </p>
           </div>
 
           {/* Cartão de Identificação do Líder ou Coordenação Pastoral */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="p-3.5 rounded-2xl border bg-background/80 backdrop-blur shadow-sm space-y-1 min-w-[220px]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+            <div className="p-3 sm:p-3.5 rounded-2xl border bg-background/80 backdrop-blur shadow-sm space-y-1 w-full sm:w-auto sm:min-w-[220px]">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10.5px] font-semibold text-muted-foreground flex items-center gap-1">
                   <UserCheck className="size-3 text-primary" />
@@ -1055,10 +1055,10 @@ function AreaEstudosPage() {
               variant="premium"
               size="lg"
               onClick={handleOpenNewStudy}
-              className="h-12 px-5 rounded-2xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all gap-2 cursor-pointer shrink-0"
+              className="h-11 sm:h-12 px-4 sm:px-5 rounded-2xl font-bold shadow-lg hover:shadow-xl active:scale-[0.98] transition-all gap-2 cursor-pointer w-full sm:w-auto justify-center shrink-0"
             >
-              <Plus className="size-5" />
-              <span>+ NOVO ESTUDO</span>
+              <Plus className="size-4.5" />
+              <span>Novo Estudo</span>
             </Button>
           </div>
         </div>
@@ -1095,7 +1095,7 @@ function AreaEstudosPage() {
       </div>
 
       {/* DASHBOARD - 4 INDICADORES NUMÉRICOS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 w-full min-w-0">
         <MetricCard
           label="Total de Estudos"
           value={stats.total}
