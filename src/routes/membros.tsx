@@ -441,7 +441,7 @@ function Membros() {
     recebimento: "",
     tipo: "Membro",
     situacao: "Ativo",
-    congregacao: "Batista Corpo e Família",
+    congregacao: "Igreja Batista Cristo e Família",
     departamento: "",
     celula: "",
     cell_id: undefined as string | undefined,
@@ -459,6 +459,19 @@ function Membros() {
   const congregations = useMemo(() => {
     return (db.congregations || []).map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b));
   }, [db.congregations]);
+
+  const defaultCongregation = useMemo(() => {
+    if (db.congregations && db.congregations.length > 0) {
+      return String(db.congregations[0].nome);
+    }
+    return "Igreja Batista Cristo e Família";
+  }, [db.congregations]);
+
+  useEffect(() => {
+    if (defaultCongregation && (!form.congregacao || form.congregacao === "Batista Corpo e Família")) {
+      setForm((s) => ({ ...s, congregacao: defaultCongregation }));
+    }
+  }, [defaultCongregation]);
 
   const departments = useMemo(() => {
     return (db.departments || []).map((d) => String(d.nome)).sort((a, b) => a.localeCompare(b));
@@ -1115,22 +1128,24 @@ function Membros() {
                 )}
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Pai (membro)</Label>
-                  <MemberSearchSelect
+                  <Label htmlFor="pai" className="text-xs font-semibold">Nome do Pai</Label>
+                  <Input
+                    id="pai"
+                    placeholder="Digite o nome do pai"
                     value={form.pai}
-                    onChange={(val) => setForm((s) => ({ ...s, pai: val }))}
-                    placeholder="Pesquise o pai na membresia..."
-                    members={membersCompact}
+                    onChange={(e) => setForm((s) => ({ ...s, pai: e.target.value }))}
+                    className="rounded-xl shadow-sm"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Mãe (membro)</Label>
-                  <MemberSearchSelect
+                  <Label htmlFor="mae" className="text-xs font-semibold">Nome da Mãe</Label>
+                  <Input
+                    id="mae"
+                    placeholder="Digite o nome da mãe"
                     value={form.mae}
-                    onChange={(val) => setForm((s) => ({ ...s, mae: val }))}
-                    placeholder="Pesquise a mãe na membresia..."
-                    members={membersCompact}
+                    onChange={(e) => setForm((s) => ({ ...s, mae: e.target.value }))}
+                    className="rounded-xl shadow-sm"
                   />
                 </div>
 
@@ -1414,7 +1429,7 @@ function Membros() {
                     <div className="flex items-center gap-2 text-foreground font-medium truncate">
                       <Church className="size-3.5 text-primary shrink-0" />
                       <span className="text-muted-foreground font-normal">Congregação:</span>
-                      <span className="truncate">{member.congregacao || "Batista Corpo e Família"}</span>
+                      <span className="truncate">{member.congregacao || defaultCongregation}</span>
                     </div>
 
                     {member.departamento && member.departamento !== "Nenhum / Geral" && (
@@ -1550,7 +1565,7 @@ function Membros() {
                   </TableCell>
                   <TableCell className="text-xs">{member.cpf || "—"}</TableCell>
                   <TableCell className="text-xs font-medium">{member.telefone || "—"}</TableCell>
-                  <TableCell className="text-xs">{member.congregacao || "Batista Corpo e Família"}</TableCell>
+                  <TableCell className="text-xs">{member.congregacao || defaultCongregation}</TableCell>
                   <TableCell className="text-xs">
                     {member.cargo && member.cargo !== "Sem função / cargo" ? (
                       <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/30">
@@ -1697,7 +1712,7 @@ function Membros() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-2xl border bg-muted/20 p-4 text-xs">
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Congregação</span>
-                    <span className="font-semibold text-foreground">{selectedMember.congregacao || "Batista Corpo e Família"}</span>
+                    <span className="font-semibold text-foreground">{selectedMember.congregacao || defaultCongregation}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Departamento</span>

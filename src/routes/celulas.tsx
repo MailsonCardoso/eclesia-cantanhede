@@ -76,21 +76,34 @@ function Celulas() {
   const [confirmDel, setConfirmDel] = useState<Row | null>(null);
   const [viewMembersCell, setViewMembersCell] = useState<Row | null>(null);
 
+  const congregations = useMemo(() => {
+    return (db.congregations || []).map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b));
+  }, [db.congregations]);
+
+  const defaultCongregation = useMemo(() => {
+    if (db.congregations && db.congregations.length > 0) {
+      return String(db.congregations[0].nome);
+    }
+    return "Igreja Batista Cristo e Família";
+  }, [db.congregations]);
+
   // Formulário
   const [form, setForm] = useState({
     nome: "",
     lider: "",
     dia: "",
     hora: "",
-    congregacao: "Batista Corpo e Família",
+    congregacao: "Igreja Batista Cristo e Família",
     participantes: "",
     situacao: "Ativa",
     observacoes: "",
   });
 
-  const congregations = useMemo(() => {
-    return (db.congregations || []).map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b));
-  }, [db.congregations]);
+  useEffect(() => {
+    if (defaultCongregation && (!form.congregacao || form.congregacao === "Batista Corpo e Família")) {
+      setForm((s) => ({ ...s, congregacao: defaultCongregation }));
+    }
+  }, [defaultCongregation]);
 
   const membersList = useMemo(() => {
     return db.members.map((m) => ({
@@ -194,7 +207,7 @@ function Celulas() {
       lider: "",
       dia: "",
       hora: "",
-      congregacao: "Batista Corpo e Família",
+      congregacao: defaultCongregation,
       participantes: "",
       situacao: "Ativa",
       observacoes: "",
@@ -364,17 +377,21 @@ function Celulas() {
               <Label htmlFor="congregacao" className="text-xs font-semibold">
                 Congregação Vinculada
               </Label>
-              <Select value={form.congregacao || "__none"} onValueChange={(v) => setForm((s) => ({ ...s, congregacao: v === "__none" ? "" : v }))}>
+              <Select value={form.congregacao || defaultCongregation} onValueChange={(v) => setForm((s) => ({ ...s, congregacao: v === "__none" ? "" : v }))}>
                 <SelectTrigger id="congregacao" className="rounded-xl">
                   <SelectValue placeholder="Selecione a congregação" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none">Sede / Geral</SelectItem>
                   {congregations.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
                   ))}
+                  {congregations.length === 0 && (
+                    <SelectItem value={defaultCongregation}>
+                      {defaultCongregation}
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -596,7 +613,7 @@ function Celulas() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="font-bold text-base text-foreground truncate">{cell.nome}</h2>
-                      <p className="text-xs text-muted-foreground truncate">{cell.congregacao || "Batista Corpo e Família"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{cell.congregacao || defaultCongregation}</p>
                     </div>
                   </div>
 
