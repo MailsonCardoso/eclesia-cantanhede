@@ -1,26 +1,9 @@
 import type { Collection, Row } from "./store";
 
-export const API_BASE =
-  import.meta.env["VITE_API_URL"] || "https://api1.eclesiapro.com.br/api";
-
-const COLLECTION_ENDPOINTS: Partial<Record<Collection, string>> = {
-  members: "/members",
-  cells: "/cells",
-  transactions: "/transactions",
-  events: "/events",
-  inventory: "/inventory",
-  pastor_series: "/pastoral/series",
-  pastor_sermons: "/pastoral/sermons",
-  pastor_insights: "/pastoral/insights",
-  pastoral_requests: "/pastoral/requests",
-};
+const API_BASE = import.meta.env["VITE_API_URL"] || "http://localhost:8000/api";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token =
-    localStorage.getItem("ecclesia_token") ||
-    localStorage.getItem("eclesiapro_token") ||
-    sessionStorage.getItem("ecclesia_token");
-
+  const token = localStorage.getItem("ecclesia_token");
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -35,53 +18,28 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message ||
-        (errorData.errors ? Object.values(errorData.errors).flat().join(" ") : "") ||
-        `Erro na requisição HTTP: ${response.status}`
-    );
+    throw new Error(errorData.message || `Erro na requisição HTTP: ${response.status}`);
   }
 
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  const text = await response.text();
-  if (!text || !text.trim()) {
-    return {} as T;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return {} as T;
-  }
+  return response.json();
 }
 
 export const api = {
   // Autenticação
   auth: {
     login: (credentials: { email: string; password: string }) =>
-      request<{ user: any; access_token?: string; token?: string }>("/login", {
+      request<{ user: any; token: string }>("/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
       }),
-    register: (data: {
-      name: string;
-      email: string;
-      password: string;
-      password_confirmation?: string;
-    }) =>
-      request<{ user: any; access_token?: string; token?: string }>("/register", {
+    register: (data: { name: string; email: string; password: string }) =>
+      request<{ user: any; token: string }>("/auth/register", {
         method: "POST",
-        body: JSON.stringify({
-          ...data,
-          password_confirmation: data.password_confirmation || data.password,
-        }),
+        body: JSON.stringify(data),
       }),
-    me: () => request<any>("/me"),
+    me: () => request<any>("/auth/me"),
     logout: () =>
-      request<{ message: string }>("/logout", {
+      request<{ message: string }>("/auth/logout", {
         method: "POST",
       }),
   },
@@ -89,41 +47,31 @@ export const api = {
   // Recursos Genéricos (CRUD)
   collection: {
     list: (collection: Collection, params?: Record<string, string>) => {
-      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
       const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
-      return request<Row[]>(`${endpoint}${qs}`);
+      return request<Row[]>(`/${collection}${qs}`);
     },
-    get: (collection: Collection, id: string | number) => {
-      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
-      return request<Row>(`${endpoint}/${id}`);
-    },
-    create: (collection: Collection, data: Omit<Row, "id">) => {
-      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
-      return request<Row>(`${endpoint}`, {
+    get: (collection: Collection, id: string | number) =>
+      request<Row>(`/${collection}/${id}`),
+    create: (collection: Collection, data: Omit<Row, "id">) =>
+      request<Row>(`/${collection}`, {
         method: "POST",
         body: JSON.stringify(data),
-      });
-    },
-    update: (collection: Collection, id: string | number, data: Partial<Row>) => {
-      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
-      return request<Row>(`${endpoint}/${id}`, {
+      }),
+    update: (collection: Collection, id: string | number, data: Partial<Row>) =>
+      request<Row>(`/${collection}/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
-      });
-    },
-    delete: (collection: Collection, id: string | number) => {
-      const endpoint = COLLECTION_ENDPOINTS[collection] || `/${collection}`;
-      return request<{ message: string }>(`${endpoint}/${id}`, {
+      }),
+    delete: (collection: Collection, id: string | number) =>
+      request<{ message: string }>(`/${collection}/${id}`, {
         method: "DELETE",
-      });
-    },
+      }),
   },
 
   // Painel & Relatórios
   dashboard: () => request<any>("/dashboard"),
   reports: {
-    membersByAge: () =>
-      request<{ chart: any[]; list: any[] }>("/reports/members-by-age"),
+    membersByAge: () => request<{ chart: any[]; list: any[] }>("/reports/members-by-age"),
   },
   auditLogs: () => request<any[]>("/audit-logs"),
   dbState: () => request<any>("/db-state"),

@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { toast } from "sonner";
-import { api } from "./api";
 
 export type UserRole = "Administrador" | "Pastor" | "Secretaria" | "Tesoureiro" | "Líder";
 
@@ -205,7 +204,7 @@ interface AuthContextType {
   users: UserAccount[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (identifier: string, passwordInput: string, remember?: boolean) => Promise<{ success: boolean; error?: string; user?: AuthUser }>;
+  login: (identifier: string, passwordInput: string, remember?: boolean) => { success: boolean; error?: string; user?: AuthUser };
   logout: () => void;
   hasRole: (roles: UserRole | UserRole[]) => boolean;
   addUser: (accountData: {
@@ -300,91 +299,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (
-    identifier: string,
-    passwordInput: string,
-    remember = true
-  ): Promise<{ success: boolean; error?: string; user?: AuthUser }> => {
-    const cleanId = (identifier || "").trim();
+  const login = (identifier: string, passwordInput: string, remember = true) => {
+    const cleanId = (identifier || "").trim().toLowerCase();
+    const cleanIdDigits = cleanCPF(cleanId);
     const cleanPass = (passwordInput || "").trim();
+    const cleanPassDigits = cleanCPF(cleanPass);
 
     if (!cleanId || !cleanPass) {
       return { success: false, error: "Informe seu e-mail (ou CPF) e a senha de acesso." };
     }
 
-    // 1. Tenta autenticar na API oficial do Laravel (MySQL)
-    try {
-      const apiEmail =
-        cleanId.toLowerCase() === "admin"
-          ? "admin@eclesiapro.com"
-          : cleanId;
-
-      const apiPassword =
-        (cleanId.toLowerCase() === "admin" || cleanId.toLowerCase() === "admin@eclesiapro.com") &&
-        (cleanPass === "admin123" || cleanPass === "admin")
-          ? "admin123password"
-          : cleanPass;
-
-      const res = await api.auth.login({ email: apiEmail, password: apiPassword });
-      const token = res?.access_token || res?.token;
-      if (res && token && res.user) {
-        localStorage.setItem("ecclesia_token", token);
-        sessionStorage.setItem("ecclesia_token", token);
-
-        const role = (res.user.role || "Administrador") as UserRole;
-        const authPayload: AuthUser = {
-          id: String(res.user.id),
-          memberId: res.user.member_id ? String(res.user.member_id) : undefined,
-          name: res.user.name || "Administrador",
-          email: res.user.email || apiEmail,
-          cpf: res.user.cpf || "000.000.000-00",
-          role,
-          cargo: res.user.cargo || ROLE_DEFINITIONS[role]?.label || role,
-          avatar: getInitials(res.user.name || "AD"),
-          cellId: res.user.cell_id ? String(res.user.cell_id) : undefined,
-          cellName: res.user.cell_name,
-        };
-
-        setUser(authPayload);
-        const userPayloadStr = JSON.stringify(authPayload);
-        localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-        sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("ecclesia:auth_synced"));
-        }
-        toast.success(`Bem-vindo, ${authPayload.name}!`);
-        return { success: true, user: authPayload };
-      }
-    } catch (e: any) {
-      console.warn("Autenticação via API remota falhou, verificando fallback:", e?.message);
-    }
-
-    // 2. Fallback de contas locais (caso a API esteja inacessível ou para contas padrão)
-    const cleanIdLower = cleanId.toLowerCase();
-    const cleanIdDigits = cleanCPF(cleanId);
-    const cleanPassDigits = cleanCPF(cleanPass);
-
+    // Busca nas contas cadastradas ativas (com fallback flexível para usuários padrão)
     const match = users.find((acc) => {
       if (acc.status === "Inativo") return false;
 
       // Correspondência flexível do identificador:
+      // - E-mail exato ou simplificado
+      // - CPF (com ou sem pontuação)
+      // - Atalhos práticos (ex: 'admin', 'pastor', 'lider', 'tesoureiro', 'secretaria')
       const emailMatches =
-        acc.email.toLowerCase() === cleanIdLower ||
-        (cleanIdLower === "admin" && acc.role === "Administrador") ||
-        (cleanIdLower === "admin@admin.com" && acc.role === "Administrador") ||
-        (cleanIdLower === "pastor" && acc.role === "Pastor") ||
-        ((cleanIdLower === "lider" || cleanIdLower === "líder" || cleanIdLower === "celula") && acc.role === "Líder") ||
-        ((cleanIdLower === "tesoureiro" || cleanIdLower === "financeiro") && acc.role === "Tesoureiro") ||
-        (cleanIdLower === "secretaria" && acc.role === "Secretaria");
+        acc.email.toLowerCase() === cleanId ||
+        (cleanId === "admin" && acc.role === "Administrador") ||
+        (cleanId === "admin@admin.com" && acc.role === "Administrador") ||
+        (cleanId === "pastor" && acc.role === "Pastor") ||
+        ((cleanId === "lider" || cleanId === "líder" || cleanId === "celula") && acc.role === "Líder") ||
+        ((cleanId === "tesoureiro" || cleanId === "financeiro") && acc.role === "Tesoureiro") ||
+        (cleanId === "secretaria" && acc.role === "Secretaria");
 
       const cpfMatches = cleanIdDigits.length >= 10 && cleanCPF(acc.cpf) === cleanIdDigits;
       if (!emailMatches && !cpfMatches) return false;
 
       // Correspondência flexível da senha:
+      // - CPF como senha (com ou sem pontuação)
+      // - Senhas padrão de cada perfil ('admin123', 'pastor123', 'lider123', 'tesouro123', 'secretaria123')
+      // - Atalhos universais simplificados ('admin', 'pastor', 'lider', '123456')
       const passMatchesCpf = cleanPass === acc.cpf || (cleanPassDigits.length >= 10 && cleanCPF(acc.cpf) === cleanPassDigits);
 
       const passMatchesRole =
-        (acc.role === "Administrador" && ["admin123", "admin", "admin123password", "123456"].includes(cleanPass)) ||
+        (acc.role === "Administrador" && ["admin123", "admin", "123456"].includes(cleanPass)) ||
         (acc.role === "Pastor" && ["pastor123", "pastor", "123456"].includes(cleanPass)) ||
         (acc.role === "Líder" && ["lider123", "lider", "líder", "123456"].includes(cleanPass)) ||
         (acc.role === "Tesoureiro" && ["tesouro123", "tesoureiro", "financeiro", "123456"].includes(cleanPass)) ||
@@ -409,6 +361,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(authPayload);
       const userPayloadStr = JSON.stringify(authPayload);
+      // Salva em localStorage e sessionStorage para garantir persistência em recarregamentos no celular
       localStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
       sessionStorage.setItem(AUTH_STORAGE_KEY, userPayloadStr);
       toast.success(`Bem-vindo, ${match.name}!`);
@@ -425,9 +378,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem("ecclesia_token");
-    localStorage.removeItem("eclesiapro_token");
-    sessionStorage.removeItem("ecclesia_token");
     toast.info("Sessão encerrada com sucesso.");
   };
 

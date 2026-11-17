@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api } from "./api";
 
 /**
  * Camada de dados local (demonstração). Cada coleção espelha um recurso REST
@@ -940,293 +939,19 @@ export function emptyDB(): DB {
 
 const KEY = "ecclesia-db-v6";
 
-export function mapMemberFromApi(m: any): Row {
-  return {
-    id: String(m.id),
-    nome: m.name ?? m.nome ?? "",
-    name: m.name ?? m.nome ?? "",
-    email: m.email ?? "",
-    telefone: m.phone ?? m.telefone ?? "",
-    phone: m.phone ?? m.telefone ?? "",
-    nascimento: m.birth_date ? String(m.birth_date).slice(0, 10) : (m.nascimento ? String(m.nascimento).slice(0, 10) : ""),
-    birth_date: m.birth_date ? String(m.birth_date).slice(0, 10) : (m.birth_date ?? ""),
-    sexo: m.sex === "masculino" ? "Masculino" : m.sex === "feminino" ? "Feminino" : (m.sexo ?? m.sex ?? ""),
-    sex: m.sex ?? m.sexo,
-    estadoCivil:
-      m.marital_status === "casado"
-        ? "Casado(a)"
-        : m.marital_status === "solteiro"
-        ? "Solteiro(a)"
-        : (m.estadoCivil ?? m.marital_status ?? "Solteiro(a)"),
-    marital_status: m.marital_status ?? m.estadoCivil,
-    cpf: m.cpf ?? "",
-    cep: m.cep ?? "",
-    logradouro: m.logradouro ?? m.address ?? m.endereco ?? "",
-    endereco: m.logradouro ?? m.address ?? m.endereco ?? "",
-    bairro: m.bairro ?? "",
-    cidade: m.cidade ?? "",
-    uf: m.uf ?? "",
-    batismo: m.baptism_date ? String(m.baptism_date).slice(0, 10) : (m.batismo ?? ""),
-    cargo: m.role ?? m.cargo ?? "Sem função / cargo",
-    role: m.role ?? m.cargo ?? "Sem função / cargo",
-    congregacao: m.congregacao || DEFAULT_CONGREGATION,
-    celula: m.cell?.name ?? m.celula ?? (m.cell_id ? String(m.cell_id) : ""),
-    cell_id: m.cell_id ? String(m.cell_id) : undefined,
-    situacao: m.status === "membro" || m.status === "ativo" ? "Ativo" : (m.situacao ?? m.status ?? "Ativo"),
-    status: m.status ?? "Ativo",
-    tipo: m.category === "membro" ? "Membro" : (m.tipo ?? m.category ?? "Membro"),
-    category: m.category ?? "membro",
-    conjuge: m.spouse?.name ?? m.spouse_name ?? m.conjuge ?? "",
-    pai: m.father?.name ?? m.father_name ?? m.pai ?? "",
-    mae: m.mother?.name ?? m.mother_name ?? m.mae ?? "",
-    filhos: m.filhos ?? "",
-    observacoes: m.observacoes ?? "",
-    created_at: m.created_at,
-    updated_at: m.updated_at,
-  };
-}
-
-export function mapMemberToApi(row: Row): any {
-  return {
-    name: row.nome || row.name || "Novo Membro",
-    nome: row.nome || row.name || "Novo Membro",
-    category: String(row.tipo || row.category || "membro").toLowerCase() === "membro" ? "membro" : "congregado",
-    tipo: row.tipo || "Membro",
-    status: String(row.situacao || row.status || "membro").toLowerCase().includes("inativ") ? "inativo" : "membro",
-    situacao: row.situacao || "Ativo",
-    congregacao: row.congregacao || DEFAULT_CONGREGATION,
-    phone: row.telefone || row.phone || null,
-    telefone: row.telefone || row.phone || null,
-    email: row.email || null,
-    birth_date: row.nascimento || row.birth_date || null,
-    nascimento: row.nascimento || row.birth_date || null,
-    sex: row.sexo === "Masculino" ? "masculino" : row.sexo === "Feminino" ? "feminino" : (row.sex || null),
-    sexo: row.sexo || "Masculino",
-    marital_status: String(row.estadoCivil || row.marital_status || "").toLowerCase().includes("casad") ? "casado" : "solteiro",
-    estado_civil: row.estadoCivil || row.marital_status || "Solteiro(a)",
-    cpf: row.cpf || null,
-    cep: row.cep || null,
-    logradouro: row.logradouro || row.endereco || null,
-    endereco: row.logradouro || row.endereco || null,
-    bairro: row.bairro || null,
-    cidade: row.cidade || null,
-    uf: row.uf || null,
-    baptism_date: row.batismo || row.baptism_date || null,
-    batismo: row.batismo || row.baptism_date || null,
-    role: row.cargo || row.role || "Membro",
-    cargo: row.cargo || row.role || "Membro",
-    conjuge: row.conjuge || null,
-    pai: row.pai || null,
-    mae: row.mae || null,
-    filhos: row.filhos || null,
-    observacoes: row.observacoes || null,
-    cell_id: row.cell_id ? Number(row.cell_id) : null,
-  };
-}
-
-export function mapCellFromApi(c: any): Row {
-  return {
-    id: String(c.id),
-    nome: c.name ?? c.nome ?? "",
-    name: c.name ?? c.nome ?? "",
-    lider: c.leader?.name ?? c.lider ?? (c.leader_id ? String(c.leader_id) : ""),
-    leader_id: c.leader_id ? String(c.leader_id) : undefined,
-    dia: c.meeting_day ?? c.dia ?? "Quarta",
-    meeting_day: c.meeting_day ?? c.dia ?? "Quarta",
-    horario: c.meeting_time ?? c.horario ?? "19:30",
-    meeting_time: c.meeting_time ?? c.horario ?? "19:30",
-    capacidade: Number(c.capacity ?? c.capacidade ?? 15),
-    capacity: Number(c.capacity ?? c.capacidade ?? 15),
-    descricao: c.description ?? c.descricao ?? "",
-    description: c.description ?? c.descricao ?? "",
-    congregacao: c.congregacao || DEFAULT_CONGREGATION,
-    membros: c.members?.map((m: any) => m.name || m.nome) || [],
-  };
-}
-
-export function mapCellToApi(row: Row): any {
-  return {
-    name: row.nome || row.name || "Nova Célula",
-    meeting_day: row.dia || row.meeting_day || "Quarta",
-    meeting_time: row.horario || row.meeting_time || "19:30",
-    capacity: Number(row.capacidade || row.capacity || 15),
-    description: row.descricao || row.description || null,
-    congregacao: row.congregacao || DEFAULT_CONGREGATION,
-    leader_id: row.leader_id ? Number(row.leader_id) : null,
-  };
-}
-
-export function mapTransactionFromApi(t: any): Row {
-  return {
-    id: String(t.id),
-    tipo: t.type === "entrada" || t.tipo === "Entrada" ? "Entrada" : "Saída",
-    type: t.type || (t.tipo === "Saída" ? "saida" : "entrada"),
-    descricao: t.description ?? t.descricao ?? "",
-    description: t.description ?? t.descricao ?? "",
-    categoria: t.category_name ?? t.categoria ?? "Oferta",
-    category: t.category_name ?? t.categoria ?? "Oferta",
-    valor: Number(t.amount) || Number(t.valor) || 0,
-    amount: Number(t.amount) || Number(t.valor) || 0,
-    data: t.date ? String(t.date).slice(0, 10) : (t.data ? String(t.data).slice(0, 10) : new Date().toISOString().slice(0, 10)),
-    date: t.date ? String(t.date).slice(0, 10) : (t.data ? String(t.data).slice(0, 10) : new Date().toISOString().slice(0, 10)),
-    congregacao: t.congregacao || DEFAULT_CONGREGATION,
-  };
-}
-
-export function mapTransactionToApi(row: Row): any {
-  return {
-    type: String(row.tipo || row.type || "entrada").toLowerCase().includes("sa") ? "saida" : "entrada",
-    tipo: row.tipo || "Entrada",
-    description: row.descricao || row.description || "Transação",
-    descricao: row.descricao || row.description || "Transação",
-    category_name: row.categoria || row.category || "Oferta",
-    categoria: row.categoria || row.category || "Oferta",
-    amount: Number(row.valor || row.amount || 0),
-    valor: Number(row.valor || row.amount || 0),
-    date: row.data || row.date || new Date().toISOString().slice(0, 10),
-    data: row.data || row.date || new Date().toISOString().slice(0, 10),
-    congregacao: row.congregacao || DEFAULT_CONGREGATION,
-  };
-}
-
-export function mapEventFromApi(e: any): Row {
-  return {
-    id: String(e.id),
-    titulo: e.title ?? e.titulo ?? "",
-    title: e.title ?? e.titulo ?? "",
-    descricao: e.description ?? e.descricao ?? "",
-    description: e.description ?? e.descricao ?? "",
-    local: e.location ?? e.local ?? DEFAULT_CONGREGATION,
-    location: e.location ?? e.local ?? DEFAULT_CONGREGATION,
-    data: e.start_date ? String(e.start_date).slice(0, 10) : (e.data ? String(e.data).slice(0, 10) : new Date().toISOString().slice(0, 10)),
-    start_date: e.start_date ?? e.data,
-    color: e.color ?? "#ecb318",
-  };
-}
-
-export function mapEventToApi(row: Row): any {
-  return {
-    title: row.titulo || row.title || "Evento",
-    titulo: row.titulo || row.title || "Evento",
-    description: row.descricao || row.description || null,
-    descricao: row.descricao || row.description || null,
-    location: row.local || row.location || DEFAULT_CONGREGATION,
-    local: row.local || row.location || DEFAULT_CONGREGATION,
-    start_date: row.data || row.start_date || new Date().toISOString(),
-    data: row.data || row.start_date || new Date().toISOString().slice(0, 10),
-    color: row.color || "#ecb318",
-  };
-}
-
-export function mapInventoryFromApi(i: any): Row {
-  return {
-    id: String(i.id),
-    nome: i.name ?? i.nome ?? "",
-    name: i.name ?? i.nome ?? "",
-    categoria: i.category ?? i.categoria ?? "Outros",
-    category: i.category ?? i.categoria ?? "Outros",
-    quantidade: Number(i.quantity ?? i.quantidade ?? 1),
-    quantity: Number(i.quantity ?? i.quantidade ?? 1),
-    local: i.location ?? i.local ?? DEFAULT_CONGREGATION,
-    location: i.location ?? i.local ?? DEFAULT_CONGREGATION,
-    estado: i.condition ?? i.estado ?? "Bom",
-    condition: i.condition ?? i.estado ?? "Bom",
-    descricao: i.description ?? i.descricao ?? "",
-  };
-}
-
-export function mapInventoryToApi(row: Row): any {
-  return {
-    name: row.nome || row.name || "Item",
-    nome: row.nome || row.name || "Item",
-    category: row.categoria || row.category || "outros",
-    categoria: row.categoria || row.category || "outros",
-    quantity: Number(row.quantidade || row.quantity || 1),
-    quantidade: Number(row.quantidade || row.quantity || 1),
-    location: row.local || row.location || DEFAULT_CONGREGATION,
-    local: row.local || row.location || DEFAULT_CONGREGATION,
-    condition: row.estado || row.condition || "bom",
-    estado: row.estado || row.condition || "bom",
-    description: row.descricao || row.description || null,
-  };
-}
-
-function toApiPayload(c: Collection, row: Row) {
-  if (c === "members") return mapMemberToApi(row);
-  if (c === "cells") return mapCellToApi(row);
-  if (c === "transactions") return mapTransactionToApi(row);
-  if (c === "events") return mapEventToApi(row);
-  if (c === "inventory") return mapInventoryToApi(row);
-  return row;
-}
-
-export type Ctx = {
+type Ctx = {
   db: DB;
   create: (c: Collection, row: Omit<Row, "id">) => Row;
   update: (c: Collection, row: Row) => void;
   remove: (c: Collection, id: string) => void;
   clearAll: () => void;
   loadDemoData: () => void;
-  refreshFromApi: () => Promise<void>;
 };
 const StoreCtx = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<DB>(emptyDB);
   const [ready, setReady] = useState(false);
-
-  // Função para sincronizar dados em tempo real com o backend REST do Laravel (MySQL)
-  const syncWithApi = async () => {
-    const token =
-      localStorage.getItem("ecclesia_token") ||
-      localStorage.getItem("eclesiapro_token") ||
-      sessionStorage.getItem("ecclesia_token");
-    if (!token) return;
-
-    try {
-      const [membersRes, cellsRes, transactionsRes, eventsRes, inventoryRes, sermonsRes, insightsRes] =
-        await Promise.allSettled([
-          api.collection.list("members"),
-          api.collection.list("cells"),
-          api.collection.list("transactions"),
-          api.collection.list("events"),
-          api.collection.list("inventory"),
-          api.collection.list("pastor_sermons"),
-          api.collection.list("pastor_insights"),
-        ]);
-
-      setDb((prev) => {
-        const next = { ...prev };
-        if (membersRes.status === "fulfilled" && Array.isArray(membersRes.value) && membersRes.value.length > 0) {
-          next.members = membersRes.value.map(mapMemberFromApi);
-        }
-        if (cellsRes.status === "fulfilled" && Array.isArray(cellsRes.value) && cellsRes.value.length > 0) {
-          next.cells = cellsRes.value.map(mapCellFromApi);
-        }
-        if (transactionsRes.status === "fulfilled" && Array.isArray(transactionsRes.value) && transactionsRes.value.length > 0) {
-          next.transactions = transactionsRes.value.map(mapTransactionFromApi);
-        }
-        if (eventsRes.status === "fulfilled" && Array.isArray(eventsRes.value) && eventsRes.value.length > 0) {
-          next.events = eventsRes.value.map(mapEventFromApi);
-        }
-        if (inventoryRes.status === "fulfilled" && Array.isArray(inventoryRes.value) && inventoryRes.value.length > 0) {
-          next.inventory = inventoryRes.value.map(mapInventoryFromApi);
-        }
-        if (sermonsRes.status === "fulfilled" && Array.isArray(sermonsRes.value)) {
-          next.pastor_sermons = sermonsRes.value;
-        }
-        if (insightsRes.status === "fulfilled" && Array.isArray(insightsRes.value)) {
-          next.pastor_insights = insightsRes.value;
-        }
-        try {
-          localStorage.setItem(KEY, JSON.stringify(next));
-        } catch {}
-        return next;
-      });
-    } catch (e) {
-      console.warn("Sincronização em segundo plano:", e);
-    }
-  };
 
   useEffect(() => {
     // Limpa versões anteriores de cache com mock para garantir teste limpo
@@ -1253,6 +978,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         name === "Congregação Vila Nova" ||
         name === "Congregação Jardim Esperança";
 
+      // Filtra congregações antigas de mock para manter apenas congregações reais ou a Sede
       let congsList = (data.congregations || []).filter((c) => !isOldMock(c.nome));
       if (!congsList.some((c) => c.nome === DEFAULT_CONGREGATION)) {
         congsList = [SEDE_CONGREGATION, ...congsList];
@@ -1262,26 +988,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         congsList = [SEDE_CONGREGATION];
       }
 
+      // Atualiza referências em membros
       const members = (data.members || []).map((m) =>
         isOldMock(m.congregacao) ? { ...m, congregacao: DEFAULT_CONGREGATION } : m
       );
 
+      // Atualiza referências em células
       const cells = (data.cells || []).map((c) =>
         isOldMock(c.congregacao) ? { ...c, congregacao: DEFAULT_CONGREGATION } : c
       );
 
+      // Atualiza referências em transações
       const transactions = (data.transactions || []).map((t) =>
         isOldMock(t.congregacao) ? { ...t, congregacao: DEFAULT_CONGREGATION } : t
       );
 
+      // Atualiza referências em contribuições
       const contributions = (data.contributions || []).map((c) =>
         isOldMock(c.congregacao) ? { ...c, congregacao: DEFAULT_CONGREGATION } : c
       );
 
+      // Atualiza referências em eventos
       const events = (data.events || []).map((e) =>
         isOldMock(e.local) ? { ...e, local: DEFAULT_CONGREGATION } : e
       );
 
+      // Atualiza referências em inventário
       const inventory = (data.inventory || []).map((i) =>
         isOldMock(i.local) ? { ...i, local: DEFAULT_CONGREGATION } : i
       );
@@ -1305,6 +1037,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const initial = emptyDB();
         const merged = { ...initial, ...parsed };
         if (merged.studies) {
+          // Remove estudos mockados antigos para manter a base 100% limpa
           merged.studies = merged.studies.filter((s: Row) => s.id !== "std_1" && s.id !== "std_2");
         } else {
           merged.studies = [];
@@ -1325,25 +1058,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setReady(true);
   }, []);
 
-  // Sincroniza com a API do Laravel quando a aplicação estiver pronta e quando o usuário logar
-  useEffect(() => {
-    if (ready) {
-      syncWithApi();
-
-      const handleAuthSync = () => {
-        syncWithApi();
-      };
-
-      window.addEventListener("ecclesia:auth_synced", handleAuthSync);
-      window.addEventListener("storage", handleAuthSync);
-
-      return () => {
-        window.removeEventListener("ecclesia:auth_synced", handleAuthSync);
-        window.removeEventListener("storage", handleAuthSync);
-      };
-    }
-  }, [ready]);
-
   useEffect(() => {
     if (ready) localStorage.setItem(KEY, JSON.stringify(db));
   }, [db, ready]);
@@ -1363,31 +1077,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         row.congregacao && row.congregacao !== "__none" && row.congregacao !== "Nenhuma / Sede"
           ? row.congregacao
           : (c === "transactions" || c === "contributions" || c === "members" || c === "cells" || c === "inventory" ? DEFAULT_CONGREGATION : row.congregacao);
-      const tempId = uid();
-      const r = { ...row, ...(cong ? { congregacao: cong } : {}), id: tempId } as Row;
+      const r = { ...row, ...(cong ? { congregacao: cong } : {}), id: uid() } as Row;
       setDb((s) => ({
         ...s,
         [c]: [r, ...(s[c] || [])],
         audit: [log(c, "criação", r), ...s.audit],
       }));
-
-      // Persistência assíncrona na REST API do Laravel (MySQL)
-      (async () => {
-        try {
-          const payload = toApiPayload(c, r);
-          const res = await api.collection.create(c, payload);
-          if (res && res.id) {
-            const remoteId = String(res.id);
-            setDb((s) => ({
-              ...s,
-              [c]: (s[c] || []).map((item) => (item.id === tempId ? { ...item, id: remoteId } : item)),
-            }));
-          }
-        } catch (err: any) {
-          console.warn(`[Store API] Erro ao sincronizar criação em ${c}:`, err?.message);
-        }
-      })();
-
       return r;
     },
     update: (c, row) => {
@@ -1401,18 +1096,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         [c]: (s[c] || []).map((r) => (r.id === row.id ? updatedRow : r)),
         audit: [log(c, "edição", updatedRow), ...s.audit],
       }));
-
-      // Persistência assíncrona na REST API do Laravel (MySQL)
-      (async () => {
-        try {
-          const payload = toApiPayload(c, updatedRow);
-          await api.collection.update(c, row.id, payload);
-        } catch (err: any) {
-          console.warn(`[Store API] Erro ao sincronizar edição em ${c}:`, err?.message);
-        }
-      })();
     },
-    remove: (c, id) => {
+    remove: (c, id) =>
       setDb((s) => {
         const r = (s[c] || []).find((x) => x.id === id);
         if (!r) return s;
@@ -1421,17 +1106,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           [c]: (s[c] || []).filter((x) => x.id !== id),
           audit: [log(c, "exclusão", r), ...s.audit],
         };
-      });
-
-      // Persistência assíncrona na REST API do Laravel (MySQL)
-      (async () => {
-        try {
-          await api.collection.delete(c, id);
-        } catch (err: any) {
-          console.warn(`[Store API] Erro ao sincronizar exclusão em ${c}:`, err?.message);
-        }
-      })();
-    },
+      }),
     clearAll: () => {
       const clean = emptyDB();
       setDb(clean);
@@ -1450,7 +1125,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         /* ignore */
       }
     },
-    refreshFromApi: syncWithApi,
   };
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
