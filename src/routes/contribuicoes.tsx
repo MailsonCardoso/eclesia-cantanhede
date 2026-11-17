@@ -90,7 +90,7 @@ function downloadPdfReceipt(r: Row, cnpj: string) {
     addField("Valor Contribuído:", brl(Number(r.valor || 0)), true);
     addField("Data do Lançamento:", fmtDate(r.data));
     addField("Forma de Pagamento:", String(r.pagamento || "Dinheiro"));
-    addField("Congregação:", String(r.congregacao || "Batista Corpo e Família"));
+    addField("Congregação:", String(r.congregacao || "Igreja Batista Cristo e Família"));
     addField("CNPJ da Igreja:", cnpj);
 
     // Biblical verse
@@ -164,7 +164,7 @@ function printReceiptDirect(r: Row, cnpj: string) {
         <div class="row highlight"><span class="label">Valor:</span><span class="val">${brl(Number(r.valor || 0))}</span></div>
         <div class="row"><span class="label">Data:</span><span class="val">${fmtDate(r.data)}</span></div>
         <div class="row"><span class="label">Forma de Pagamento:</span><span class="val">${r.pagamento || "—"}</span></div>
-        <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Batista Corpo e Família"}</span></div>
+        <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Igreja Batista Cristo e Família"}</span></div>
         <div class="row"><span class="label">CNPJ da Igreja:</span><span class="val">${cnpj}</span></div>
         <div class="verse">"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Co 9:7)</div>
         <div class="signature">
@@ -198,7 +198,7 @@ function sendToWhatsapp(r: Row, phone: string, cnpj: string) {
     `💰 *Valor:* ${brl(Number(r.valor || 0))}`,
     `📅 *Data:* ${fmtDate(r.data)}`,
     `💳 *Forma de Pagamento:* ${r.pagamento || "—"}`,
-    `⛪ *Congregação:* ${r.congregacao || "Batista Corpo e Família"}`,
+    `⛪ *Congregação:* ${r.congregacao || "Igreja Batista Cristo e Família"}`,
     `----------------------------------------`,
     `_"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Co 9:7)_`,
     ``,
@@ -305,7 +305,7 @@ function ReceiptModal({
 
             <div className="flex items-center justify-between py-1 border-b">
               <span className="text-[11px] text-muted-foreground font-medium">Congregação</span>
-              <span className="font-medium text-foreground">{row.congregacao || "Batista Corpo e Família"}</span>
+              <span className="font-medium text-foreground">{row.congregacao || "Igreja Batista Cristo e Família"}</span>
             </div>
 
             <div className="flex items-center justify-between py-0.5">

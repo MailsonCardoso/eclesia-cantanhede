@@ -147,7 +147,7 @@ function Inventario() {
   // Lista de locais/congregações disponíveis
   const locations = useMemo(() => {
     const list = new Set<string>();
-    list.add("Batista Corpo e Família");
+    list.add("Igreja Batista Cristo e Família");
     list.add("Depósito");
     (db.congregations || []).forEach((c) => {
       if (c.nome) list.add(String(c.nome));
@@ -697,7 +697,7 @@ function Inventario() {
                       <span className="flex items-center gap-1.5 text-muted-foreground font-normal">
                         <MapPin className="size-3.5 text-chart-2 shrink-0" /> Local:
                       </span>
-                      <span className="truncate">{item.local || "Batista Corpo e Família"}</span>
+                      <span className="truncate">{item.local || "Igreja Batista Cristo e Família"}</span>
                     </div>
 
                     {item.aquisicao && (
@@ -795,7 +795,7 @@ function Inventario() {
                   <TableCell className="text-xs">{item.categoria || "—"}</TableCell>
                   <TableCell className="text-xs font-semibold">{item.qtd}</TableCell>
                   <TableCell>{getEstadoBadge(String(item.estado || "Bom"))}</TableCell>
-                  <TableCell className="text-xs">{item.local || "Batista Corpo e Família"}</TableCell>
+                  <TableCell className="text-xs">{item.local || "Igreja Batista Cristo e Família"}</TableCell>
                   <TableCell className="text-xs">{fmtDate(item.aquisicao) || "—"}</TableCell>
                   <TableCell className="text-xs font-medium">
                     {item.valUnit > 0 ? brl(item.valUnit) : "—"}

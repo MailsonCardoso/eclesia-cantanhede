@@ -916,7 +916,7 @@ export const SEDE_CONGREGATION: Row = {
 };
 
 /**
- * Retorna uma base de dados limpa com a congregação Sede Batista Corpo e Família como padrão.
+ * Retorna uma base de dados limpa com a congregação Sede Igreja Batista Cristo e Família como padrão.
  */
 export function emptyDB(): DB {
   return {

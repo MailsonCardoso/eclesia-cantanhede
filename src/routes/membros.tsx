@@ -23,6 +23,7 @@ import {
   Table as TableIcon,
   Eye,
   X,
+  CheckCircle2,
   ShieldCheck,
   Sparkles,
   Layers,
@@ -139,9 +140,17 @@ function MemberSearchSelect({
   placeholder?: string;
   members: Array<{ id: string; nome: string; congregacao?: string; cargo?: string }>;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(value || "");
   const [isOpen, setIsOpen] = useState(false);
+  const [isChanging, setIsChanging] = useState(!value);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setQuery(value || "");
+    if (!value) {
+      setIsChanging(true);
+    }
+  }, [value]);
 
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
@@ -154,30 +163,39 @@ function MemberSearchSelect({
   }, []);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return members.slice(0, 8);
+    if (!query.trim()) return [];
     const q = query.toLowerCase().trim();
     return members.filter((m) => String(m.nome).toLowerCase().includes(q)).slice(0, 8);
   }, [members, query]);
 
-  if (value) {
+  // Se já houver um membro vinculado e não estiver em modo de troca
+  if (value && !isChanging) {
     return (
-      <div className="flex items-center justify-between rounded-xl border bg-background px-3.5 py-2 text-sm shadow-sm">
-        <div className="flex items-center gap-2 min-w-0">
-          <UserRound className="size-4 text-primary shrink-0" />
-          <span className="font-semibold text-foreground truncate">{value}</span>
+      <div className="flex items-center justify-between rounded-xl border bg-muted/40 p-2.5 sm:p-3 text-sm shadow-xs hover:border-primary/40 transition-colors">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
+            {value.slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <span className="font-semibold text-foreground truncate block text-xs sm:text-sm">{value}</span>
+            <span className="text-[10.5px] text-muted-foreground flex items-center gap-1">
+              <CheckCircle2 className="size-3 text-emerald-500" /> Vinculado
+            </span>
+          </div>
         </div>
         <Button
           type="button"
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={() => {
-            onChange("");
-            setQuery("");
+            setIsChanging(true);
+            setIsOpen(false);
           }}
-          className="size-7 text-muted-foreground hover:text-destructive"
-          title="Remover / trocar membro"
+          className="h-8 text-xs rounded-xl gap-1 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
+          title="Trocar ou editar"
         >
-          <X className="size-3.5" />
+          <Pencil className="size-3" />
+          <span>Trocar</span>
         </Button>
       </div>
     );
@@ -191,57 +209,81 @@ function MemberSearchSelect({
           placeholder={placeholder || "Digite o nome para buscar..."}
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
-            setIsOpen(true);
+            const val = e.target.value;
+            setQuery(val);
+            onChange(val); // Atualiza diretamente no formulário com o texto digitado!
+            setIsOpen(Boolean(val.trim()));
           }}
-          onFocus={() => setIsOpen(true)}
-          className="pl-9 pr-8 rounded-xl shadow-sm"
+          onFocus={() => {
+            if (query.trim()) {
+              setIsOpen(true);
+            }
+          }}
+          className="pl-9 pr-8 rounded-xl shadow-sm text-xs sm:text-sm h-10 sm:h-11"
         />
         {query && (
           <button
             type="button"
             onClick={() => {
               setQuery("");
+              onChange("");
               setIsOpen(false);
             }}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 cursor-pointer"
+            title="Limpar campo"
           >
             <X className="size-3.5" />
           </button>
         )}
       </div>
 
-      {isOpen && (
-        <div className="absolute left-0 right-0 z-50 mt-1.5 max-h-56 overflow-y-auto rounded-2xl border bg-popover p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95">
-          {filtered.length === 0 ? (
-            <div className="p-3 text-center text-xs text-muted-foreground">
-              Nenhum membro encontrado.
-            </div>
-          ) : (
-            filtered.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => {
-                  onChange(String(m.nome));
-                  setQuery("");
-                  setIsOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-accent flex items-center justify-between gap-2 transition-colors cursor-pointer"
-              >
-                <div className="min-w-0">
-                  <div className="font-semibold text-foreground truncate">{String(m.nome)}</div>
-                  {(m.congregacao || m.cargo) && (
-                    <div className="text-[11px] text-muted-foreground truncate">
-                      {String(m.congregacao || "")} {m.cargo && m.cargo !== "Sem função / cargo" ? `· ${m.cargo}` : ""}
+      {/* A lista suspensa SÓ abre se houver texto digitado! */}
+      {isOpen && query.trim() && (
+        <div className="absolute left-0 right-0 z-50 mt-1.5 max-h-56 overflow-y-auto rounded-2xl border bg-popover p-1.5 shadow-xl animate-in fade-in-0 zoom-in-95 space-y-1">
+          {filtered.length > 0 ? (
+            <>
+              <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wider">
+                Membros da congregação encontrados ({filtered.length})
+              </div>
+              {filtered.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    const chosen = String(m.nome);
+                    onChange(chosen);
+                    setQuery(chosen);
+                    setIsChanging(false);
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-left p-2 rounded-xl text-xs hover:bg-muted flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
+                      {String(m.nome).slice(0, 2).toUpperCase()}
                     </div>
-                  )}
-                </div>
-                <Badge variant="outline" className="text-[10px] shrink-0 font-normal">
-                  Selecionar
-                </Badge>
-              </button>
-            ))
+                    <div className="min-w-0">
+                      <div className="font-semibold text-foreground truncate">{String(m.nome)}</div>
+                      {(m.congregacao || m.cargo) && (
+                        <div className="text-[10.5px] text-muted-foreground truncate">
+                          {String(m.congregacao || "")} {m.cargo && m.cargo !== "Sem função / cargo" ? `· ${m.cargo}` : ""}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] shrink-0 font-normal">
+                    Selecionar
+                  </Badge>
+                </button>
+              ))}
+            </>
+          ) : (
+            <div className="p-2.5 text-center text-xs text-muted-foreground space-y-1">
+              <div>Nenhum membro da igreja encontrado com esse nome.</div>
+              <div className="text-[11px] text-primary font-medium">
+                O nome &ldquo;<strong>{query}</strong>&rdquo; será salvo como digitado.
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -441,7 +483,7 @@ function Membros() {
     recebimento: "",
     tipo: "Membro",
     situacao: "Ativo",
-    congregacao: "Batista Corpo e Família",
+    congregacao: "Igreja Batista Cristo e Família",
     departamento: "",
     celula: "",
     cell_id: undefined as string | undefined,
@@ -459,6 +501,19 @@ function Membros() {
   const congregations = useMemo(() => {
     return (db.congregations || []).map((c) => String(c.nome)).sort((a, b) => a.localeCompare(b));
   }, [db.congregations]);
+
+  const defaultCongregation = useMemo(() => {
+    if (db.congregations && db.congregations.length > 0) {
+      return String(db.congregations[0].nome);
+    }
+    return "Igreja Batista Cristo e Família";
+  }, [db.congregations]);
+
+  useEffect(() => {
+    if (defaultCongregation && (!form.congregacao || form.congregacao === "Batista Corpo e Família")) {
+      setForm((s) => ({ ...s, congregacao: defaultCongregation }));
+    }
+  }, [defaultCongregation]);
 
   const departments = useMemo(() => {
     return (db.departments || []).map((d) => String(d.nome)).sort((a, b) => a.localeCompare(b));
@@ -1104,32 +1159,32 @@ function Membros() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {form.estadoCivil === "Casado(a)" && (
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
-                    <Label className="text-xs font-semibold">Cônjuge (membro)</Label>
+                    <Label className="text-xs font-semibold">Cônjuge</Label>
                     <MemberSearchSelect
                       value={form.conjuge}
                       onChange={(val) => setForm((s) => ({ ...s, conjuge: val }))}
-                      placeholder="Pesquise o cônjuge na lista de membros..."
+                      placeholder="Digite o nome do cônjuge para buscar ou vincular..."
                       members={membersCompact}
                     />
                   </div>
                 )}
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Pai (membro)</Label>
+                  <Label className="text-xs font-semibold">Pai</Label>
                   <MemberSearchSelect
                     value={form.pai}
                     onChange={(val) => setForm((s) => ({ ...s, pai: val }))}
-                    placeholder="Pesquise o pai na membresia..."
+                    placeholder="Digite o nome do pai para buscar ou vincular..."
                     members={membersCompact}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Mãe (membro)</Label>
+                  <Label className="text-xs font-semibold">Mãe</Label>
                   <MemberSearchSelect
                     value={form.mae}
                     onChange={(val) => setForm((s) => ({ ...s, mae: val }))}
-                    placeholder="Pesquise a mãe na membresia..."
+                    placeholder="Digite o nome da mãe para buscar ou vincular..."
                     members={membersCompact}
                   />
                 </div>
@@ -1414,7 +1469,7 @@ function Membros() {
                     <div className="flex items-center gap-2 text-foreground font-medium truncate">
                       <Church className="size-3.5 text-primary shrink-0" />
                       <span className="text-muted-foreground font-normal">Congregação:</span>
-                      <span className="truncate">{member.congregacao || "Batista Corpo e Família"}</span>
+                      <span className="truncate">{member.congregacao || defaultCongregation}</span>
                     </div>
 
                     {member.departamento && member.departamento !== "Nenhum / Geral" && (
@@ -1550,7 +1605,7 @@ function Membros() {
                   </TableCell>
                   <TableCell className="text-xs">{member.cpf || "—"}</TableCell>
                   <TableCell className="text-xs font-medium">{member.telefone || "—"}</TableCell>
-                  <TableCell className="text-xs">{member.congregacao || "Batista Corpo e Família"}</TableCell>
+                  <TableCell className="text-xs">{member.congregacao || defaultCongregation}</TableCell>
                   <TableCell className="text-xs">
                     {member.cargo && member.cargo !== "Sem função / cargo" ? (
                       <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/30">
@@ -1697,7 +1752,7 @@ function Membros() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-2xl border bg-muted/20 p-4 text-xs">
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Congregação</span>
-                    <span className="font-semibold text-foreground">{selectedMember.congregacao || "Batista Corpo e Família"}</span>
+                    <span className="font-semibold text-foreground">{selectedMember.congregacao || defaultCongregation}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Departamento</span>
