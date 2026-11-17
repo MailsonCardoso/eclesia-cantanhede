@@ -6,7 +6,6 @@ import {
   UserCheck,
   Calendar,
   Clock,
-  MapPin,
   Pencil,
   Trash2,
   Plus,
@@ -81,8 +80,6 @@ function Celulas() {
   const [form, setForm] = useState({
     nome: "",
     lider: "",
-    anfitriao: "",
-    endereco: "",
     dia: "",
     hora: "",
     congregacao: "Batista Corpo e Família",
@@ -180,8 +177,6 @@ function Celulas() {
         !query ||
         String(c.nome || "").toLowerCase().includes(query) ||
         String(c.lider || "").toLowerCase().includes(query) ||
-        String(c.anfitriao || "").toLowerCase().includes(query) ||
-        String(c.endereco || "").toLowerCase().includes(query) ||
         String(c.congregacao || "").toLowerCase().includes(query);
 
       const matchCong = filtroCongregacao === "__all" || c.congregacao === filtroCongregacao;
@@ -197,8 +192,6 @@ function Celulas() {
     setForm({
       nome: "",
       lider: "",
-      anfitriao: "",
-      endereco: "",
       dia: "",
       hora: "",
       congregacao: "Batista Corpo e Família",
@@ -214,8 +207,6 @@ function Celulas() {
     setForm({
       nome: String(cell.nome || ""),
       lider: String(cell.lider || ""),
-      anfitriao: String(cell.anfitriao || ""),
-      endereco: String(cell.endereco || ""),
       dia: String(cell.dia || ""),
       hora: String(cell.hora || ""),
       congregacao: String(cell.congregacao || ""),
@@ -253,7 +244,6 @@ function Celulas() {
     const dataToExport = filteredCells.map((c) => ({
       Nome: c.nome,
       Líder: c.lider,
-      Anfitrião: c.anfitriao,
       "Dia de Encontro": c.dia,
       Horário: c.hora,
       Congregação: c.congregacao,
@@ -262,12 +252,10 @@ function Celulas() {
       "Taxa de Meta (%)": `${c.taxaMeta}%`,
       "Part. da Igreja (%)": `${c.percentIgreja}%`,
       Situação: c.situacao,
-      Endereço: c.endereco,
     }));
     exportCSV("cells", dataToExport, [
       { key: "Nome", label: "Nome" },
       { key: "Líder", label: "Líder" },
-      { key: "Anfitrião", label: "Anfitrião" },
       { key: "Dia de Encontro", label: "Dia de Encontro" },
       { key: "Horário", label: "Horário" },
       { key: "Congregação", label: "Congregação" },
@@ -276,7 +264,6 @@ function Celulas() {
       { key: "Taxa de Meta (%)", label: "Taxa de Meta (%)" },
       { key: "Part. da Igreja (%)", label: "Part. da Igreja (%)" },
       { key: "Situação", label: "Situação" },
-      { key: "Endereço", label: "Endereço" },
     ]);
   };
 
@@ -374,25 +361,6 @@ function Celulas() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="anfitriao" className="text-xs font-semibold">
-                Anfitrião (Lar de Encontro)
-              </Label>
-              <Select value={form.anfitriao || "__none"} onValueChange={(v) => setForm((s) => ({ ...s, anfitriao: v === "__none" ? "" : v }))}>
-                <SelectTrigger id="anfitriao" className="rounded-xl">
-                  <SelectValue placeholder="Selecione o anfitrião" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none">Não especificado / Rotativo</SelectItem>
-                  {membersList.map((m) => (
-                    <SelectItem key={m.nome} value={m.nome}>
-                      {m.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
               <Label htmlFor="congregacao" className="text-xs font-semibold">
                 Congregação Vinculada
               </Label>
@@ -455,19 +423,6 @@ function Celulas() {
                 placeholder="Ex: 15"
                 value={form.participantes}
                 onChange={(e) => setForm((s) => ({ ...s, participantes: e.target.value }))}
-                className="rounded-xl shadow-sm"
-              />
-            </div>
-
-            <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
-              <Label htmlFor="endereco" className="text-xs font-semibold">
-                Endereço de Encontro
-              </Label>
-              <Input
-                id="endereco"
-                placeholder="Rua, número, bairro..."
-                value={form.endereco}
-                onChange={(e) => setForm((s) => ({ ...s, endereco: e.target.value }))}
                 className="rounded-xl shadow-sm"
               />
             </div>
@@ -553,7 +508,7 @@ function Celulas() {
         <div className="relative flex-1 min-w-56">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Pesquisar por nome da célula, líder, endereço..."
+            placeholder="Pesquisar por nome da célula, líder, congregação..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="pl-9 rounded-xl text-xs shadow-sm"
@@ -658,14 +613,6 @@ function Celulas() {
                     <span className="truncate">{cell.lider || "Não definido"}</span>
                   </div>
 
-                  {cell.anfitriao && (
-                    <div className="flex items-center gap-2 text-foreground font-medium truncate">
-                      <Home className="size-3.5 text-chart-2 shrink-0" />
-                      <span className="text-muted-foreground font-normal">Anfitrião:</span>
-                      <span className="truncate">{cell.anfitriao}</span>
-                    </div>
-                  )}
-
                   <div className="flex items-center gap-2 text-foreground font-medium">
                     <Calendar className="size-3.5 text-amber-500 shrink-0" />
                     <span>{cell.dia}</span>
@@ -673,13 +620,6 @@ function Celulas() {
                     <Clock className="size-3.5 text-muted-foreground shrink-0" />
                     <span>{cell.hora || "19:30"}</span>
                   </div>
-
-                  {cell.endereco && (
-                    <div className="flex items-center gap-2 text-muted-foreground truncate pt-0.5 border-t border-border/50">
-                      <MapPin className="size-3.5 text-muted-foreground shrink-0" />
-                      <span className="truncate">{cell.endereco}</span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Bloco de Estatística e Associação de Membros */}
