@@ -483,7 +483,7 @@ function Membros() {
     recebimento: "",
     tipo: "Membro",
     situacao: "Ativo",
-    congregacao: "Igreja Batista Cristo e Família",
+    congregacao: "Igreja Batista Corpo e Família",
     departamento: "",
     celula: "",
     cell_id: undefined as string | undefined,
@@ -506,11 +506,11 @@ function Membros() {
     if (db.congregations && db.congregations.length > 0) {
       return String(db.congregations[0].nome);
     }
-    return "Igreja Batista Cristo e Família";
+    return "Igreja Batista Corpo e Família";
   }, [db.congregations]);
 
   useEffect(() => {
-    if (defaultCongregation && (!form.congregacao || form.congregacao === "Batista Corpo e Família")) {
+    if (defaultCongregation && (!form.congregacao || form.congregacao === "Igreja Batista Cristo e Família" || form.congregacao === "Batista Corpo e Família" || form.congregacao === "__none")) {
       setForm((s) => ({ ...s, congregacao: defaultCongregation }));
     }
   }, [defaultCongregation]);
@@ -1048,8 +1048,16 @@ function Membros() {
                       <SelectValue placeholder="Selecione a congregação" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none">Sede / Geral</SelectItem>
-                      {congregations.map((c) => (
+                      {Array.from(
+                        new Set(
+                          [
+                            defaultCongregation,
+                            ...congregations,
+                          ]
+                            .map((c) => (c === "Igreja Batista Cristo e Família" || c === "Sede / Geral" || c === "__none" ? defaultCongregation : c))
+                            .filter(Boolean)
+                        )
+                      ).map((c) => (
                         <SelectItem key={c} value={c}>
                           {c}
                         </SelectItem>

@@ -388,12 +388,19 @@ export function CrudPage({
       const bad = ["Inativo", "Cancelado", "Ruim"].includes(String(v));
       const isPending = String(v) === "Aguardando baixa";
       return (
-        <Badge
-          variant={good ? "default" : bad ? "destructive" : "secondary"}
-          className={isPending ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30" : undefined}
-        >
-          {v}
-        </Badge>
+        <div className="inline-flex flex-col items-start gap-0.5">
+          <Badge
+            variant={good ? "default" : bad ? "destructive" : "secondary"}
+            className={isPending ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[11px]" : "text-[11px]"}
+          >
+            {v}
+          </Badge>
+          {f.key === "status_deposito" && row?.id_deposito && (
+            <span className="font-mono text-[10.5px] text-muted-foreground whitespace-nowrap">
+              ID: {String(row.id_deposito)}
+            </span>
+          )}
+        </div>
       );
     }
     if (f.type === "congregation" || f.key === "congregacao") {
@@ -570,11 +577,15 @@ export function CrudPage({
                       </SelectTrigger>
                       <SelectContent>
                         {Array.from(
-                          new Set([
-                            DEFAULT_CONGREGATION,
-                            ...congregationNames,
-                            ...(typeof f.options === "function" ? f.options(formValues) : (f.options || [])),
-                          ].filter(Boolean))
+                          new Set(
+                            [
+                              DEFAULT_CONGREGATION,
+                              ...congregationNames,
+                              ...(typeof f.options === "function" ? f.options(formValues) : (f.options || [])),
+                            ]
+                              .map((n) => (n === "Igreja Batista Cristo e Família" || n === "Sede / Geral" || n === "__none" ? DEFAULT_CONGREGATION : n))
+                              .filter(Boolean)
+                          )
                         ).map((n) => (
                           <SelectItem key={n} value={n}>
                             {n}
@@ -796,6 +807,9 @@ export function CrudPage({
             if (!f) return null;
             const opts = f.type === "congregation" || f.key === "congregacao"
               ? [...new Set([...congregationNames, ...(typeof f.options === "function" ? [] : (f.options || []))])]
+                  .map((n) => (n === "Igreja Batista Cristo e Família" || n === "Sede / Geral" || n === "__none" ? DEFAULT_CONGREGATION : n))
+                  .filter(Boolean)
+                  .filter((v, i, a) => a.indexOf(v) === i)
               : f.type === "department"
               ? departmentNames
               : f.type === "leader"

@@ -84,7 +84,7 @@ function Celulas() {
     if (db.congregations && db.congregations.length > 0) {
       return String(db.congregations[0].nome);
     }
-    return "Igreja Batista Cristo e Família";
+    return "Igreja Batista Corpo e Família";
   }, [db.congregations]);
 
   // Formulário
@@ -93,14 +93,14 @@ function Celulas() {
     lider: "",
     dia: "",
     hora: "",
-    congregacao: "Igreja Batista Cristo e Família",
+    congregacao: "Igreja Batista Corpo e Família",
     participantes: "",
     situacao: "Ativa",
     observacoes: "",
   });
 
   useEffect(() => {
-    if (defaultCongregation && (!form.congregacao || form.congregacao === "Batista Corpo e Família")) {
+    if (defaultCongregation && (!form.congregacao || form.congregacao === "Igreja Batista Cristo e Família" || form.congregacao === "Batista Corpo e Família")) {
       setForm((s) => ({ ...s, congregacao: defaultCongregation }));
     }
   }, [defaultCongregation]);

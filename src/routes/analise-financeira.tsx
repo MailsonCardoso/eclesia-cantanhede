@@ -414,7 +414,7 @@ function BalanceteView({
 
   const congregationsData = useMemo(() => {
     const list = db.congregations.map((c) => String(c.nome));
-    const all = list.length > 0 ? list : ["Igreja Batista Cristo e Família"];
+    const all = list.length > 0 ? list : ["Igreja Batista Corpo e Família"];
     return all.map((cong) => {
       const ctVal = db.contributions.filter((c) => String(c.congregacao).toLowerCase() === cong.toLowerCase()).reduce((a, c) => a + Number(c.valor || 0), 0);
       const txVal = db.transactions.filter((t) => String(t.congregacao).toLowerCase() === cong.toLowerCase()).reduce((a, t) => a + Number(t.valor || 0), 0);

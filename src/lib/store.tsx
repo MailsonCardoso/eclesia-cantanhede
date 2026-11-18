@@ -121,7 +121,7 @@ const ageYears = (years: number, month = 5, day = 15) => {
   return x.toISOString().slice(0, 10);
 };
 
-export const DEFAULT_CONGREGATION = "Igreja Batista Cristo e Família";
+export const DEFAULT_CONGREGATION = "Igreja Batista Corpo e Família";
 const congs = [DEFAULT_CONGREGATION];
 const cellNames = ["Célula Ágape", "Célula Betel", "Célula Canaã", "Célula Emanuel", "Célula Shalom"];
 
@@ -906,17 +906,17 @@ export function seed(): DB {
 export const SEDE_CONGREGATION: Row = {
   id: "cong_sede",
   nome: DEFAULT_CONGREGATION,
-  cnpj: "12.345.678/0001-90",
-  endereco: "Av. Principal, 500 - Centro",
-  telefone: "(98) 3211-4500",
-  pastor: "Pr. João Batista",
-  fundacao: "1988-03-15",
+  cnpj: "50.264.838/0001-60",
+  endereco: "Rua A, 100",
+  telefone: "(98) 99607-6494",
+  pastor: "Pr. Cantanhede",
+  fundacao: "2018-02-16",
   situacao: "Ativa",
   tipo: "Sede",
 };
 
 /**
- * Retorna uma base de dados limpa com a congregação Sede Igreja Batista Cristo e Família como padrão.
+ * Retorna uma base de dados limpa com a congregação Sede Igreja Batista Corpo e Família como padrão.
  */
 export function emptyDB(): DB {
   return {
@@ -1183,7 +1183,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             });
           }
           if (Array.isArray(remoteState.congregations)) {
-            next.congregations = remoteState.congregations;
+            const list = remoteState.congregations
+              .map((c: any) => ({
+                ...c,
+                nome: c.nome === "Igreja Batista Cristo e Família" ? DEFAULT_CONGREGATION : c.nome,
+              }))
+              .filter((c: any) => Boolean(c.nome));
+            const seen = new Set<string>();
+            const deduped = list.filter((c: any) => {
+              const k = String(c.nome).trim().toLowerCase();
+              if (seen.has(k)) return false;
+              seen.add(k);
+              return true;
+            });
+            next.congregations = deduped.length > 0 ? deduped : [SEDE_CONGREGATION];
           }
           if (Array.isArray(remoteState.departments)) {
             next.departments = remoteState.departments;

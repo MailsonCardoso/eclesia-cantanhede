@@ -163,7 +163,7 @@ function drawFinancialReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
     { label: "Data do Lançamento", val: fmtDate(r.data), highlight: false, isBadge: false, isMono: false },
     { label: "Forma de Pagamento", val: String(r.pagamento || "—"), highlight: false, isBadge: false, isMono: false },
     { label: "Conta / Destino", val: String(r.conta || "Tesouraria"), highlight: false, isBadge: false, isMono: false },
-    { label: "Congregação", val: String(r.congregacao || "Igreja Batista Cristo e Família"), highlight: false, isBadge: false, isMono: false },
+    { label: "Congregação", val: String(r.congregacao || "Igreja Batista Corpo e Família"), highlight: false, isBadge: false, isMono: false },
     { label: "CNPJ da Igreja", val: cnpj, highlight: false, isBadge: false, isMono: true },
   ];
 
@@ -238,7 +238,7 @@ function drawFinancialReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
 
   ctx.fillStyle = "#64748b";
   ctx.font = "12px system-ui, -apple-system, sans-serif";
-  ctx.fillText(`${r.congregacao || "Igreja Batista Cristo e Família"} · CNPJ ${cnpj}`, width / 2, footY + 44);
+  ctx.fillText(`${r.congregacao || "Igreja Batista Corpo e Família"} · CNPJ ${cnpj}`, width / 2, footY + 44);
 
   ctx.fillStyle = "#475569";
   ctx.font = "10.5px system-ui, -apple-system, sans-serif";
@@ -299,7 +299,7 @@ function printFinancialReceiptDirect(r: Row, cnpj: string) {
         <div class="row"><span class="label">Data do Lançamento:</span><span class="val">${fmtDate(r.data)}</span></div>
         <div class="row"><span class="label">Forma de Pagamento:</span><span class="val">${r.pagamento || "—"}</span></div>
         <div class="row"><span class="label">Conta / Destino:</span><span class="val">${r.conta || "Tesouraria"}</span></div>
-        <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Igreja Batista Cristo e Família"}</span></div>
+        <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Igreja Batista Corpo e Família"}</span></div>
         <div class="row"><span class="label">CNPJ da Igreja:</span><span class="val">${cnpj}</span></div>
 
         <div class="note">
@@ -309,7 +309,7 @@ function printFinancialReceiptDirect(r: Row, cnpj: string) {
 
         <div class="signature">
           <div class="sig-title">Tesouraria / Ministério Financeiro</div>
-          <div class="sig-sub">${r.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ ${cnpj}</div>
+          <div class="sig-sub">${r.congregacao || "Igreja Batista Corpo e Família"} &middot; CNPJ ${cnpj}</div>
         </div>
       </div>
       <script>window.onload = function() { window.print(); window.close(); };</script>
@@ -415,12 +415,12 @@ function FinancialReceiptModal({
         `📅 *Data:* ${fmtDate(row.data)}`,
         `💳 *Forma de Pagamento:* ${row.pagamento || "—"}`,
         `🏦 *Conta:* ${row.conta || "Tesouraria"}`,
-        `⛪ *Congregação:* ${row.congregacao || "Igreja Batista Cristo e Família"}`,
+        `⛪ *Congregação:* ${row.congregacao || "Igreja Batista Corpo e Família"}`,
         `🏢 *CNPJ:* ${churchCnpj}`,
         ``,
         `_Documento comprobatório de lançamento financeiro emitido pela Tesouraria._`,
         ``,
-        `Igreja Batista Cristo e Família 🙏`,
+        `Igreja Batista Corpo e Família 🙏`,
       ].join("\n");
 
       const blob = await new Promise<Blob | null>((resolve) =>
@@ -547,7 +547,7 @@ function FinancialReceiptModal({
           <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
             <span className="text-[#94a3b8] font-medium">Congregação</span>
             <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[200px]">
-              {row.congregacao || "Igreja Batista Cristo e Família"}
+              {row.congregacao || "Igreja Batista Corpo e Família"}
             </span>
           </div>
 
@@ -569,7 +569,7 @@ function FinancialReceiptModal({
         <div className="text-center space-y-0.5 border-t border-[#1e2742]/60 pt-2">
           <div className="text-[10.5px] font-semibold text-[#cbd5e1]">Tesouraria / Ministério Financeiro</div>
           <div className="text-[9px] text-[#64748b]">
-            {row.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ {churchCnpj}
+            {row.congregacao || "Igreja Batista Corpo e Família"} &middot; CNPJ {churchCnpj}
           </div>
         </div>
 

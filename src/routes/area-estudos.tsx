@@ -523,7 +523,7 @@ function AreaEstudosPage() {
       `--- *DESENVOLVIMENTO* ---\n${study.development || "Não informado"}\n\n` +
       `--- *PERGUNTAS PARA REFLEXÃO* ---\n${study.reflection_questions || "Não informadas"}\n\n` +
       `--- *CONCLUSÃO* ---\n${study.conclusion || "Não informada"}\n\n` +
-      `⛪ *${study.cell_name}* | Igreja Batista Cristo e Família`;
+      `⛪ *${study.cell_name}* | Igreja Batista Corpo e Família`;
 
     navigator.clipboard.writeText(text);
     toast.success("Texto completo do estudo copiado para a área de transferência!");
@@ -1011,7 +1011,7 @@ function AreaEstudosPage() {
                 className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] sm:text-xs font-semibold gap-1.5 py-1 px-2.5 sm:px-3 rounded-full"
               >
                 <Church className="size-3.5" />
-                Igreja Batista Cristo e Família
+                Igreja Batista Corpo e Família
               </Badge>
             </div>
 

@@ -194,7 +194,7 @@ function Dashboard() {
           icon={UserPlus}
           items={latest.map((x) => [
             String(x.nome),
-            `${x.congregacao || "Igreja Batista Cristo e Família"} · ${fmtDate(getJoinDate(x)) || "Membro ativo"}`,
+            `${x.congregacao || "Igreja Batista Corpo e Família"} · ${fmtDate(getJoinDate(x)) || "Membro ativo"}`,
           ])}
         />
       </div>

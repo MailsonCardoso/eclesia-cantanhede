@@ -179,7 +179,7 @@ function drawReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
             : []),
         ]
       : []),
-    { label: "Congregação", val: String(r.congregacao || "Igreja Batista Cristo e Família"), highlight: false, isBadge: false, isMono: false },
+    { label: "Congregação", val: String(r.congregacao || "Igreja Batista Corpo e Família"), highlight: false, isBadge: false, isMono: false },
     { label: "CNPJ da Igreja", val: cnpj, highlight: false, isBadge: false, isMono: true },
   ];
 
@@ -268,7 +268,7 @@ function drawReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
 
   ctx.fillStyle = "#64748b";
   ctx.font = "12px system-ui, -apple-system, sans-serif";
-  ctx.fillText(`${r.congregacao || "Igreja Batista Cristo e Família"} · CNPJ ${cnpj}`, width / 2, footY + 44);
+  ctx.fillText(`${r.congregacao || "Igreja Batista Corpo e Família"} · CNPJ ${cnpj}`, width / 2, footY + 44);
 
   ctx.fillStyle = "#475569";
   ctx.font = "10.5px system-ui, -apple-system, sans-serif";
@@ -332,7 +332,7 @@ function printReceiptDirect(r: Row, cnpj: string) {
         <div class="row"><span class="label">Status do Depósito:</span><span class="val">${r.status_deposito || "Aguardando baixa"}</span></div>
         ${r.id_deposito ? `<div class="row"><span class="label">ID Depósito Bancário:</span><span class="val">${r.id_deposito}</span></div>` : ""}
         ` : ""}
-        <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Igreja Batista Cristo e Família"}</span></div>
+        <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Igreja Batista Corpo e Família"}</span></div>
         <div class="row"><span class="label">CNPJ da Igreja:</span><span class="val">${cnpj}</span></div>
 
         <div class="verse">
@@ -342,7 +342,7 @@ function printReceiptDirect(r: Row, cnpj: string) {
 
         <div class="signature">
           <div class="sig-title">Tesouraria / Ministério Financeiro</div>
-          <div class="sig-sub">${r.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ ${cnpj}</div>
+          <div class="sig-sub">${r.congregacao || "Igreja Batista Corpo e Família"} &middot; CNPJ ${cnpj}</div>
         </div>
       </div>
       <script>window.onload = function() { window.print(); window.close(); };</script>
@@ -470,7 +470,7 @@ function ReceiptModal({
               ...(row.id_deposito ? [`🔖 *ID do Depósito:* ${row.id_deposito}`] : []),
             ]
           : []),
-        `⛪ *Congregação:* ${row.congregacao || "Igreja Batista Cristo e Família"}`,
+        `⛪ *Congregação:* ${row.congregacao || "Igreja Batista Corpo e Família"}`,
         `🏢 *CNPJ:* ${churchCnpj}`,
         ``,
         `_"Cada um dê conforme determinou em seu coração, não com pesar ou por obrigação, pois Deus ama quem dá com alegria." (2 Co 9:7)_`,
@@ -546,7 +546,7 @@ function ReceiptModal({
 
   return (
     <Dialog open={!!row} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[420px] p-4 sm:p-5 rounded-3xl border border-[#232d4b] bg-[#0c101d] text-[#f8fafc] shadow-2xl space-y-3.5 focus:outline-none max-h-[94vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#232d4b] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+      <DialogContent className="max-w-[420px] p-3.5 sm:p-4 rounded-3xl border border-[#232d4b] bg-[#0c101d] text-[#f8fafc] shadow-2xl space-y-2.5 focus:outline-none max-h-[94vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#232d4b] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
         {/* Cabeçalho do Modal */}
         <DialogHeader className="flex flex-row items-center gap-3 pr-6 space-y-0 text-left">
           <div className="grid size-9 place-items-center rounded-xl bg-[#2e1d52] border border-[#7c3aed]/40 text-[#c084fc] shadow-sm shrink-0">
@@ -609,7 +609,7 @@ function ReceiptModal({
               </div>
               {row.id_deposito && (
                 <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
-                  <span className="text-[#94a3b8] font-medium">ID Depósito Bancário</span>
+                  <span className="text-[#94a3b8] font-medium">ID do Depósito</span>
                   <span className="font-mono text-[11px] font-semibold text-[#f8fafc]">{String(row.id_deposito)}</span>
                 </div>
               )}
@@ -619,7 +619,7 @@ function ReceiptModal({
           <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
             <span className="text-[#94a3b8] font-medium">Congregação</span>
             <span className="font-semibold text-[#f8fafc] text-right truncate max-w-[200px]">
-              {row.congregacao || "Igreja Batista Cristo e Família"}
+              {row.congregacao || "Igreja Batista Corpo e Família"}
             </span>
           </div>
 
@@ -641,7 +641,7 @@ function ReceiptModal({
         <div className="text-center space-y-0.5 border-t border-[#1e2742]/60 pt-2">
           <div className="text-[10.5px] font-semibold text-[#cbd5e1]">Tesouraria / Ministério Financeiro</div>
           <div className="text-[9px] text-[#64748b]">
-            {row.congregacao || "Igreja Batista Cristo e Família"} &middot; CNPJ {churchCnpj}
+            {row.congregacao || "Igreja Batista Corpo e Família"} &middot; CNPJ {churchCnpj}
           </div>
         </div>
 
@@ -767,7 +767,7 @@ function Contribuicoes() {
           },
           {
             key: "status_deposito",
-            label: "Status Depósito",
+            label: "Depósito Bancário",
             type: "select",
             options: ["Aguardando baixa", "Depositado / Baixado"],
             table: true,
@@ -775,9 +775,9 @@ function Contribuicoes() {
           },
           {
             key: "id_deposito",
-            label: "ID do Depósito Bancário",
+            label: "ID / Comprovante do Depósito",
             type: "text",
-            table: true,
+            table: false,
             enabledWhen: (values) => values.pagamento === "Dinheiro",
           },
           { key: "congregacao", label: "Congregação", type: "congregation", options: [DEFAULT_CONGREGATION], table: true },

@@ -250,7 +250,7 @@ function RelatorioMembros() {
         esposa: esposa || undefined,
         temConjugeCadastrado: !!spouse,
         telefoneContato: tel,
-        congregacao: String(membro.congregacao || "Igreja Batista Cristo e Família"),
+        congregacao: String(membro.congregacao || "Igreja Batista Corpo e Família"),
       });
     }
 
@@ -665,7 +665,7 @@ function RelatorioMembros() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">{bucketOf(m.calculatedAge!)}</TableCell>
                       <TableCell>{fmtDate(m.nascimento ?? m.birth_date)}</TableCell>
-                      <TableCell>{m.congregacao ?? "Igreja Batista Cristo e Família"}</TableCell>
+                      <TableCell>{m.congregacao ?? "Igreja Batista Corpo e Família"}</TableCell>
                       <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">

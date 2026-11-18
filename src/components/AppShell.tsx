@@ -294,7 +294,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <SidebarTrigger />
               <div className="h-4 w-px bg-border shrink-0" />
               <span className="font-display font-bold text-xs sm:text-sm tracking-wider text-foreground uppercase truncate select-none">
-                IGREJA BATISTA CRISTO E FAMÍLIA
+                IGREJA BATISTA CORPO E FAMÍLIA
               </span>
             </div>
 
