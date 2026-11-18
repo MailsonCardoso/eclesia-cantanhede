@@ -8,6 +8,7 @@ import {
   FileText,
   Filter,
   Heart,
+  HeartHandshake,
   Printer,
   Sparkles,
   UserCheck,
@@ -44,8 +45,7 @@ export const AGE_BUCKETS: [string, number, number][] = [
   ["26–35", 26, 35],
   ["36–45", 36, 45],
   ["46–59", 46, 59],
-  ["60–69", 60, 69],
-  ["70+", 70, 200],
+  ["60+", 60, 200],
 ];
 
 export function ageOf(nascimento: unknown, ref = new Date()): number | null {
@@ -59,12 +59,12 @@ export function ageOf(nascimento: unknown, ref = new Date()): number | null {
 }
 
 export function bucketOf(age: number): string {
-  return AGE_BUCKETS.find(([, lo, hi]) => age >= lo && age <= hi)?.[0] ?? "70+";
+  return AGE_BUCKETS.find(([, lo, hi]) => age >= lo && age <= hi)?.[0] ?? "60+";
 }
 
-const COLORS = ["#3B82F6", "#8B5CF6", "#22C55E", "#F97316", "#6366F1", "#A855F7", "#10B981", "#FB923C"];
+const COLORS = ["#3B82F6", "#8B5CF6", "#22C55E", "#F97316", "#6366F1", "#A855F7", "#10B981"];
 
-type ActiveTab = "geral" | "casais" | "homens" | "mulheres" | "criancas" | "jovens";
+type ActiveTab = "geral" | "casais" | "homens" | "mulheres" | "criancas" | "jovens" | "idosos";
 
 function exportPDF({
   title,
@@ -287,6 +287,13 @@ function RelatorioMembros() {
     return membersWithAge.filter((m) => m.calculatedAge !== null && m.calculatedAge >= 13 && m.calculatedAge <= 17);
   }, [membersWithAge]);
 
+  // 7. Idosos (60+ anos)
+  const idososList = useMemo(() => {
+    return membersWithAge
+      .filter((m) => m.calculatedAge !== null && m.calculatedAge >= 60)
+      .sort((a, b) => (b.calculatedAge ?? 0) - (a.calculatedAge ?? 0));
+  }, [membersWithAge]);
+
   // Handlers de Exportação
   const handleExportCSV = () => {
     const filename = `relatorio-membros-${tab}-${new Date().toISOString().slice(0, 10)}`;
@@ -344,6 +351,8 @@ function RelatorioMembros() {
         ? mulheresList
         : tab === "jovens"
         ? jovensList
+        : tab === "idosos"
+        ? idososList
         : list;
 
     exportCSV(
@@ -415,6 +424,8 @@ function RelatorioMembros() {
         ? mulheresList
         : tab === "jovens"
         ? jovensList
+        : tab === "idosos"
+        ? idososList
         : list;
 
     const tabTitle =
@@ -424,6 +435,8 @@ function RelatorioMembros() {
         ? "Relatório do Ministério de Mulheres (>= 18 anos)"
         : tab === "jovens"
         ? "Relatório de Adolescentes e Jovens (13 a 17 anos)"
+        : tab === "idosos"
+        ? "Relatório de Idosos / Melhor Idade (60+ anos)"
         : "Relatório Geral de Membros por Idade";
 
     exportPDF({
@@ -487,7 +500,7 @@ function RelatorioMembros() {
       </div>
 
       {/* Cards de Métricas Resumo */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
         <button
           onClick={() => setTab("geral")}
           className={`text-left rounded-xl border p-4 transition-all card-hover ${
@@ -564,6 +577,19 @@ function RelatorioMembros() {
           </div>
           <div className="mt-1 text-2xl font-bold">{jovensList.length}</div>
           <div className="text-[11px] text-muted-foreground">Adolescentes</div>
+        </button>
+
+        <button
+          onClick={() => setTab("idosos")}
+          className={`text-left rounded-xl border p-4 transition-all card-hover ${
+            tab === "idosos" ? "border-primary bg-primary/10 shadow-sm" : "bg-card"
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            Idosos (60+) <HeartHandshake className="size-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="mt-1 text-2xl font-bold">{idososList.length}</div>
+          <div className="text-[11px] text-muted-foreground">Melhor Idade</div>
         </button>
       </div>
 
@@ -960,6 +986,61 @@ function RelatorioMembros() {
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Nenhum adolescente cadastrado nesta congregação.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* 7. ABA IDOSOS (60+ anos) */}
+      {tab === "idosos" && (
+        <div className="rounded-2xl border bg-card shadow-card overflow-hidden">
+          <div className="border-b px-5 py-3 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">Idosos & Melhor Idade (60+ anos)</h3>
+              <p className="text-xs text-muted-foreground">Membros experientes para ministério da terceira idade, aconselhamento e oração.</p>
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">{idososList.length} membros</span>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Idade</TableHead>
+                <TableHead>Nascimento</TableHead>
+                <TableHead>Sexo</TableHead>
+                <TableHead>Estado Civil</TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Cargo</TableHead>
+                <TableHead>Célula</TableHead>
+                <TableHead>Congregação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {idososList.length ? (
+                idososList.map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{m.nome ?? m.name}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                        {m.calculatedAge} anos
+                      </span>
+                    </TableCell>
+                    <TableCell>{fmtDate(m.nascimento ?? m.birth_date)}</TableCell>
+                    <TableCell>{m.sexo ?? m.sex ?? "—"}</TableCell>
+                    <TableCell>{m.estadoCivil ?? m.marital_status ?? "—"}</TableCell>
+                    <TableCell className="font-mono text-xs">{m.telefone ?? m.phone ?? "—"}</TableCell>
+                    <TableCell>{m.cargo ?? m.role ?? "Membro"}</TableCell>
+                    <TableCell>{m.celula ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{m.congregacao}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    Nenhum membro idoso (60+) cadastrado nesta congregação.
                   </TableCell>
                 </TableRow>
               )}

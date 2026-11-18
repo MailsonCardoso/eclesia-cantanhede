@@ -136,6 +136,7 @@ function DreView({
     "Ajuda ministerial",
     "Ação social",
     "Materiais",
+    "Sistema",
     "Taxas bancárias",
     "Outras despesas",
   ];

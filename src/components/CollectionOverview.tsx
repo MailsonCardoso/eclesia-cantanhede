@@ -47,23 +47,59 @@ export function CollectionOverview({
     return `no ano de ${filterYear}`;
   })();
 
-  // Métricas de Transações (Financeiro)
-  const txIncome = periodFilteredRows
-    .filter((r) => r.tipo === "Receita")
-    .reduce((a, r) => a + Number(r.valor || 0), 0);
-  const txExpenses = periodFilteredRows
-    .filter((r) => r.tipo === "Despesa")
-    .reduce((a, r) => a + Number(r.valor || 0), 0);
-  const txBalance = txIncome - txExpenses;
+  // 1. Saldo Anterior e Acumulado (antes do período selecionado)
+  const isMonthFiltered = Boolean(filterYear && filterMonth && filterMonth !== "all");
+  const periodStartDate = isMonthFiltered
+    ? `${filterYear}-${String(filterMonth).padStart(2, "0")}-01`
+    : filterYear
+    ? `${filterYear}-01-01`
+    : "";
 
-  // Saldo geral acumulado no banco/caixa (de todos os tempos)
-  const allTimeIncome = rows
+  const prevTxIncome = periodStartDate
+    ? db.transactions
+        .filter((r) => r.tipo === "Receita" && String(r.data || "") < periodStartDate)
+        .reduce((a, r) => a + Number(r.valor || 0), 0)
+    : 0;
+  const prevCtIncome = periodStartDate
+    ? db.contributions
+        .filter((c) => String(c.data || "") < periodStartDate)
+        .reduce((a, c) => a + Number(c.valor || 0), 0)
+    : 0;
+  const prevTxExpenses = periodStartDate
+    ? db.transactions
+        .filter((r) => r.tipo === "Despesa" && String(r.data || "") < periodStartDate)
+        .reduce((a, r) => a + Number(r.valor || 0), 0)
+    : 0;
+  const prevBalance = (prevTxIncome + prevCtIncome) - prevTxExpenses;
+
+  // 2. Entradas do Período (Movimentações de Receita + Dízimos e Ofertas)
+  const currentTxIncome = periodFilteredRows
     .filter((r) => r.tipo === "Receita")
     .reduce((a, r) => a + Number(r.valor || 0), 0);
-  const allTimeExpenses = rows
+  const currentCtIncome = (() => {
+    if (!filterYear) {
+      return db.contributions.reduce((a, c) => a + Number(c.valor || 0), 0);
+    }
+    const prefix = filterMonth && filterMonth !== "all"
+      ? `${filterYear}-${String(filterMonth).padStart(2, "0")}`
+      : `${filterYear}-`;
+    return db.contributions
+      .filter((c) => String(c.data || "").startsWith(prefix))
+      .reduce((a, c) => a + Number(c.valor || 0), 0);
+  })();
+  const totalPeriodIncome = currentTxIncome + currentCtIncome;
+
+  // 3. Despesas do Período
+  const totalPeriodExpenses = periodFilteredRows
     .filter((r) => r.tipo === "Despesa")
     .reduce((a, r) => a + Number(r.valor || 0), 0);
-  const allTimeBalance = allTimeIncome - allTimeExpenses;
+
+  // 4. Saldo Atual em Caixa (Saldo Anterior + Entradas − Saídas)
+  const currentClosingBalance = isPeriodFiltered
+    ? prevBalance + totalPeriodIncome - totalPeriodExpenses
+    : (db.transactions.filter((r) => r.tipo === "Receita").reduce((a, r) => a + Number(r.valor || 0), 0)
+        + db.contributions.reduce((a, c) => a + Number(c.valor || 0), 0))
+      - db.transactions.filter((r) => r.tipo === "Despesa").reduce((a, r) => a + Number(r.valor || 0), 0);
 
   // Métricas de Contribuições (Dízimos e Ofertas)
   const contribTotal = periodFilteredRows.reduce((a, r) => a + Number(r.valor || 0), 0);
@@ -126,24 +162,30 @@ export function CollectionOverview({
     ],
     transactions: [
       {
-        label: "Receitas",
-        value: brl(txIncome),
-        icon: ArrowDownLeft,
-        detail: isPeriodFiltered ? `Entradas ${periodLabel}` : undefined,
-      },
-      {
-        label: "Despesas",
-        value: brl(txExpenses),
-        icon: ArrowUpRight,
-        detail: isPeriodFiltered ? `Saídas ${periodLabel}` : undefined,
-      },
-      {
-        label: "Saldo em caixa",
-        value: brl(txBalance),
+        label: "Saldo anterior",
+        value: brl(prevBalance),
         icon: Landmark,
+        detail: isPeriodFiltered ? "Acumulado até o mês anterior" : "Saldo inicial",
+      },
+      {
+        label: "Receitas do período",
+        value: brl(totalPeriodIncome),
+        icon: ArrowDownLeft,
+        detail: isPeriodFiltered ? `Dízimos, ofertas e receitas ${periodLabel}` : "Total de entradas acumuladas",
+      },
+      {
+        label: "Despesas do período",
+        value: brl(totalPeriodExpenses),
+        icon: ArrowUpRight,
+        detail: isPeriodFiltered ? `Saídas e pagamentos ${periodLabel}` : "Total de saídas acumuladas",
+      },
+      {
+        label: "Saldo atual em caixa",
+        value: brl(currentClosingBalance),
+        icon: Wallet,
         detail: isPeriodFiltered
-          ? `Saldo geral acumulado no banco: ${brl(allTimeBalance)}`
-          : undefined,
+          ? "Saldo anterior + Receitas − Despesas"
+          : "Disponível em caixa e banco",
       },
     ],
     events: [

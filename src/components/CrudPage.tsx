@@ -377,13 +377,24 @@ export function CrudPage({
   const cols = fields.filter((f) => f.table);
   const Icon = collectionIcons[collection];
   const hasFilters = !!q || Object.values(filters).some((v) => v && v !== "__all");
-  const render = (f: Field, v: Row[string]) => {
+  const render = (f: Field, v: Row[string], row?: Row) => {
+    if (row && f.enabledWhen && !f.enabledWhen(row as Record<string, string>)) {
+      return <span className="text-muted-foreground text-xs">—</span>;
+    }
     if (f.type === "money" || f.key === "valor" || f.key === "valor_unitario") return brl(Number(v || 0));
     if (f.type === "date") return fmtDate(v);
-    if (f.key === "situacao" || f.key === "tipo" || f.key === "status" || f.key === "estado") {
-      const good = ["Ativo", "Ativa", "Receita", "Membro", "Dízimo", "Realizado", "Bom", "Novo"].includes(String(v));
+    if (f.key === "situacao" || f.key === "tipo" || f.key === "status" || f.key === "estado" || f.key === "status_deposito") {
+      const good = ["Ativo", "Ativa", "Receita", "Membro", "Dízimo", "Realizado", "Bom", "Novo", "Depositado / Baixado"].includes(String(v));
       const bad = ["Inativo", "Cancelado", "Ruim"].includes(String(v));
-      return <Badge variant={good ? "default" : bad ? "destructive" : "secondary"}>{v}</Badge>;
+      const isPending = String(v) === "Aguardando baixa";
+      return (
+        <Badge
+          variant={good ? "default" : bad ? "destructive" : "secondary"}
+          className={isPending ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30" : undefined}
+        >
+          {v}
+        </Badge>
+      );
     }
     if (f.type === "congregation" || f.key === "congregacao") {
       return v || DEFAULT_CONGREGATION;
@@ -815,7 +826,7 @@ export function CrudPage({
           <TableBody>
             {rows.map((r) => (
               <TableRow key={r.id}>
-                {cols.map((c) => <TableCell key={c.key} className={c.key === cols[0]?.key ? "font-medium" : ""}>{render(c, r[c.key])}</TableCell>)}
+                {cols.map((c) => <TableCell key={c.key} className={c.key === cols[0]?.key ? "font-medium" : ""}>{render(c, r[c.key], r)}</TableCell>)}
                 <TableCell className="text-right no-print whitespace-nowrap">
                   {extraAction?.(r)}
                   <Button size="icon" variant="ghost" aria-label="Editar" onClick={() => openForm(r)}><Pencil className="size-4" /></Button>
