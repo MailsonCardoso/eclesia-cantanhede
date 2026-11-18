@@ -159,25 +159,25 @@ function drawReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
     { label: "Forma de Pagamento", val: String(r.pagamento || "—"), highlight: false, isBadge: false, isMono: false },
     ...(isDinheiro
       ? [
-          {
-            label: "Status do Depósito",
-            val: String(r.status_deposito || "Aguardando baixa"),
-            highlight: false,
-            isBadge: true,
-            isMono: false,
-          },
-          ...(r.id_deposito
-            ? [
-                {
-                  label: "ID Depósito Bancário",
-                  val: String(r.id_deposito),
-                  highlight: false,
-                  isBadge: false,
-                  isMono: true,
-                },
-              ]
-            : []),
-        ]
+        {
+          label: "Status do Depósito",
+          val: String(r.status_deposito || "Aguardando baixa"),
+          highlight: false,
+          isBadge: true,
+          isMono: false,
+        },
+        ...(r.id_deposito
+          ? [
+            {
+              label: "ID Depósito Bancário",
+              val: String(r.id_deposito),
+              highlight: false,
+              isBadge: false,
+              isMono: true,
+            },
+          ]
+          : []),
+      ]
       : []),
     { label: "Congregação", val: String(r.congregacao || "Igreja Batista Corpo e Família"), highlight: false, isBadge: false, isMono: false },
     { label: "CNPJ da Igreja", val: cnpj, highlight: false, isBadge: false, isMono: true },
@@ -466,9 +466,9 @@ function ReceiptModal({
         `💳 *Forma de Pagamento:* ${row.pagamento || "—"}`,
         ...(row.pagamento === "Dinheiro"
           ? [
-              `🏦 *Status do Depósito:* ${row.status_deposito || "Aguardando baixa"}`,
-              ...(row.id_deposito ? [`🔖 *ID do Depósito:* ${row.id_deposito}`] : []),
-            ]
+            `🏦 *Status do Depósito:* ${row.status_deposito || "Aguardando baixa"}`,
+            ...(row.id_deposito ? [`🔖 *ID do Depósito:* ${row.id_deposito}`] : []),
+          ]
           : []),
         `⛪ *Congregação:* ${row.congregacao || "Igreja Batista Corpo e Família"}`,
         `🏢 *CNPJ:* ${churchCnpj}`,
@@ -599,11 +599,10 @@ function ReceiptModal({
             <>
               <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
                 <span className="text-[#94a3b8] font-medium">Status do Depósito</span>
-                <span className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold border ${
-                  row.status_deposito === "Depositado / Baixado"
-                    ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
-                    : "border-amber-500/30 bg-amber-500/15 text-amber-400"
-                }`}>
+                <span className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold border ${row.status_deposito === "Depositado / Baixado"
+                  ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
+                  : "border-amber-500/30 bg-amber-500/15 text-amber-400"
+                  }`}>
                   {row.status_deposito || "Aguardando baixa"}
                 </span>
               </div>
