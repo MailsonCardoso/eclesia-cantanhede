@@ -1300,7 +1300,7 @@ function Membros() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Filtro Congregação */}
           <Select value={filtroCongregacao} onValueChange={setFiltroCongregacao}>
-            <SelectTrigger className="w-40 rounded-xl text-xs">
+            <SelectTrigger className="w-40 rounded-xl text-xs shrink-0">
               <SelectValue placeholder="Congregação: todas" />
             </SelectTrigger>
             <SelectContent>
@@ -1315,7 +1315,7 @@ function Membros() {
 
           {/* Filtro Situação */}
           <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
-            <SelectTrigger className="w-32 rounded-xl text-xs">
+            <SelectTrigger className="w-32 rounded-xl text-xs shrink-0">
               <SelectValue placeholder="Situação: todas" />
             </SelectTrigger>
             <SelectContent>
@@ -1330,7 +1330,7 @@ function Membros() {
 
           {/* Filtro Cargo */}
           <Select value={filtroCargo} onValueChange={setFiltroCargo}>
-            <SelectTrigger className="w-36 rounded-xl text-xs">
+            <SelectTrigger className="w-36 rounded-xl text-xs shrink-0">
               <SelectValue placeholder="Cargo: todos" />
             </SelectTrigger>
             <SelectContent>
@@ -1345,7 +1345,7 @@ function Membros() {
 
           {/* Filtro Célula */}
           <Select value={filtroCelula} onValueChange={setFiltroCelula}>
-            <SelectTrigger className="w-36 rounded-xl text-xs">
+            <SelectTrigger className="w-36 rounded-xl text-xs shrink-0">
               <SelectValue placeholder="Célula: todas" />
             </SelectTrigger>
             <SelectContent>
@@ -1378,7 +1378,7 @@ function Membros() {
                 setFiltroCargo("__all");
                 setFiltroCelula("__all");
               }}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
             >
               Limpar filtros
             </Button>

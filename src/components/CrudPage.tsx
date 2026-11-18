@@ -727,7 +727,7 @@ export function CrudPage({
                 value={String(selectedMonth)}
                 onValueChange={(val) => setSelectedMonth(val === "all" ? "all" : Number(val))}
               >
-                <SelectTrigger className="h-10 min-w-[140px] rounded-2xl text-xs font-semibold bg-background shadow-xs border-border/70 hover:border-primary/50 transition-colors">
+                <SelectTrigger className="h-10 min-w-[140px] rounded-2xl text-xs font-semibold bg-background shadow-xs border-border/70 hover:border-primary/50 transition-colors shrink-0">
                   <SelectValue placeholder="Mês" />
                 </SelectTrigger>
                 <SelectContent>
@@ -746,7 +746,7 @@ export function CrudPage({
                 value={String(selectedYear)}
                 onValueChange={(val) => setSelectedYear(Number(val))}
               >
-                <SelectTrigger className="h-10 min-w-[95px] rounded-2xl text-xs font-semibold bg-background shadow-xs border-border/70 hover:border-primary/50 transition-colors">
+                <SelectTrigger className="h-10 min-w-[95px] rounded-2xl text-xs font-semibold bg-background shadow-xs border-border/70 hover:border-primary/50 transition-colors shrink-0">
                   <SelectValue placeholder="Ano" />
                 </SelectTrigger>
                 <SelectContent>
@@ -797,7 +797,7 @@ export function CrudPage({
               : `${rows.length} de ${db[collection].length}`}
           </Badge>
         </div>
-        <div className="flex flex-wrap gap-3 border-b p-4 no-print">
+        <div className="flex flex-wrap items-center gap-3 border-b p-4 no-print">
           <div className="relative flex-1 min-w-56">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input className="pl-9" aria-label={`Pesquisar ${title.toLowerCase()}`} placeholder="Pesquisar..." value={q} onChange={(e) => setQ(e.target.value)} />
@@ -823,7 +823,7 @@ export function CrudPage({
               : f.options ?? [...new Set(db[collection].map((r) => String(r[k])))];
             return (
               <Select key={k} value={filters[k] ?? "__all"} onValueChange={(v) => setFilters((s) => ({ ...s, [k]: v }))}>
-                <SelectTrigger className="w-full sm:w-52" aria-label={`Filtrar por ${f.label.toLowerCase()}`}><SelectValue placeholder={f.label} /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-52 shrink-0" aria-label={`Filtrar por ${f.label.toLowerCase()}`}><SelectValue placeholder={f.label} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">{f.label}: todos</SelectItem>
                   {opts.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
@@ -831,7 +831,7 @@ export function CrudPage({
               </Select>
             );
           })}
-          {hasFilters && <Button variant="ghost" onClick={() => { setQ(""); setFilters({}); }}>Limpar filtros</Button>}
+          {hasFilters && <Button variant="ghost" size="sm" className="h-9 shrink-0 text-xs text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => { setQ(""); setFilters({}); }}>Limpar filtros</Button>}
         </div>
         <Table>
           <TableHeader>

@@ -10,7 +10,9 @@
  * (o AppShell alterna a classe .dark no <html>, com padrão escuro).
  */
 
-html {
+html,
+html[data-scroll-locked] {
+  overflow-y: scroll !important;
   scrollbar-gutter: stable;
 }
 
@@ -19,9 +21,26 @@ html, body {
   max-width: 100%;
 }
 
-body[data-scroll-locked] {
+/*
+ * Previne que Radix UI / react-remove-scroll oculte a barra de rolagem vertical ao abrir selects e modais,
+ * e zera margens/paddings injetados que causavam o deslocamento lateral de 17px ("tela diminuindo e voltando").
+ */
+html body[data-scroll-locked],
+body[data-scroll-locked],
+.with-scroll-bars-hidden {
+  overflow: visible !important;
+  position: static !important;
+  overscroll-behavior: auto !important;
   margin-right: 0px !important;
   padding-right: 0px !important;
+}
+
+.right-scroll-bar-position {
+  right: 0px !important;
+}
+
+.width-before-scroll-bar {
+  margin-right: 0px !important;
 }
 
 @theme inline {
