@@ -336,25 +336,6 @@ export function NotificationCenter() {
         });
       }
 
-      // Membros sem célula (integração)
-      const membersWithoutCell = db.members.filter((m) => {
-        const c = String(m.celula || "").trim();
-        return !c || c === "Não participa de célula" || c === "__none" || c === "Nenhuma";
-      });
-      if (membersWithoutCell.length > 0) {
-        list.push({
-          id: "cells_members_without_cell",
-          category: "contextual",
-          priority: "low",
-          title: `${membersWithoutCell.length} membro(s) sem célula`,
-          description: `Irmãos cadastrados na igreja que ainda não foram integrados a uma célula.`,
-          iconName: "Users",
-          tag: "Integração",
-          route: "/membros",
-          actionLabel: "Ver Membros",
-        });
-      }
-
       // Alerta administrativo para atribuir liderança (Pastor e Admin)
       if (isPastoralStaff) {
         const noLeader = db.cells.filter((c) => !c.lider || c.lider === "__none" || c.lider === "Nenhum");
