@@ -549,6 +549,9 @@ export function CrudPage({
                           onValueChange={(v) => {
                             setFormValues((s) => {
                               const next = { ...s, [f.key]: v };
+                              if (f.key === "pagamento" && v === "Dinheiro" && !next.status_deposito) {
+                                next.status_deposito = "Aguardando baixa";
+                              }
                               fields.forEach((other) => {
                                 if (typeof other.options === "function" && other.key !== f.key) {
                                   const nextOpts = other.options(next);

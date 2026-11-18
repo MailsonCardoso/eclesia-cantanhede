@@ -444,6 +444,23 @@ export function NotificationCenter() {
           actionLabel: "Ver Lançamentos",
         });
       }
+
+      const pendingCashTxs = db.transactions.filter(
+        (t) => t.pagamento === "Dinheiro" && (t.status_deposito === "Aguardando baixa" || !t.status_deposito)
+      );
+      if (pendingCashTxs.length > 0) {
+        list.push({
+          id: "finance_pending_cash_deposits",
+          category: "contextual",
+          priority: "medium",
+          title: `${pendingCashTxs.length} lançamento(s) em dinheiro aguardando baixa`,
+          description: `Valores em espécie pendentes de depósito ou baixa bancária.`,
+          iconName: "Wallet",
+          tag: "Tesouraria",
+          route: "/financeiro",
+          actionLabel: "Ver Pendências",
+        });
+      }
     }
 
     // Tela: /contribuicoes (Apenas Tesoureiro, Pastor e Admin)

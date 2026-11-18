@@ -72,7 +72,7 @@ function getFinancialReceiptFileName(row: Row, ext: "png" | "pdf"): string {
 function drawFinancialReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   const width = 640;
-  const height = 860;
+  const height = 920;
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
@@ -152,23 +152,46 @@ function drawFinancialReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
   ctx.stroke();
 
   // 3. Card com os Dados da Receita
-  const cardY = 118;
-  const cardH = 410;
-  drawRoundRect(32, cardY, width - 64, cardH, 18, "#141b30", "#1e2742", 1.5);
-
+  const isDinheiro = r.pagamento === "Dinheiro";
   const rows = [
     { label: "Finalidade / Descrição", val: String(r.descricao || r.categoria || "Receita Administrativa"), highlight: false, isBadge: false, isMono: false },
     { label: "Categoria", val: String(r.categoria || "Geral"), highlight: false, isBadge: true, isMono: false },
     { label: "Valor Recebido", val: brl(Number(r.valor || 0)), highlight: true, isBadge: false, isMono: false },
     { label: "Data do Lançamento", val: fmtDate(r.data), highlight: false, isBadge: false, isMono: false },
     { label: "Forma de Pagamento", val: String(r.pagamento || "—"), highlight: false, isBadge: false, isMono: false },
+    ...(isDinheiro
+      ? [
+          {
+            label: "Status do Depósito",
+            val: String(r.status_deposito || "Aguardando baixa"),
+            highlight: false,
+            isBadge: true,
+            isMono: false,
+          },
+          ...(r.id_deposito
+            ? [
+                {
+                  label: "ID Depósito Bancário",
+                  val: String(r.id_deposito),
+                  highlight: false,
+                  isBadge: false,
+                  isMono: true,
+                },
+              ]
+            : []),
+        ]
+      : []),
     { label: "Conta / Destino", val: String(r.conta || "Tesouraria"), highlight: false, isBadge: false, isMono: false },
     { label: "Congregação", val: String(r.congregacao || "Igreja Batista Corpo e Família"), highlight: false, isBadge: false, isMono: false },
     { label: "CNPJ da Igreja", val: cnpj, highlight: false, isBadge: false, isMono: true },
   ];
 
+  const cardY = 118;
+  const rowSpacing = rows.length > 8 ? 44 : 48;
+  const cardH = 30 + (rows.length - 1) * rowSpacing + 28;
+  drawRoundRect(32, cardY, width - 64, cardH, 18, "#141b30", "#1e2742", 1.5);
+
   let currentY = cardY + 36;
-  const rowSpacing = 48;
 
   rows.forEach((row, idx) => {
     ctx.textAlign = "left";
@@ -182,11 +205,21 @@ function drawFinancialReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
       ctx.font = "bold 23px system-ui, -apple-system, sans-serif";
       ctx.fillText(row.val, width - 52, currentY + 2);
     } else if (row.isBadge) {
-      const badgeW = 90;
+      const badgeW = row.val.length > 10 ? 122 : 90;
       const badgeH = 26;
-      drawRoundRect(width - 52 - badgeW, currentY - 18, badgeW, badgeH, 7, "#1e293b", "#334155", 1);
-      ctx.fillStyle = "#e2e8f0";
-      ctx.font = "600 12.5px system-ui, -apple-system, sans-serif";
+      const isPending = row.val === "Aguardando baixa";
+      drawRoundRect(
+        width - 52 - badgeW,
+        currentY - 18,
+        badgeW,
+        badgeH,
+        7,
+        isPending ? "rgba(245, 158, 11, 0.15)" : "#1e293b",
+        isPending ? "rgba(245, 158, 11, 0.4)" : "#334155",
+        1
+      );
+      ctx.fillStyle = isPending ? "#fbbf24" : "#e2e8f0";
+      ctx.font = "600 12px system-ui, -apple-system, sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(row.val, width - 52 - badgeW / 2, currentY);
     } else {
@@ -208,22 +241,22 @@ function drawFinancialReceiptToCanvas(r: Row, cnpj: string): HTMLCanvasElement {
   });
 
   // 4. Nota Administrativa (sem texto eclesiástico)
-  const noteY = cardY + cardH + 20;
-  const noteH = 105;
+  const noteY = cardY + cardH + 18;
+  const noteH = 95;
   drawRoundRect(32, noteY, width - 64, noteH, 16, "rgba(20, 27, 48, 0.8)", "#1e2742", 1.5);
 
   ctx.textAlign = "center";
   ctx.fillStyle = "#cbd5e1";
-  ctx.font = "italic 13.5px system-ui, -apple-system, sans-serif";
-  ctx.fillText("“Documento comprobatório de lançamento de receita administrativa", width / 2, noteY + 34);
-  ctx.fillText("emitido pela Tesouraria / Departamento Financeiro.”", width / 2, noteY + 56);
+  ctx.font = "italic 13px system-ui, -apple-system, sans-serif";
+  ctx.fillText("“Documento comprobatório de lançamento de receita administrativa", width / 2, noteY + 32);
+  ctx.fillText("emitido pela Tesouraria / Departamento Financeiro.”", width / 2, noteY + 52);
 
   ctx.fillStyle = "#38bdf8";
-  ctx.font = "bold 13px system-ui, -apple-system, sans-serif";
-  ctx.fillText("Autenticação Eletrônica EclesiaPro", width / 2, noteY + 84);
+  ctx.font = "bold 12.5px system-ui, -apple-system, sans-serif";
+  ctx.fillText("Autenticação Eletrônica EclesiaPro", width / 2, noteY + 76);
 
   // 5. Rodapé Institucional
-  const footY = noteY + noteH + 26;
+  const footY = noteY + noteH + 22;
   ctx.strokeStyle = "#1e2742";
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -298,6 +331,10 @@ function printFinancialReceiptDirect(r: Row, cnpj: string) {
         <div class="row highlight"><span class="label">Valor Recebido:</span><span class="val">${brl(Number(r.valor || 0))}</span></div>
         <div class="row"><span class="label">Data do Lançamento:</span><span class="val">${fmtDate(r.data)}</span></div>
         <div class="row"><span class="label">Forma de Pagamento:</span><span class="val">${r.pagamento || "—"}</span></div>
+        ${r.pagamento === "Dinheiro" ? `
+        <div class="row"><span class="label">Status do Depósito:</span><span class="val">${r.status_deposito || "Aguardando baixa"}</span></div>
+        ${r.id_deposito ? `<div class="row"><span class="label">ID Depósito Bancário:</span><span class="val">${r.id_deposito}</span></div>` : ""}
+        ` : ""}
         <div class="row"><span class="label">Conta / Destino:</span><span class="val">${r.conta || "Tesouraria"}</span></div>
         <div class="row"><span class="label">Congregação:</span><span class="val">${r.congregacao || "Igreja Batista Corpo e Família"}</span></div>
         <div class="row"><span class="label">CNPJ da Igreja:</span><span class="val">${cnpj}</span></div>
@@ -414,6 +451,12 @@ function FinancialReceiptModal({
         `💰 *Valor:* ${brl(Number(row.valor || 0))}`,
         `📅 *Data:* ${fmtDate(row.data)}`,
         `💳 *Forma de Pagamento:* ${row.pagamento || "—"}`,
+        ...(row.pagamento === "Dinheiro"
+          ? [
+              `🏦 *Status do Depósito:* ${row.status_deposito || "Aguardando baixa"}`,
+              ...(row.id_deposito ? [`🔖 *ID do Depósito:* ${row.id_deposito}`] : []),
+            ]
+          : []),
         `🏦 *Conta:* ${row.conta || "Tesouraria"}`,
         `⛪ *Congregação:* ${row.congregacao || "Igreja Batista Corpo e Família"}`,
         `🏢 *CNPJ:* ${churchCnpj}`,
@@ -538,6 +581,29 @@ function FinancialReceiptModal({
             <span className="text-[#94a3b8] font-medium">Forma de Pagamento</span>
             <span className="font-semibold text-[#f8fafc]">{row.pagamento || "—"}</span>
           </div>
+
+          {row.pagamento === "Dinheiro" && (
+            <>
+              <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+                <span className="text-[#94a3b8] font-medium">Status do Depósito</span>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold border ${
+                    row.status_deposito === "Depositado / Baixado"
+                      ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
+                      : "border-amber-500/30 bg-amber-500/15 text-amber-400"
+                  }`}
+                >
+                  {row.status_deposito || "Aguardando baixa"}
+                </span>
+              </div>
+              {row.id_deposito && (
+                <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
+                  <span className="text-[#94a3b8] font-medium">ID do Depósito</span>
+                  <span className="font-mono text-[11px] font-semibold text-[#f8fafc]">{String(row.id_deposito)}</span>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="flex items-center justify-between py-1 border-b border-[#1e2742]/80 text-xs">
             <span className="text-[#94a3b8] font-medium">Conta / Destino</span>
@@ -673,7 +739,7 @@ function Financeiro() {
         singular="Lançamento"
         enablePeriodFilter={true}
         searchKeys={["descricao", "categoria"]}
-        filterKeys={["tipo", "categoria", "congregacao"]}
+        filterKeys={["tipo", "categoria", "pagamento", "status_deposito", "congregacao"]}
         extraAction={(r) =>
           r.tipo === "Receita" ? (
             <Button
@@ -730,6 +796,22 @@ function Financeiro() {
             label: "Forma de pagamento",
             type: "select",
             options: ["PIX", "Dinheiro", "Transferência", "Cartão", "Boleto"],
+            table: true,
+          },
+          {
+            key: "status_deposito",
+            label: "Depósito Bancário",
+            type: "select",
+            options: ["Aguardando baixa", "Depositado / Baixado"],
+            table: true,
+            enabledWhen: (values) => values.pagamento === "Dinheiro",
+          },
+          {
+            key: "id_deposito",
+            label: "ID / Comprovante do Depósito",
+            type: "text",
+            table: false,
+            enabledWhen: (values) => values.pagamento === "Dinheiro",
           },
           {
             key: "conta",
